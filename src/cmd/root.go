@@ -25,6 +25,8 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -61,7 +63,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig, initTests)
 
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false,
 		"print log messages (default is false)")
@@ -69,14 +71,13 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	checkCmd.Flags().StringVarP(&configFile, "config", "c", "",
-		"config file path (default is current working directory)")
+		"config file path (default is current working directory + \"http-client.env.json\")")
 	checkCmd.Flags().StringVarP(&testFile, "file", "f", "",
-		"test file path (default is current working directory)")
+		"test file path (default is current working directory + \"default.http\")")
 	runCmd.Flags().StringVarP(&configFile, "config", "c", "",
-		"config file path (default is current working directory)")
+		"config file path (default is current working directory + \"http-client.env.json\")")
 	runCmd.Flags().StringVarP(&testFile, "file", "f", "",
-		"test file path (default is current working directory)")
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+		"test file path (default is current working directory + \"default.http\")")
 }
 
 func initConfig() {
@@ -94,4 +95,22 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+func initTests() {
+	if testFile == "" {
+		testFile, err := os.Getwd()
+		cobra.CheckErr(err)
+		testFile += "default.http"
+	}
+	content, err := ioutil.ReadFile(testFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO: parse test file contents here
+	// TODO: validate if check has been called - maybe outsource it to check.go
+
+	stringContent := string(content)
+	fmt.Println(stringContent)
 }
