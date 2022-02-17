@@ -14,3 +14,6 @@ gotep
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Test files to validate syntax and parsing
+test_files/
