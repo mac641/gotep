@@ -1,0 +1,53 @@
+#!/bin/sh
+
+MSG="${1}"
+REGEX="^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|temp)(\([a-z_\-]*\))?(: [a-z][^#]*)"
+
+# Check if commit message follows Angular commit message guidelines
+# Inspired by https://github.com/legend80s/commit-msg-linter
+if ! grep -qE "$REGEX" "$MSG"; then
+  tput setaf 3
+  echo ""
+  echo "Commit message:"
+  tput setaf 7
+  sed -i '/# Everything below it will be ignored./,$d' $MSG
+  sed -i '/^#.*$/d' $MSG
+  sed -i '/\S*\n^$/d' $MSG
+  cat $MSG
+  echo ""
+
+  tput setaf 1
+  echo "Even though this tool is written in Go, your commit message must follow Angular commit message"
+  echo "guidelines for better readability / understanding of the git history tree!"
+  echo ""
+
+  tput setaf 3
+  echo "Guidelines:"
+  tput setaf 2
+  echo "<type>(<scope>): <short summary>"
+  echo "^----^ ^-----^   ^-------------^"
+  echo "|      |         |"
+  echo "|      |         +-> Summary in present tense. Not capitalized. No period at the end."
+  echo "|      |"
+  echo "|      +-> Commit Scope: Optional, can be anything specifying the scope of the commit change."
+  echo "|"
+  echo "+-> Commit Type: feat|fix|docs|style|refactor|test|chore|perf|ci|build|temp"
+  echo ""
+  echo "type:"
+  echo "  feat      -> A new feature."
+  echo "  fix       -> A bug fix."
+  echo "  docs      -> Documentation only changes."
+  echo "  style     -> Changes that do not affect the meaning of the code (white-space, formatting, etc)."
+  echo "  refactor  -> A code change that neither fixes a bug nor adds a feature."
+  echo "  test      -> Adding missing tests or correcting existing ones."
+  echo "  chore     -> Changes to the build process or auxiliary tools and libraries such as documentation"
+  echo "               generation."
+  echo "  perf      -> A code change that improves performance."
+  echo "  ci        -> Changes to your CI configuration files and scripts."
+  echo "  build     -> Changes that affect the build system or external dependencies (e.g. cobra, viper)."
+  echo "  temp      -> Temporary commit that won't be included in your CHANGELOG."
+  echo ""
+
+  tput setaf 7
+  exit 1
+fi
