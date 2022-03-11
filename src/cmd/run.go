@@ -33,7 +33,7 @@ var (
 	runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Execute tests",
-		Long:  `Execute tests based on a test file and its associated environment definitions. 
+		Long: `Execute tests based on a test file and its associated environment definitions. 
 For example run: gotep run -c http-client.env.json -f tests.http`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("run called")
