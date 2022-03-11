@@ -1,3 +1,5 @@
+default: build
+
 .PHONY: build
 build: src/main.go
 	cd src; \
@@ -12,6 +14,7 @@ cd ..
 clean: gotep
 	trash-put gotep
 
+.PHONY: fmt
 fmt:
 	gofmt -w -s .
 
