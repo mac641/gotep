@@ -24,10 +24,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
@@ -108,7 +109,8 @@ func initTests() {
 		log.Fatal(err)
 	}
 
-	// TODO: parse test file contents here
+	// TODO: invoke parsing of test_files here
+
 	// TODO: validate if check has been called - maybe outsource it to check.go
 
 	stringContent := string(content)
