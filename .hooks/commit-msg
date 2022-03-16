@@ -17,8 +17,8 @@ if ! grep -qE "$REGEX" "$MSG"; then
   echo ""
 
   tput setaf 1
-  echo "Even though this tool is written in Go, your commit message must follow Angular commit message"
-  echo "guidelines for better readability / understanding of the git history tree!"
+  echo "Your commit message must follow the guidelines described below for better readability /"
+  echo "understanding of the git history tree!"
   echo ""
 
   tput setaf 3
