@@ -2,7 +2,7 @@
 gotep is a terminal-based REST client designed to execute HTTP tests based on the Jetbrains HTTP-Client.
 
 ## Contribution guidelines
-Please read this and follow these guidelines, if you wish to contribute.
+Please read and follow the guidelines, if you wish to contribute.
 
 ### Git hooks
 Before you can start contributing, enable git commit hooks to ensure unified commit messages and properly formatted source code.

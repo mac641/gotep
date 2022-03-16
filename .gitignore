@@ -4,7 +4,6 @@
 *.dll
 *.so
 *.dylib
-gotep
 
 # Test binary, built with `go test -c`
 *.test
@@ -15,5 +14,5 @@ gotep
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Test files to validate syntax and parsing
-test_files/
+# compiled binaries
+bin/
