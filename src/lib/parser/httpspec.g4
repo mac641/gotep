@@ -86,5 +86,7 @@ responseref: '<>' requiredwhitespace filepath;
 envvariable:
 	'{{' optionalwhitespace identifier optionalwhitespace '}}';
 
+// TODO: add rule for boundary and handlerscript
+
 // TODO: Investigate Island Grammars further, especially regarding JSON, ECMAScript (maybe HTML
 // multipart-form-data) parsing
