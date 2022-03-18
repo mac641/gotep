@@ -1,0 +1,11 @@
+### Get all templates
+GET {{origin}}/{{location}}/available
+Accept: application/json
+
+### Generate pdf from sent html file
+POST {{origin}}/{{location}}/pdf
+Content-Type: application/json
+
+{
+  "html": "<h1>I'm an example heading!</h1>"
+}
