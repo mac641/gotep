@@ -1,33 +1,27 @@
 grammar httpspec;
 
-// Chars: every unicode character except line breaks are supported
-INPUT: .;
-ALPHA: [A-Za-z];
-DIGIT: [0-9];
-identifier: (ALPHA | DIGIT | '-' | '_')+;
-
 // Line terminators
-newline: 'r\n' | '\n' | '\r';
-newlinewithindent: newline*;
-linetail: INPUT* newline;
+NEWLINE: '\u000D\u000A' | '\u000A' | '\u000D'; // \r\n | \r | \n
+NEWLINEWITHINDENT: NEWLINE REQUIREDWHITESPACE;
+LINETAIL: INPUT* NEWLINE;
+
+// Chars: every unicode character except NEWLINE is supPORTed
+INPUT: ~NEWLINE;
+ALPHA: [A-Za-z]; // TODO: Insert unicode chars
+DIGIT: [0-9]; // TODO: Insert unicode chars
+ID: (ALPHA | DIGIT | '-' | '_')+;
 
 // Whitespaces
-WHITESPACE: [ \t\f];
-optionalwhitespace: WHITESPACE*;
-requiredwhitespace: WHITESPACE+;
+WHITESPACE: [ \t\f]; // TODO: Insert unicode chars
+OPTIONALWHITESPACE: WHITESPACE* -> skip;
+REQUIREDWHITESPACE: WHITESPACE+;
 
 // Comments
-linecomment: '#' linetail | '//' linetail;
-// TODO: Put them in hidden channel because there not necessary for executing http requests
+LINECOMMENT: ('#' LINETAIL | '//' LINETAIL) -> skip;
 
 // Requests
-requestseparator: '###' linetail;
-request:
-	requestline newline headers newline messagebody? responsehandler? responseref?;
-requestline: (method requiredwhitespace)? requesttarget (
-		requiredwhitespace httpversion
-	)?;
-method:
+REQUESTSEPARATOR: '###' LINETAIL;
+METHOD:
 	'GET'
 	| 'HEAD'
 	| 'POST'
@@ -37,54 +31,62 @@ method:
 	| 'PATCH'
 	| 'OPTIONS'
 	| 'TRACE';
-httpversion: 'HTTP/' DIGIT+ '.' DIGIT+;
-requesttarget: originform | absoluteform | asteriskform;
-originform: absolutepath ('?' query)? ('#' requestfragment)?;
-absoluteform: (scheme '://')? hierpart ('?' query)? (
-		'#' requestfragment
+REQUESTTARGET: ORIGINFORM | ABSOLUTEFORM | ASTERISKFORM;
+ASTERISKFORM: '*';
+ORIGINFORM: ABSOLUTEPATH ('?' QUERY)? ('#' REQUESTFRAGMENT)?;
+// FIXME: figure out if it is necessary to parse ip addresses regarding hierpart - if not, make them lexer rules
+ABSOLUTEFORM: (SCHEME '://')? hierpart ('?' QUERY)? (
+		'#' REQUESTFRAGMENT
 	)?;
-scheme: 'http' | 'https';
-hierpart: authority absolutepath?;
-asteriskform: '*';
-authority: host (':' port)?;
-port: DIGIT+;
+SEGMENT: ~('/' | '?' | '#');
+ABSOLUTEPATH: '/' (PATHSEPARATOR SEGMENT)+;
+SCHEME: 'http' | 'https';
+PORT: DIGIT+;
+PATHSEPARATOR: '/' NEWLINEWITHINDENT;
+HTTPVERSION: 'HTTP/' DIGIT+ '.' DIGIT+;
+QUERY: ~'#' (NEWLINEWITHINDENT QUERY)?;
+REQUESTFRAGMENT: ~'?' (NEWLINEWITHINDENT REQUESTFRAGMENT)?;
+
+request:
+	requestline NEWLINE headers NEWLINE messagebody? responsehandler? responseref?;
+requestline: (METHOD REQUIREDWHITESPACE)? REQUESTTARGET (
+		REQUIREDWHITESPACE HTTPVERSION
+	)?;
+hierpart: authority ABSOLUTEPATH?;
+authority: host (':' PORT)?;
 host: '[' ipv6address ']' | ipv4addressorregname;
 ipv6address: ~('/' | ']')+;
 ipv4addressorregname: ~('/' | ':' | '?' | '#')+;
-absolutepath: '/' (pathseparator segment)+;
-pathseparator: '/' newlinewithindent;
-segment: ~('/' | '?' | '#');
-query: ~'#' (newlinewithindent query)?;
-requestfragment: ~'?' (newlinewithindent requestfragment)?;
 
 // Headers
-headers: (headerfield newline)*;
+FIELDNAME: ~':'+;
+
+headers: (headerfield NEWLINE)*;
 headerfield:
-	fieldname ':' optionalwhitespace fieldvalue optionalwhitespace;
-fieldname: ~':'+;
-fieldvalue: linetail (newlinewithindent fieldvalue)?;
+	FIELDNAME ':' OPTIONALWHITESPACE fieldvalue OPTIONALWHITESPACE;
+fieldvalue: LINETAIL (NEWLINEWITHINDENT fieldvalue)?;
 
 // Message body
+FILEPATH: LINETAIL;
+
 messagebody: messages | multipartformdata;
-messages: messageline (newline messageline)?;
-messageline: ~('<' | '<>' | '###') linetail | inputfileref;
-inputfileref: '<' requiredwhitespace filepath;
-filepath: linetail;
+messages: messageline (NEWLINE messageline)?;
+messageline: ~('<' | '<>' | '###') LINETAIL | inputfileref;
+inputfileref: '<' REQUIREDWHITESPACE FILEPATH;
 multipartformdata: multipartfield multipartformdata? boundary;
 multipartfield:
-	boundary (headerfield newline)* newline messages?;
+	boundary (headerfield NEWLINE)* NEWLINE messages?;
 
 // Response handler
 responsehandler:
-	'>' requiredwhitespace '{%' handlerscript '%}'
-	| '>' requiredwhitespace filepath;
+	'>' REQUIREDWHITESPACE '{%' handlerscript '%}'
+	| '>' REQUIREDWHITESPACE FILEPATH;
 
 // Response reference
-responseref: '<>' requiredwhitespace filepath;
+responseref: '<>' REQUIREDWHITESPACE FILEPATH;
 
 // Environment variables
-envvariable:
-	'{{' optionalwhitespace identifier optionalwhitespace '}}';
+ENVVARIABLE: '{{' OPTIONALWHITESPACE ID OPTIONALWHITESPACE '}}';
 
 // TODO: add rule for boundary and handlerscript
 
