@@ -1,9 +1,21 @@
 default: build
 
+antlr: src/lib/parser/httpspec.g4
+	java -jar ./bin/antlr-4.9-complete.jar -Dlanguage=Go -o . -lib . ./src/lib/parser/httpspec.g4
+
+.PHONY: grunGuiTree
+grunGuiTree: src/lib/parser/httpspec.g4
+	java org.antlr.v4.gui.TestRig httpspec requests -tree -gui
+
+.PHONY: grunTokens
+grunTokens: src/lib/parser/httpspec.g4
+	java org.antlr.v4.gui.TestRig httpspec requests -tokens
+
 .PHONY: build
 build: src/main.go
-	cd src; \
-go build -o ../gotep
+	mkdir -p bin; \
+cd src; \
+go build -o ../bin/gotep
 
 .PHONY: check-updates
 check-updates: src/go.mod
@@ -11,8 +23,8 @@ check-updates: src/go.mod
 go list -u -m all; \
 cd ..
 
-clean: gotep
-	trash-put gotep
+clean: bin/gotep
+	trash-put bin/gotep
 
 .PHONY: fmt
 fmt:
@@ -21,5 +33,6 @@ fmt:
 .PHONY: update
 update: check-updates src/go.mod
 	cd src; \
-go get -t -u ./...; \
+go get -u ./...; \
+go mod tidy; \
 cd ..
