@@ -16,77 +16,89 @@ var _ = reflect.Copy
 var _ = strconv.Itoa
 
 var parserATN = []uint16{
-	3, 24715, 42794, 33075, 47597, 16764, 15335, 30598, 22884, 3, 41, 153,
+	3, 24715, 42794, 33075, 47597, 16764, 15335, 30598, 22884, 3, 41, 184,
 	4, 2, 9, 2, 4, 3, 9, 3, 4, 4, 9, 4, 4, 5, 9, 5, 4, 6, 9, 6, 4, 7, 9, 7,
 	4, 8, 9, 8, 4, 9, 9, 9, 4, 10, 9, 10, 4, 11, 9, 11, 4, 12, 9, 12, 4, 13,
-	9, 13, 4, 14, 9, 14, 4, 15, 9, 15, 4, 16, 9, 16, 4, 17, 9, 17, 3, 2, 3,
-	2, 3, 2, 3, 2, 3, 2, 5, 2, 40, 10, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5,
-	3, 47, 10, 3, 3, 3, 5, 3, 50, 10, 3, 3, 3, 5, 3, 53, 10, 3, 3, 4, 3, 4,
-	3, 4, 5, 4, 58, 10, 4, 3, 4, 3, 4, 3, 4, 3, 4, 5, 4, 64, 10, 4, 3, 5, 3,
-	5, 3, 5, 5, 5, 69, 10, 5, 3, 6, 3, 6, 3, 6, 3, 6, 5, 6, 75, 10, 6, 3, 6,
-	3, 6, 3, 6, 5, 6, 80, 10, 6, 3, 6, 3, 6, 5, 6, 84, 10, 6, 3, 7, 3, 7, 5,
-	7, 88, 10, 7, 3, 8, 3, 8, 3, 8, 5, 8, 93, 10, 8, 3, 9, 3, 9, 3, 9, 3, 9,
-	3, 9, 5, 9, 100, 10, 9, 3, 10, 6, 10, 103, 10, 10, 13, 10, 14, 10, 104,
-	3, 11, 6, 11, 108, 10, 11, 13, 11, 14, 11, 109, 3, 12, 3, 12, 7, 12, 114,
-	10, 12, 12, 12, 14, 12, 117, 11, 12, 3, 13, 3, 13, 5, 13, 121, 10, 13,
-	3, 14, 3, 14, 3, 14, 5, 14, 126, 10, 14, 3, 15, 3, 15, 3, 15, 3, 15, 3,
-	15, 5, 15, 133, 10, 15, 3, 16, 3, 16, 5, 16, 137, 10, 16, 3, 16, 3, 16,
-	3, 17, 3, 17, 3, 17, 7, 17, 144, 10, 17, 12, 17, 14, 17, 147, 11, 17, 3,
-	17, 3, 17, 5, 17, 151, 10, 17, 3, 17, 2, 2, 18, 2, 4, 6, 8, 10, 12, 14,
-	16, 18, 20, 22, 24, 26, 28, 30, 32, 2, 4, 4, 2, 11, 11, 17, 17, 4, 2, 11,
-	12, 14, 15, 2, 159, 2, 39, 3, 2, 2, 2, 4, 41, 3, 2, 2, 2, 6, 57, 3, 2,
-	2, 2, 8, 68, 3, 2, 2, 2, 10, 74, 3, 2, 2, 2, 12, 85, 3, 2, 2, 2, 14, 89,
-	3, 2, 2, 2, 16, 99, 3, 2, 2, 2, 18, 102, 3, 2, 2, 2, 20, 107, 3, 2, 2,
-	2, 22, 115, 3, 2, 2, 2, 24, 120, 3, 2, 2, 2, 26, 122, 3, 2, 2, 2, 28, 132,
-	3, 2, 2, 2, 30, 134, 3, 2, 2, 2, 32, 140, 3, 2, 2, 2, 34, 40, 3, 2, 2,
-	2, 35, 36, 5, 4, 3, 2, 36, 37, 7, 18, 2, 2, 37, 38, 5, 2, 2, 2, 38, 40,
-	3, 2, 2, 2, 39, 34, 3, 2, 2, 2, 39, 35, 3, 2, 2, 2, 40, 3, 3, 2, 2, 2,
-	41, 42, 5, 6, 4, 2, 42, 43, 7, 3, 2, 2, 43, 44, 5, 22, 12, 2, 44, 46, 7,
-	3, 2, 2, 45, 47, 5, 24, 13, 2, 46, 45, 3, 2, 2, 2, 46, 47, 3, 2, 2, 2,
-	47, 49, 3, 2, 2, 2, 48, 50, 7, 39, 2, 2, 49, 48, 3, 2, 2, 2, 49, 50, 3,
-	2, 2, 2, 50, 52, 3, 2, 2, 2, 51, 53, 7, 40, 2, 2, 52, 51, 3, 2, 2, 2, 52,
-	53, 3, 2, 2, 2, 53, 5, 3, 2, 2, 2, 54, 55, 7, 19, 2, 2, 55, 56, 7, 10,
-	2, 2, 56, 58, 8, 4, 1, 2, 57, 54, 3, 2, 2, 2, 57, 58, 3, 2, 2, 2, 58, 59,
-	3, 2, 2, 2, 59, 63, 5, 8, 5, 2, 60, 61, 7, 10, 2, 2, 61, 62, 8, 4, 1, 2,
-	62, 64, 7, 27, 2, 2, 63, 60, 3, 2, 2, 2, 63, 64, 3, 2, 2, 2, 64, 7, 3,
-	2, 2, 2, 65, 69, 7, 21, 2, 2, 66, 69, 5, 10, 6, 2, 67, 69, 7, 20, 2, 2,
-	68, 65, 3, 2, 2, 2, 68, 66, 3, 2, 2, 2, 68, 67, 3, 2, 2, 2, 69, 9, 3, 2,
-	2, 2, 70, 71, 7, 24, 2, 2, 71, 72, 7, 14, 2, 2, 72, 73, 7, 11, 2, 2, 73,
-	75, 7, 11, 2, 2, 74, 70, 3, 2, 2, 2, 74, 75, 3, 2, 2, 2, 75, 76, 3, 2,
-	2, 2, 76, 79, 5, 12, 7, 2, 77, 78, 7, 15, 2, 2, 78, 80, 7, 28, 2, 2, 79,
-	77, 3, 2, 2, 2, 79, 80, 3, 2, 2, 2, 80, 83, 3, 2, 2, 2, 81, 82, 7, 12,
-	2, 2, 82, 84, 7, 29, 2, 2, 83, 81, 3, 2, 2, 2, 83, 84, 3, 2, 2, 2, 84,
-	11, 3, 2, 2, 2, 85, 87, 5, 14, 8, 2, 86, 88, 7, 23, 2, 2, 87, 86, 3, 2,
-	2, 2, 87, 88, 3, 2, 2, 2, 88, 13, 3, 2, 2, 2, 89, 92, 5, 16, 9, 2, 90,
-	91, 7, 14, 2, 2, 91, 93, 7, 25, 2, 2, 92, 90, 3, 2, 2, 2, 92, 93, 3, 2,
-	2, 2, 93, 15, 3, 2, 2, 2, 94, 95, 7, 16, 2, 2, 95, 96, 5, 18, 10, 2, 96,
-	97, 7, 17, 2, 2, 97, 100, 3, 2, 2, 2, 98, 100, 5, 20, 11, 2, 99, 94, 3,
-	2, 2, 2, 99, 98, 3, 2, 2, 2, 100, 17, 3, 2, 2, 2, 101, 103, 10, 2, 2, 2,
-	102, 101, 3, 2, 2, 2, 103, 104, 3, 2, 2, 2, 104, 102, 3, 2, 2, 2, 104,
-	105, 3, 2, 2, 2, 105, 19, 3, 2, 2, 2, 106, 108, 10, 3, 2, 2, 107, 106,
-	3, 2, 2, 2, 108, 109, 3, 2, 2, 2, 109, 107, 3, 2, 2, 2, 109, 110, 3, 2,
-	2, 2, 110, 21, 3, 2, 2, 2, 111, 112, 7, 31, 2, 2, 112, 114, 7, 3, 2, 2,
-	113, 111, 3, 2, 2, 2, 114, 117, 3, 2, 2, 2, 115, 113, 3, 2, 2, 2, 115,
-	116, 3, 2, 2, 2, 116, 23, 3, 2, 2, 2, 117, 115, 3, 2, 2, 2, 118, 121, 5,
-	26, 14, 2, 119, 121, 5, 30, 16, 2, 120, 118, 3, 2, 2, 2, 120, 119, 3, 2,
-	2, 2, 121, 25, 3, 2, 2, 2, 122, 125, 5, 28, 15, 2, 123, 124, 7, 3, 2, 2,
-	124, 126, 5, 28, 15, 2, 125, 123, 3, 2, 2, 2, 125, 126, 3, 2, 2, 2, 126,
-	27, 3, 2, 2, 2, 127, 128, 7, 6, 2, 2, 128, 129, 7, 6, 2, 2, 129, 130, 7,
-	6, 2, 2, 130, 133, 7, 5, 2, 2, 131, 133, 7, 37, 2, 2, 132, 127, 3, 2, 2,
-	2, 132, 131, 3, 2, 2, 2, 133, 29, 3, 2, 2, 2, 134, 136, 5, 32, 17, 2, 135,
-	137, 5, 30, 16, 2, 136, 135, 3, 2, 2, 2, 136, 137, 3, 2, 2, 2, 137, 138,
-	3, 2, 2, 2, 138, 139, 7, 36, 2, 2, 139, 31, 3, 2, 2, 2, 140, 145, 7, 36,
-	2, 2, 141, 142, 7, 31, 2, 2, 142, 144, 7, 3, 2, 2, 143, 141, 3, 2, 2, 2,
-	144, 147, 3, 2, 2, 2, 145, 143, 3, 2, 2, 2, 145, 146, 3, 2, 2, 2, 146,
-	148, 3, 2, 2, 2, 147, 145, 3, 2, 2, 2, 148, 150, 7, 3, 2, 2, 149, 151,
-	5, 26, 14, 2, 150, 149, 3, 2, 2, 2, 150, 151, 3, 2, 2, 2, 151, 33, 3, 2,
-	2, 2, 24, 39, 46, 49, 52, 57, 63, 68, 74, 79, 83, 87, 92, 99, 104, 109,
-	115, 120, 125, 132, 136, 145, 150,
+	9, 13, 4, 14, 9, 14, 4, 15, 9, 15, 4, 16, 9, 16, 4, 17, 9, 17, 4, 18, 9,
+	18, 4, 19, 9, 19, 4, 20, 9, 20, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 5, 3, 51, 10, 3, 3, 3, 5, 3, 54, 10, 3, 3, 3, 5, 3,
+	57, 10, 3, 3, 4, 3, 4, 3, 4, 5, 4, 62, 10, 4, 3, 4, 3, 4, 3, 4, 3, 4, 5,
+	4, 68, 10, 4, 3, 5, 3, 5, 3, 5, 5, 5, 73, 10, 5, 3, 6, 3, 6, 3, 6, 3, 6,
+	5, 6, 79, 10, 6, 3, 6, 3, 6, 3, 6, 5, 6, 84, 10, 6, 3, 6, 3, 6, 5, 6, 88,
+	10, 6, 3, 7, 3, 7, 5, 7, 92, 10, 7, 3, 8, 3, 8, 3, 8, 5, 8, 97, 10, 8,
+	3, 9, 3, 9, 3, 9, 3, 9, 3, 9, 5, 9, 104, 10, 9, 3, 10, 6, 10, 107, 10,
+	10, 13, 10, 14, 10, 108, 3, 11, 6, 11, 112, 10, 11, 13, 11, 14, 11, 113,
+	3, 12, 3, 12, 3, 12, 7, 12, 119, 10, 12, 12, 12, 14, 12, 122, 11, 12, 3,
+	13, 3, 13, 3, 13, 3, 13, 3, 13, 3, 13, 3, 13, 3, 13, 3, 14, 3, 14, 5, 14,
+	134, 10, 14, 3, 15, 3, 15, 3, 15, 5, 15, 139, 10, 15, 3, 16, 3, 16, 3,
+	16, 3, 16, 3, 16, 5, 16, 146, 10, 16, 3, 17, 3, 17, 5, 17, 150, 10, 17,
+	3, 17, 3, 17, 3, 18, 3, 18, 3, 18, 3, 18, 7, 18, 158, 10, 18, 12, 18, 14,
+	18, 161, 11, 18, 3, 18, 3, 18, 5, 18, 165, 10, 18, 3, 19, 3, 19, 3, 20,
+	3, 20, 3, 20, 3, 20, 3, 20, 3, 20, 3, 20, 3, 20, 3, 20, 3, 20, 3, 20, 3,
+	20, 3, 20, 5, 20, 182, 10, 20, 3, 20, 2, 2, 21, 2, 4, 6, 8, 10, 12, 14,
+	16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 2, 4, 4, 2, 11, 11, 17,
+	17, 4, 2, 11, 12, 14, 15, 2, 187, 2, 40, 3, 2, 2, 2, 4, 45, 3, 2, 2, 2,
+	6, 61, 3, 2, 2, 2, 8, 72, 3, 2, 2, 2, 10, 78, 3, 2, 2, 2, 12, 89, 3, 2,
+	2, 2, 14, 93, 3, 2, 2, 2, 16, 103, 3, 2, 2, 2, 18, 106, 3, 2, 2, 2, 20,
+	111, 3, 2, 2, 2, 22, 120, 3, 2, 2, 2, 24, 123, 3, 2, 2, 2, 26, 133, 3,
+	2, 2, 2, 28, 135, 3, 2, 2, 2, 30, 145, 3, 2, 2, 2, 32, 147, 3, 2, 2, 2,
+	34, 153, 3, 2, 2, 2, 36, 166, 3, 2, 2, 2, 38, 181, 3, 2, 2, 2, 40, 41,
+	5, 4, 3, 2, 41, 42, 7, 18, 2, 2, 42, 43, 5, 2, 2, 2, 43, 44, 7, 2, 2, 3,
+	44, 3, 3, 2, 2, 2, 45, 46, 5, 6, 4, 2, 46, 47, 7, 3, 2, 2, 47, 48, 5, 22,
+	12, 2, 48, 50, 7, 3, 2, 2, 49, 51, 5, 26, 14, 2, 50, 49, 3, 2, 2, 2, 50,
+	51, 3, 2, 2, 2, 51, 53, 3, 2, 2, 2, 52, 54, 5, 38, 20, 2, 53, 52, 3, 2,
+	2, 2, 53, 54, 3, 2, 2, 2, 54, 56, 3, 2, 2, 2, 55, 57, 7, 40, 2, 2, 56,
+	55, 3, 2, 2, 2, 56, 57, 3, 2, 2, 2, 57, 5, 3, 2, 2, 2, 58, 59, 7, 19, 2,
+	2, 59, 60, 7, 10, 2, 2, 60, 62, 8, 4, 1, 2, 61, 58, 3, 2, 2, 2, 61, 62,
+	3, 2, 2, 2, 62, 63, 3, 2, 2, 2, 63, 67, 5, 8, 5, 2, 64, 65, 7, 10, 2, 2,
+	65, 66, 8, 4, 1, 2, 66, 68, 7, 27, 2, 2, 67, 64, 3, 2, 2, 2, 67, 68, 3,
+	2, 2, 2, 68, 7, 3, 2, 2, 2, 69, 73, 7, 21, 2, 2, 70, 73, 5, 10, 6, 2, 71,
+	73, 7, 20, 2, 2, 72, 69, 3, 2, 2, 2, 72, 70, 3, 2, 2, 2, 72, 71, 3, 2,
+	2, 2, 73, 9, 3, 2, 2, 2, 74, 75, 7, 24, 2, 2, 75, 76, 7, 14, 2, 2, 76,
+	77, 7, 11, 2, 2, 77, 79, 7, 11, 2, 2, 78, 74, 3, 2, 2, 2, 78, 79, 3, 2,
+	2, 2, 79, 80, 3, 2, 2, 2, 80, 83, 5, 12, 7, 2, 81, 82, 7, 15, 2, 2, 82,
+	84, 7, 28, 2, 2, 83, 81, 3, 2, 2, 2, 83, 84, 3, 2, 2, 2, 84, 87, 3, 2,
+	2, 2, 85, 86, 7, 12, 2, 2, 86, 88, 7, 29, 2, 2, 87, 85, 3, 2, 2, 2, 87,
+	88, 3, 2, 2, 2, 88, 11, 3, 2, 2, 2, 89, 91, 5, 14, 8, 2, 90, 92, 7, 23,
+	2, 2, 91, 90, 3, 2, 2, 2, 91, 92, 3, 2, 2, 2, 92, 13, 3, 2, 2, 2, 93, 96,
+	5, 16, 9, 2, 94, 95, 7, 14, 2, 2, 95, 97, 7, 25, 2, 2, 96, 94, 3, 2, 2,
+	2, 96, 97, 3, 2, 2, 2, 97, 15, 3, 2, 2, 2, 98, 99, 7, 16, 2, 2, 99, 100,
+	5, 18, 10, 2, 100, 101, 7, 17, 2, 2, 101, 104, 3, 2, 2, 2, 102, 104, 5,
+	20, 11, 2, 103, 98, 3, 2, 2, 2, 103, 102, 3, 2, 2, 2, 104, 17, 3, 2, 2,
+	2, 105, 107, 10, 2, 2, 2, 106, 105, 3, 2, 2, 2, 107, 108, 3, 2, 2, 2, 108,
+	106, 3, 2, 2, 2, 108, 109, 3, 2, 2, 2, 109, 19, 3, 2, 2, 2, 110, 112, 10,
+	3, 2, 2, 111, 110, 3, 2, 2, 2, 112, 113, 3, 2, 2, 2, 113, 111, 3, 2, 2,
+	2, 113, 114, 3, 2, 2, 2, 114, 21, 3, 2, 2, 2, 115, 116, 5, 24, 13, 2, 116,
+	117, 7, 3, 2, 2, 117, 119, 3, 2, 2, 2, 118, 115, 3, 2, 2, 2, 119, 122,
+	3, 2, 2, 2, 120, 118, 3, 2, 2, 2, 120, 121, 3, 2, 2, 2, 121, 23, 3, 2,
+	2, 2, 122, 120, 3, 2, 2, 2, 123, 124, 7, 30, 2, 2, 124, 125, 7, 14, 2,
+	2, 125, 126, 7, 10, 2, 2, 126, 127, 8, 13, 1, 2, 127, 128, 7, 31, 2, 2,
+	128, 129, 7, 10, 2, 2, 129, 130, 8, 13, 1, 2, 130, 25, 3, 2, 2, 2, 131,
+	134, 5, 28, 15, 2, 132, 134, 5, 32, 17, 2, 133, 131, 3, 2, 2, 2, 133, 132,
+	3, 2, 2, 2, 134, 27, 3, 2, 2, 2, 135, 138, 5, 30, 16, 2, 136, 137, 7, 3,
+	2, 2, 137, 139, 5, 30, 16, 2, 138, 136, 3, 2, 2, 2, 138, 139, 3, 2, 2,
+	2, 139, 29, 3, 2, 2, 2, 140, 141, 7, 6, 2, 2, 141, 142, 7, 6, 2, 2, 142,
+	143, 7, 6, 2, 2, 143, 146, 7, 5, 2, 2, 144, 146, 7, 39, 2, 2, 145, 140,
+	3, 2, 2, 2, 145, 144, 3, 2, 2, 2, 146, 31, 3, 2, 2, 2, 147, 149, 5, 34,
+	18, 2, 148, 150, 5, 32, 17, 2, 149, 148, 3, 2, 2, 2, 149, 150, 3, 2, 2,
+	2, 150, 151, 3, 2, 2, 2, 151, 152, 7, 38, 2, 2, 152, 33, 3, 2, 2, 2, 153,
+	159, 7, 38, 2, 2, 154, 155, 5, 24, 13, 2, 155, 156, 7, 3, 2, 2, 156, 158,
+	3, 2, 2, 2, 157, 154, 3, 2, 2, 2, 158, 161, 3, 2, 2, 2, 159, 157, 3, 2,
+	2, 2, 159, 160, 3, 2, 2, 2, 160, 162, 3, 2, 2, 2, 161, 159, 3, 2, 2, 2,
+	162, 164, 7, 3, 2, 2, 163, 165, 5, 28, 15, 2, 164, 163, 3, 2, 2, 2, 164,
+	165, 3, 2, 2, 2, 165, 35, 3, 2, 2, 2, 166, 167, 7, 5, 2, 2, 167, 37, 3,
+	2, 2, 2, 168, 169, 7, 36, 2, 2, 169, 170, 7, 10, 2, 2, 170, 171, 8, 20,
+	1, 2, 171, 172, 7, 32, 2, 2, 172, 173, 7, 34, 2, 2, 173, 174, 5, 36, 19,
+	2, 174, 175, 7, 34, 2, 2, 175, 176, 7, 33, 2, 2, 176, 182, 3, 2, 2, 2,
+	177, 178, 7, 36, 2, 2, 178, 179, 7, 10, 2, 2, 179, 180, 8, 20, 1, 2, 180,
+	182, 7, 37, 2, 2, 181, 168, 3, 2, 2, 2, 181, 177, 3, 2, 2, 2, 182, 39,
+	3, 2, 2, 2, 24, 50, 53, 56, 61, 67, 72, 78, 83, 87, 91, 96, 103, 108, 113,
+	120, 133, 138, 145, 149, 159, 164, 181,
 }
 var literalNames = []string{
 	"", "", "", "", "", "", "", "", "", "'\u002F'", "'\u0023'", "", "'\u003A'",
 	"'\u003F'", "'\u005B'", "'\u005D'", "", "", "", "", "", "", "", "", "",
-	"", "", "", "", "", "", "'\u003C'", "'\u003E'",
+	"", "", "", "", "", "'\u007B'", "'\u007D'", "'\u0025'", "'\u003C'", "'\u003E'",
 }
 var symbolicNames = []string{
 	"", "NEWLINE", "NEWLINEWITHINDENT", "LINETAIL", "INPUT", "ALPHA", "DIGIT",
@@ -94,16 +106,16 @@ var symbolicNames = []string{
 	"LEFTSQUAREBRACKET", "RIGHTSQUAREBRACKET", "REQUESTSEPARATOR", "METHOD",
 	"ASTERISKFORM", "ORIGINFORM", "SEGMENT", "ABSOLUTEPATH", "SCHEME", "PORT",
 	"PATHSEPARATOR", "HTTPVERSION", "QUERY", "REQUESTFRAGMENT", "FIELDNAME",
-	"HEADERFIELD", "FIELDVALUE", "LESSTHANSIGN", "GREATERTHANSIGN", "FILEPATH",
-	"BOUNDARY", "INPUTFILEREF", "HANDLERSCRIPT", "RESPONSEHANDLER", "RESPONSEREF",
+	"FIELDVALUE", "LEFTCURLYBRACKET", "RIGHTCURLYBRACKET", "PERCENTSIGN", "LESSTHANSIGN",
+	"GREATERTHANSIGN", "FILEPATH", "BOUNDARY", "INPUTFILEREF", "RESPONSEREF",
 	"ENVVARIABLE",
 }
 
 var ruleNames = []string{
 	"requests", "request", "requestline", "requesttarget", "absoluteform",
 	"hierpart", "authority", "host", "ipv6address", "ipv4addressorregname",
-	"headers", "messagebody", "messages", "messageline", "multipartformdata",
-	"multipartfield",
+	"headers", "headerfield", "messagebody", "messages", "messageline", "multipartformdata",
+	"multipartfield", "handlerscript", "responsehandler",
 }
 
 type httpspecParser struct {
@@ -166,15 +178,15 @@ const (
 	httpspecParserQUERY              = 26
 	httpspecParserREQUESTFRAGMENT    = 27
 	httpspecParserFIELDNAME          = 28
-	httpspecParserHEADERFIELD        = 29
-	httpspecParserFIELDVALUE         = 30
-	httpspecParserLESSTHANSIGN       = 31
-	httpspecParserGREATERTHANSIGN    = 32
-	httpspecParserFILEPATH           = 33
-	httpspecParserBOUNDARY           = 34
-	httpspecParserINPUTFILEREF       = 35
-	httpspecParserHANDLERSCRIPT      = 36
-	httpspecParserRESPONSEHANDLER    = 37
+	httpspecParserFIELDVALUE         = 29
+	httpspecParserLEFTCURLYBRACKET   = 30
+	httpspecParserRIGHTCURLYBRACKET  = 31
+	httpspecParserPERCENTSIGN        = 32
+	httpspecParserLESSTHANSIGN       = 33
+	httpspecParserGREATERTHANSIGN    = 34
+	httpspecParserFILEPATH           = 35
+	httpspecParserBOUNDARY           = 36
+	httpspecParserINPUTFILEREF       = 37
 	httpspecParserRESPONSEREF        = 38
 	httpspecParserENVVARIABLE        = 39
 )
@@ -192,11 +204,14 @@ const (
 	httpspecParserRULE_ipv6address          = 8
 	httpspecParserRULE_ipv4addressorregname = 9
 	httpspecParserRULE_headers              = 10
-	httpspecParserRULE_messagebody          = 11
-	httpspecParserRULE_messages             = 12
-	httpspecParserRULE_messageline          = 13
-	httpspecParserRULE_multipartformdata    = 14
-	httpspecParserRULE_multipartfield       = 15
+	httpspecParserRULE_headerfield          = 11
+	httpspecParserRULE_messagebody          = 12
+	httpspecParserRULE_messages             = 13
+	httpspecParserRULE_messageline          = 14
+	httpspecParserRULE_multipartformdata    = 15
+	httpspecParserRULE_multipartfield       = 16
+	httpspecParserRULE_handlerscript        = 17
+	httpspecParserRULE_responsehandler      = 18
 )
 
 // IRequestsContext is an interface to support dynamic dispatch.
@@ -261,6 +276,10 @@ func (s *RequestsContext) Requests() IRequestsContext {
 	return t.(IRequestsContext)
 }
 
+func (s *RequestsContext) EOF() antlr.TerminalNode {
+	return s.GetToken(httpspecParserEOF, 0)
+}
+
 func (s *RequestsContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -301,27 +320,22 @@ func (p *httpspecParser) Requests() (localctx IRequestsContext) {
 		}
 	}()
 
-	p.SetState(37)
-	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 0, p.GetParserRuleContext()) {
-	case 1:
-		p.EnterOuterAlt(localctx, 1)
-
-	case 2:
-		p.EnterOuterAlt(localctx, 2)
-		{
-			p.SetState(33)
-			p.Request()
-		}
-		{
-			p.SetState(34)
-			p.Match(httpspecParserREQUESTSEPARATOR)
-		}
-		{
-			p.SetState(35)
-			p.Requests()
-		}
-
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(38)
+		p.Request()
+	}
+	{
+		p.SetState(39)
+		p.Match(httpspecParserREQUESTSEPARATOR)
+	}
+	{
+		p.SetState(40)
+		p.Requests()
+	}
+	{
+		p.SetState(41)
+		p.Match(httpspecParserEOF)
 	}
 
 	return localctx
@@ -403,8 +417,14 @@ func (s *RequestContext) Messagebody() IMessagebodyContext {
 	return t.(IMessagebodyContext)
 }
 
-func (s *RequestContext) RESPONSEHANDLER() antlr.TerminalNode {
-	return s.GetToken(httpspecParserRESPONSEHANDLER, 0)
+func (s *RequestContext) Responsehandler() IResponsehandlerContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IResponsehandlerContext)(nil)).Elem(), 0)
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IResponsehandlerContext)
 }
 
 func (s *RequestContext) RESPONSEREF() antlr.TerminalNode {
@@ -454,50 +474,50 @@ func (p *httpspecParser) Request() (localctx IRequestContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(39)
+		p.SetState(43)
 		p.Requestline()
 	}
 	{
-		p.SetState(40)
+		p.SetState(44)
 		p.Match(httpspecParserNEWLINE)
 	}
 	{
-		p.SetState(41)
+		p.SetState(45)
 		p.Headers()
 	}
 	{
-		p.SetState(42)
+		p.SetState(46)
 		p.Match(httpspecParserNEWLINE)
 	}
-	p.SetState(44)
+	p.SetState(48)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	if ((_la-4)&-(0x1f+1)) == 0 && ((1<<uint((_la-4)))&((1<<(httpspecParserINPUT-4))|(1<<(httpspecParserBOUNDARY-4))|(1<<(httpspecParserINPUTFILEREF-4)))) != 0 {
+	if _la == httpspecParserINPUT || _la == httpspecParserBOUNDARY || _la == httpspecParserINPUTFILEREF {
 		{
-			p.SetState(43)
+			p.SetState(47)
 			p.Messagebody()
 		}
 
 	}
-	p.SetState(47)
+	p.SetState(51)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	if _la == httpspecParserRESPONSEHANDLER {
+	if _la == httpspecParserGREATERTHANSIGN {
 		{
-			p.SetState(46)
-			p.Match(httpspecParserRESPONSEHANDLER)
+			p.SetState(50)
+			p.Responsehandler()
 		}
 
 	}
-	p.SetState(50)
+	p.SetState(54)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == httpspecParserRESPONSEREF {
 		{
-			p.SetState(49)
+			p.SetState(53)
 			p.Match(httpspecParserRESPONSEREF)
 		}
 
@@ -612,37 +632,37 @@ func (p *httpspecParser) Requestline() (localctx IRequestlineContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(55)
+	p.SetState(59)
 	p.GetErrorHandler().Sync(p)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 4, p.GetParserRuleContext()) == 1 {
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 3, p.GetParserRuleContext()) == 1 {
 		{
-			p.SetState(52)
+			p.SetState(56)
 			p.Match(httpspecParserMETHOD)
 		}
 		{
-			p.SetState(53)
+			p.SetState(57)
 			p.Match(httpspecParserWHITESPACE)
 		}
 		ignoreWs = false
 
 	}
 	{
-		p.SetState(57)
+		p.SetState(61)
 		p.Requesttarget()
 	}
-	p.SetState(61)
+	p.SetState(65)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == httpspecParserWHITESPACE {
 		{
-			p.SetState(58)
+			p.SetState(62)
 			p.Match(httpspecParserWHITESPACE)
 		}
 		ignoreWs = false
 		{
-			p.SetState(60)
+			p.SetState(64)
 			p.Match(httpspecParserHTTPVERSION)
 		}
 
@@ -747,27 +767,27 @@ func (p *httpspecParser) Requesttarget() (localctx IRequesttargetContext) {
 		}
 	}()
 
-	p.SetState(66)
+	p.SetState(70)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 6, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 5, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(63)
+			p.SetState(67)
 			p.Match(httpspecParserORIGINFORM)
 		}
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(64)
+			p.SetState(68)
 			p.Absoluteform()
 		}
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(65)
+			p.SetState(69)
 			p.Match(httpspecParserASTERISKFORM)
 		}
 
@@ -898,58 +918,58 @@ func (p *httpspecParser) Absoluteform() (localctx IAbsoluteformContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(72)
+	p.SetState(76)
 	p.GetErrorHandler().Sync(p)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 7, p.GetParserRuleContext()) == 1 {
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 6, p.GetParserRuleContext()) == 1 {
 		{
-			p.SetState(68)
+			p.SetState(72)
 			p.Match(httpspecParserSCHEME)
 		}
 		{
-			p.SetState(69)
+			p.SetState(73)
 			p.Match(httpspecParserCOLON)
 		}
 		{
-			p.SetState(70)
+			p.SetState(74)
 			p.Match(httpspecParserSLASH)
 		}
 		{
-			p.SetState(71)
+			p.SetState(75)
 			p.Match(httpspecParserSLASH)
 		}
 
 	}
 	{
-		p.SetState(74)
+		p.SetState(78)
 		p.Hierpart()
-	}
-	p.SetState(77)
-	p.GetErrorHandler().Sync(p)
-	_la = p.GetTokenStream().LA(1)
-
-	if _la == httpspecParserQUESTIONMARK {
-		{
-			p.SetState(75)
-			p.Match(httpspecParserQUESTIONMARK)
-		}
-		{
-			p.SetState(76)
-			p.Match(httpspecParserQUERY)
-		}
-
 	}
 	p.SetState(81)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	if _la == httpspecParserHASHTAG {
+	if _la == httpspecParserQUESTIONMARK {
 		{
 			p.SetState(79)
-			p.Match(httpspecParserHASHTAG)
+			p.Match(httpspecParserQUESTIONMARK)
 		}
 		{
 			p.SetState(80)
+			p.Match(httpspecParserQUERY)
+		}
+
+	}
+	p.SetState(85)
+	p.GetErrorHandler().Sync(p)
+	_la = p.GetTokenStream().LA(1)
+
+	if _la == httpspecParserHASHTAG {
+		{
+			p.SetState(83)
+			p.Match(httpspecParserHASHTAG)
+		}
+		{
+			p.SetState(84)
 			p.Match(httpspecParserREQUESTFRAGMENT)
 		}
 
@@ -1053,16 +1073,16 @@ func (p *httpspecParser) Hierpart() (localctx IHierpartContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(83)
+		p.SetState(87)
 		p.Authority()
 	}
-	p.SetState(85)
+	p.SetState(89)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == httpspecParserABSOLUTEPATH {
 		{
-			p.SetState(84)
+			p.SetState(88)
 			p.Match(httpspecParserABSOLUTEPATH)
 		}
 
@@ -1170,20 +1190,20 @@ func (p *httpspecParser) Authority() (localctx IAuthorityContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(87)
+		p.SetState(91)
 		p.Host()
 	}
-	p.SetState(90)
+	p.SetState(94)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == httpspecParserCOLON {
 		{
-			p.SetState(88)
+			p.SetState(92)
 			p.Match(httpspecParserCOLON)
 		}
 		{
-			p.SetState(89)
+			p.SetState(93)
 			p.Match(httpspecParserPORT)
 		}
 
@@ -1298,28 +1318,28 @@ func (p *httpspecParser) Host() (localctx IHostContext) {
 		}
 	}()
 
-	p.SetState(97)
+	p.SetState(101)
 	p.GetErrorHandler().Sync(p)
-	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 12, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 11, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(92)
+			p.SetState(96)
 			p.Match(httpspecParserLEFTSQUAREBRACKET)
 		}
 		{
-			p.SetState(93)
+			p.SetState(97)
 			p.Ipv6address()
 		}
 		{
-			p.SetState(94)
+			p.SetState(98)
 			p.Match(httpspecParserRIGHTSQUAREBRACKET)
 		}
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(96)
+			p.SetState(100)
 			p.Ipv4addressorregname()
 		}
 
@@ -1424,13 +1444,13 @@ func (p *httpspecParser) Ipv6address() (localctx IIpv6addressContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(100)
+	p.SetState(104)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for ok := true; ok; ok = (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<httpspecParserNEWLINE)|(1<<httpspecParserNEWLINEWITHINDENT)|(1<<httpspecParserLINETAIL)|(1<<httpspecParserINPUT)|(1<<httpspecParserALPHA)|(1<<httpspecParserDIGIT)|(1<<httpspecParserID)|(1<<httpspecParserWHITESPACE)|(1<<httpspecParserHASHTAG)|(1<<httpspecParserLINECOMMENT)|(1<<httpspecParserCOLON)|(1<<httpspecParserQUESTIONMARK)|(1<<httpspecParserLEFTSQUAREBRACKET)|(1<<httpspecParserREQUESTSEPARATOR)|(1<<httpspecParserMETHOD)|(1<<httpspecParserASTERISKFORM)|(1<<httpspecParserORIGINFORM)|(1<<httpspecParserSEGMENT)|(1<<httpspecParserABSOLUTEPATH)|(1<<httpspecParserSCHEME)|(1<<httpspecParserPORT)|(1<<httpspecParserPATHSEPARATOR)|(1<<httpspecParserHTTPVERSION)|(1<<httpspecParserQUERY)|(1<<httpspecParserREQUESTFRAGMENT)|(1<<httpspecParserFIELDNAME)|(1<<httpspecParserHEADERFIELD)|(1<<httpspecParserFIELDVALUE)|(1<<httpspecParserLESSTHANSIGN))) != 0) || (((_la-32)&-(0x1f+1)) == 0 && ((1<<uint((_la-32)))&((1<<(httpspecParserGREATERTHANSIGN-32))|(1<<(httpspecParserFILEPATH-32))|(1<<(httpspecParserBOUNDARY-32))|(1<<(httpspecParserINPUTFILEREF-32))|(1<<(httpspecParserHANDLERSCRIPT-32))|(1<<(httpspecParserRESPONSEHANDLER-32))|(1<<(httpspecParserRESPONSEREF-32))|(1<<(httpspecParserENVVARIABLE-32)))) != 0) {
+	for ok := true; ok; ok = (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<httpspecParserNEWLINE)|(1<<httpspecParserNEWLINEWITHINDENT)|(1<<httpspecParserLINETAIL)|(1<<httpspecParserINPUT)|(1<<httpspecParserALPHA)|(1<<httpspecParserDIGIT)|(1<<httpspecParserID)|(1<<httpspecParserWHITESPACE)|(1<<httpspecParserHASHTAG)|(1<<httpspecParserLINECOMMENT)|(1<<httpspecParserCOLON)|(1<<httpspecParserQUESTIONMARK)|(1<<httpspecParserLEFTSQUAREBRACKET)|(1<<httpspecParserREQUESTSEPARATOR)|(1<<httpspecParserMETHOD)|(1<<httpspecParserASTERISKFORM)|(1<<httpspecParserORIGINFORM)|(1<<httpspecParserSEGMENT)|(1<<httpspecParserABSOLUTEPATH)|(1<<httpspecParserSCHEME)|(1<<httpspecParserPORT)|(1<<httpspecParserPATHSEPARATOR)|(1<<httpspecParserHTTPVERSION)|(1<<httpspecParserQUERY)|(1<<httpspecParserREQUESTFRAGMENT)|(1<<httpspecParserFIELDNAME)|(1<<httpspecParserFIELDVALUE)|(1<<httpspecParserLEFTCURLYBRACKET)|(1<<httpspecParserRIGHTCURLYBRACKET))) != 0) || (((_la-32)&-(0x1f+1)) == 0 && ((1<<uint((_la-32)))&((1<<(httpspecParserPERCENTSIGN-32))|(1<<(httpspecParserLESSTHANSIGN-32))|(1<<(httpspecParserGREATERTHANSIGN-32))|(1<<(httpspecParserFILEPATH-32))|(1<<(httpspecParserBOUNDARY-32))|(1<<(httpspecParserINPUTFILEREF-32))|(1<<(httpspecParserRESPONSEREF-32))|(1<<(httpspecParserENVVARIABLE-32)))) != 0) {
 		{
-			p.SetState(99)
+			p.SetState(103)
 			_la = p.GetTokenStream().LA(1)
 
 			if _la <= 0 || _la == httpspecParserSLASH || _la == httpspecParserRIGHTSQUAREBRACKET {
@@ -1441,7 +1461,7 @@ func (p *httpspecParser) Ipv6address() (localctx IIpv6addressContext) {
 			}
 		}
 
-		p.SetState(102)
+		p.SetState(106)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
@@ -1563,14 +1583,14 @@ func (p *httpspecParser) Ipv4addressorregname() (localctx IIpv4addressorregnameC
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(105)
+	p.SetState(109)
 	p.GetErrorHandler().Sync(p)
 	_alt = 1
 	for ok := true; ok; ok = _alt != 2 && _alt != antlr.ATNInvalidAltNumber {
 		switch _alt {
 		case 1:
 			{
-				p.SetState(104)
+				p.SetState(108)
 				_la = p.GetTokenStream().LA(1)
 
 				if _la <= 0 || (((_la)&-(0x1f+1)) == 0 && ((1<<uint(_la))&((1<<httpspecParserSLASH)|(1<<httpspecParserHASHTAG)|(1<<httpspecParserCOLON)|(1<<httpspecParserQUESTIONMARK))) != 0) {
@@ -1585,9 +1605,9 @@ func (p *httpspecParser) Ipv4addressorregname() (localctx IIpv4addressorregnameC
 			panic(antlr.NewNoViableAltException(p, nil, nil, nil, nil, nil))
 		}
 
-		p.SetState(107)
+		p.SetState(111)
 		p.GetErrorHandler().Sync(p)
-		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 14, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 13, p.GetParserRuleContext())
 	}
 
 	return localctx
@@ -1631,12 +1651,27 @@ func NewHeadersContext(parser antlr.Parser, parent antlr.ParserRuleContext, invo
 
 func (s *HeadersContext) GetParser() antlr.Parser { return s.parser }
 
-func (s *HeadersContext) AllHEADERFIELD() []antlr.TerminalNode {
-	return s.GetTokens(httpspecParserHEADERFIELD)
+func (s *HeadersContext) AllHeaderfield() []IHeaderfieldContext {
+	var ts = s.GetTypedRuleContexts(reflect.TypeOf((*IHeaderfieldContext)(nil)).Elem())
+	var tst = make([]IHeaderfieldContext, len(ts))
+
+	for i, t := range ts {
+		if t != nil {
+			tst[i] = t.(IHeaderfieldContext)
+		}
+	}
+
+	return tst
 }
 
-func (s *HeadersContext) HEADERFIELD(i int) antlr.TerminalNode {
-	return s.GetToken(httpspecParserHEADERFIELD, i)
+func (s *HeadersContext) Headerfield(i int) IHeaderfieldContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IHeaderfieldContext)(nil)).Elem(), i)
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IHeaderfieldContext)
 }
 
 func (s *HeadersContext) AllNEWLINE() []antlr.TerminalNode {
@@ -1689,24 +1724,149 @@ func (p *httpspecParser) Headers() (localctx IHeadersContext) {
 	}()
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(113)
+	p.SetState(118)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for _la == httpspecParserHEADERFIELD {
+	for _la == httpspecParserFIELDNAME {
 		{
-			p.SetState(109)
-			p.Match(httpspecParserHEADERFIELD)
+			p.SetState(113)
+			p.Headerfield()
 		}
 		{
-			p.SetState(110)
+			p.SetState(114)
 			p.Match(httpspecParserNEWLINE)
 		}
 
-		p.SetState(115)
+		p.SetState(120)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
+
+	return localctx
+}
+
+// IHeaderfieldContext is an interface to support dynamic dispatch.
+type IHeaderfieldContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// IsHeaderfieldContext differentiates from other interfaces.
+	IsHeaderfieldContext()
+}
+
+type HeaderfieldContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyHeaderfieldContext() *HeaderfieldContext {
+	var p = new(HeaderfieldContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = httpspecParserRULE_headerfield
+	return p
+}
+
+func (*HeaderfieldContext) IsHeaderfieldContext() {}
+
+func NewHeaderfieldContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *HeaderfieldContext {
+	var p = new(HeaderfieldContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = httpspecParserRULE_headerfield
+
+	return p
+}
+
+func (s *HeaderfieldContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *HeaderfieldContext) FIELDNAME() antlr.TerminalNode {
+	return s.GetToken(httpspecParserFIELDNAME, 0)
+}
+
+func (s *HeaderfieldContext) COLON() antlr.TerminalNode {
+	return s.GetToken(httpspecParserCOLON, 0)
+}
+
+func (s *HeaderfieldContext) AllWHITESPACE() []antlr.TerminalNode {
+	return s.GetTokens(httpspecParserWHITESPACE)
+}
+
+func (s *HeaderfieldContext) WHITESPACE(i int) antlr.TerminalNode {
+	return s.GetToken(httpspecParserWHITESPACE, i)
+}
+
+func (s *HeaderfieldContext) FIELDVALUE() antlr.TerminalNode {
+	return s.GetToken(httpspecParserFIELDVALUE, 0)
+}
+
+func (s *HeaderfieldContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *HeaderfieldContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *HeaderfieldContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(httpspecListener); ok {
+		listenerT.EnterHeaderfield(s)
+	}
+}
+
+func (s *HeaderfieldContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(httpspecListener); ok {
+		listenerT.ExitHeaderfield(s)
+	}
+}
+
+func (p *httpspecParser) Headerfield() (localctx IHeaderfieldContext) {
+	localctx = NewHeaderfieldContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 22, httpspecParserRULE_headerfield)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(121)
+		p.Match(httpspecParserFIELDNAME)
+	}
+	{
+		p.SetState(122)
+		p.Match(httpspecParserCOLON)
+	}
+	{
+		p.SetState(123)
+		p.Match(httpspecParserWHITESPACE)
+	}
+	ignoreWs = true
+	{
+		p.SetState(125)
+		p.Match(httpspecParserFIELDVALUE)
+	}
+	{
+		p.SetState(126)
+		p.Match(httpspecParserWHITESPACE)
+	}
+	ignoreWs = true
 
 	return localctx
 }
@@ -1791,7 +1951,7 @@ func (s *MessagebodyContext) ExitRule(listener antlr.ParseTreeListener) {
 
 func (p *httpspecParser) Messagebody() (localctx IMessagebodyContext) {
 	localctx = NewMessagebodyContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 22, httpspecParserRULE_messagebody)
+	p.EnterRule(localctx, 24, httpspecParserRULE_messagebody)
 
 	defer func() {
 		p.ExitRule()
@@ -1809,21 +1969,21 @@ func (p *httpspecParser) Messagebody() (localctx IMessagebodyContext) {
 		}
 	}()
 
-	p.SetState(118)
+	p.SetState(131)
 	p.GetErrorHandler().Sync(p)
 
 	switch p.GetTokenStream().LA(1) {
 	case httpspecParserINPUT, httpspecParserINPUTFILEREF:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(116)
+			p.SetState(129)
 			p.Messages()
 		}
 
 	case httpspecParserBOUNDARY:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(117)
+			p.SetState(130)
 			p.Multipartformdata()
 		}
 
@@ -1921,7 +2081,7 @@ func (s *MessagesContext) ExitRule(listener antlr.ParseTreeListener) {
 
 func (p *httpspecParser) Messages() (localctx IMessagesContext) {
 	localctx = NewMessagesContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 24, httpspecParserRULE_messages)
+	p.EnterRule(localctx, 26, httpspecParserRULE_messages)
 	var _la int
 
 	defer func() {
@@ -1942,20 +2102,20 @@ func (p *httpspecParser) Messages() (localctx IMessagesContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(120)
+		p.SetState(133)
 		p.Messageline()
 	}
-	p.SetState(123)
+	p.SetState(136)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == httpspecParserNEWLINE {
 		{
-			p.SetState(121)
+			p.SetState(134)
 			p.Match(httpspecParserNEWLINE)
 		}
 		{
-			p.SetState(122)
+			p.SetState(135)
 			p.Messageline()
 		}
 
@@ -2040,7 +2200,7 @@ func (s *MessagelineContext) ExitRule(listener antlr.ParseTreeListener) {
 
 func (p *httpspecParser) Messageline() (localctx IMessagelineContext) {
 	localctx = NewMessagelineContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 26, httpspecParserRULE_messageline)
+	p.EnterRule(localctx, 28, httpspecParserRULE_messageline)
 
 	defer func() {
 		p.ExitRule()
@@ -2058,33 +2218,33 @@ func (p *httpspecParser) Messageline() (localctx IMessagelineContext) {
 		}
 	}()
 
-	p.SetState(130)
+	p.SetState(143)
 	p.GetErrorHandler().Sync(p)
 
 	switch p.GetTokenStream().LA(1) {
 	case httpspecParserINPUT:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(125)
+			p.SetState(138)
 			p.Match(httpspecParserINPUT)
 		}
 		{
-			p.SetState(126)
+			p.SetState(139)
 			p.Match(httpspecParserINPUT)
 		}
 		{
-			p.SetState(127)
+			p.SetState(140)
 			p.Match(httpspecParserINPUT)
 		}
 		{
-			p.SetState(128)
+			p.SetState(141)
 			p.Match(httpspecParserLINETAIL)
 		}
 
 	case httpspecParserINPUTFILEREF:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(129)
+			p.SetState(142)
 			p.Match(httpspecParserINPUTFILEREF)
 		}
 
@@ -2179,7 +2339,7 @@ func (s *MultipartformdataContext) ExitRule(listener antlr.ParseTreeListener) {
 
 func (p *httpspecParser) Multipartformdata() (localctx IMultipartformdataContext) {
 	localctx = NewMultipartformdataContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 28, httpspecParserRULE_multipartformdata)
+	p.EnterRule(localctx, 30, httpspecParserRULE_multipartformdata)
 
 	defer func() {
 		p.ExitRule()
@@ -2199,21 +2359,21 @@ func (p *httpspecParser) Multipartformdata() (localctx IMultipartformdataContext
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(132)
+		p.SetState(145)
 		p.Multipartfield()
 	}
-	p.SetState(134)
+	p.SetState(147)
 	p.GetErrorHandler().Sync(p)
 
-	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 19, p.GetParserRuleContext()) == 1 {
+	if p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 18, p.GetParserRuleContext()) == 1 {
 		{
-			p.SetState(133)
+			p.SetState(146)
 			p.Multipartformdata()
 		}
 
 	}
 	{
-		p.SetState(136)
+		p.SetState(149)
 		p.Match(httpspecParserBOUNDARY)
 	}
 
@@ -2270,12 +2430,27 @@ func (s *MultipartfieldContext) NEWLINE(i int) antlr.TerminalNode {
 	return s.GetToken(httpspecParserNEWLINE, i)
 }
 
-func (s *MultipartfieldContext) AllHEADERFIELD() []antlr.TerminalNode {
-	return s.GetTokens(httpspecParserHEADERFIELD)
+func (s *MultipartfieldContext) AllHeaderfield() []IHeaderfieldContext {
+	var ts = s.GetTypedRuleContexts(reflect.TypeOf((*IHeaderfieldContext)(nil)).Elem())
+	var tst = make([]IHeaderfieldContext, len(ts))
+
+	for i, t := range ts {
+		if t != nil {
+			tst[i] = t.(IHeaderfieldContext)
+		}
+	}
+
+	return tst
 }
 
-func (s *MultipartfieldContext) HEADERFIELD(i int) antlr.TerminalNode {
-	return s.GetToken(httpspecParserHEADERFIELD, i)
+func (s *MultipartfieldContext) Headerfield(i int) IHeaderfieldContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IHeaderfieldContext)(nil)).Elem(), i)
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IHeaderfieldContext)
 }
 
 func (s *MultipartfieldContext) Messages() IMessagesContext {
@@ -2310,7 +2485,7 @@ func (s *MultipartfieldContext) ExitRule(listener antlr.ParseTreeListener) {
 
 func (p *httpspecParser) Multipartfield() (localctx IMultipartfieldContext) {
 	localctx = NewMultipartfieldContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 30, httpspecParserRULE_multipartfield)
+	p.EnterRule(localctx, 32, httpspecParserRULE_multipartfield)
 	var _la int
 
 	defer func() {
@@ -2331,39 +2506,302 @@ func (p *httpspecParser) Multipartfield() (localctx IMultipartfieldContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(138)
+		p.SetState(151)
 		p.Match(httpspecParserBOUNDARY)
 	}
-	p.SetState(143)
+	p.SetState(157)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
-	for _la == httpspecParserHEADERFIELD {
+	for _la == httpspecParserFIELDNAME {
 		{
-			p.SetState(139)
-			p.Match(httpspecParserHEADERFIELD)
+			p.SetState(152)
+			p.Headerfield()
 		}
 		{
-			p.SetState(140)
+			p.SetState(153)
 			p.Match(httpspecParserNEWLINE)
 		}
 
-		p.SetState(145)
+		p.SetState(159)
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 	}
 	{
-		p.SetState(146)
+		p.SetState(160)
 		p.Match(httpspecParserNEWLINE)
 	}
-	p.SetState(148)
+	p.SetState(162)
 	p.GetErrorHandler().Sync(p)
 	_la = p.GetTokenStream().LA(1)
 
 	if _la == httpspecParserINPUT || _la == httpspecParserINPUTFILEREF {
 		{
-			p.SetState(147)
+			p.SetState(161)
 			p.Messages()
+		}
+
+	}
+
+	return localctx
+}
+
+// IHandlerscriptContext is an interface to support dynamic dispatch.
+type IHandlerscriptContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// IsHandlerscriptContext differentiates from other interfaces.
+	IsHandlerscriptContext()
+}
+
+type HandlerscriptContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyHandlerscriptContext() *HandlerscriptContext {
+	var p = new(HandlerscriptContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = httpspecParserRULE_handlerscript
+	return p
+}
+
+func (*HandlerscriptContext) IsHandlerscriptContext() {}
+
+func NewHandlerscriptContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *HandlerscriptContext {
+	var p = new(HandlerscriptContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = httpspecParserRULE_handlerscript
+
+	return p
+}
+
+func (s *HandlerscriptContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *HandlerscriptContext) LINETAIL() antlr.TerminalNode {
+	return s.GetToken(httpspecParserLINETAIL, 0)
+}
+
+func (s *HandlerscriptContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *HandlerscriptContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *HandlerscriptContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(httpspecListener); ok {
+		listenerT.EnterHandlerscript(s)
+	}
+}
+
+func (s *HandlerscriptContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(httpspecListener); ok {
+		listenerT.ExitHandlerscript(s)
+	}
+}
+
+func (p *httpspecParser) Handlerscript() (localctx IHandlerscriptContext) {
+	localctx = NewHandlerscriptContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 34, httpspecParserRULE_handlerscript)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(164)
+		p.Match(httpspecParserLINETAIL)
+	}
+
+	return localctx
+}
+
+// IResponsehandlerContext is an interface to support dynamic dispatch.
+type IResponsehandlerContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// IsResponsehandlerContext differentiates from other interfaces.
+	IsResponsehandlerContext()
+}
+
+type ResponsehandlerContext struct {
+	*antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyResponsehandlerContext() *ResponsehandlerContext {
+	var p = new(ResponsehandlerContext)
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(nil, -1)
+	p.RuleIndex = httpspecParserRULE_responsehandler
+	return p
+}
+
+func (*ResponsehandlerContext) IsResponsehandlerContext() {}
+
+func NewResponsehandlerContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *ResponsehandlerContext {
+	var p = new(ResponsehandlerContext)
+
+	p.BaseParserRuleContext = antlr.NewBaseParserRuleContext(parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = httpspecParserRULE_responsehandler
+
+	return p
+}
+
+func (s *ResponsehandlerContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *ResponsehandlerContext) GREATERTHANSIGN() antlr.TerminalNode {
+	return s.GetToken(httpspecParserGREATERTHANSIGN, 0)
+}
+
+func (s *ResponsehandlerContext) WHITESPACE() antlr.TerminalNode {
+	return s.GetToken(httpspecParserWHITESPACE, 0)
+}
+
+func (s *ResponsehandlerContext) LEFTCURLYBRACKET() antlr.TerminalNode {
+	return s.GetToken(httpspecParserLEFTCURLYBRACKET, 0)
+}
+
+func (s *ResponsehandlerContext) AllPERCENTSIGN() []antlr.TerminalNode {
+	return s.GetTokens(httpspecParserPERCENTSIGN)
+}
+
+func (s *ResponsehandlerContext) PERCENTSIGN(i int) antlr.TerminalNode {
+	return s.GetToken(httpspecParserPERCENTSIGN, i)
+}
+
+func (s *ResponsehandlerContext) Handlerscript() IHandlerscriptContext {
+	var t = s.GetTypedRuleContext(reflect.TypeOf((*IHandlerscriptContext)(nil)).Elem(), 0)
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IHandlerscriptContext)
+}
+
+func (s *ResponsehandlerContext) RIGHTCURLYBRACKET() antlr.TerminalNode {
+	return s.GetToken(httpspecParserRIGHTCURLYBRACKET, 0)
+}
+
+func (s *ResponsehandlerContext) FILEPATH() antlr.TerminalNode {
+	return s.GetToken(httpspecParserFILEPATH, 0)
+}
+
+func (s *ResponsehandlerContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *ResponsehandlerContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *ResponsehandlerContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(httpspecListener); ok {
+		listenerT.EnterResponsehandler(s)
+	}
+}
+
+func (s *ResponsehandlerContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(httpspecListener); ok {
+		listenerT.ExitResponsehandler(s)
+	}
+}
+
+func (p *httpspecParser) Responsehandler() (localctx IResponsehandlerContext) {
+	localctx = NewResponsehandlerContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 36, httpspecParserRULE_responsehandler)
+
+	defer func() {
+		p.ExitRule()
+	}()
+
+	defer func() {
+		if err := recover(); err != nil {
+			if v, ok := err.(antlr.RecognitionException); ok {
+				localctx.SetException(v)
+				p.GetErrorHandler().ReportError(p, v)
+				p.GetErrorHandler().Recover(p, v)
+			} else {
+				panic(err)
+			}
+		}
+	}()
+
+	p.SetState(179)
+	p.GetErrorHandler().Sync(p)
+	switch p.GetInterpreter().AdaptivePredict(p.GetTokenStream(), 21, p.GetParserRuleContext()) {
+	case 1:
+		p.EnterOuterAlt(localctx, 1)
+		{
+			p.SetState(166)
+			p.Match(httpspecParserGREATERTHANSIGN)
+		}
+		{
+			p.SetState(167)
+			p.Match(httpspecParserWHITESPACE)
+		}
+		ignoreWs = false
+		{
+			p.SetState(169)
+			p.Match(httpspecParserLEFTCURLYBRACKET)
+		}
+		{
+			p.SetState(170)
+			p.Match(httpspecParserPERCENTSIGN)
+		}
+		{
+			p.SetState(171)
+			p.Handlerscript()
+		}
+		{
+			p.SetState(172)
+			p.Match(httpspecParserPERCENTSIGN)
+		}
+		{
+			p.SetState(173)
+			p.Match(httpspecParserRIGHTCURLYBRACKET)
+		}
+
+	case 2:
+		p.EnterOuterAlt(localctx, 2)
+		{
+			p.SetState(175)
+			p.Match(httpspecParserGREATERTHANSIGN)
+		}
+		{
+			p.SetState(176)
+			p.Match(httpspecParserWHITESPACE)
+		}
+		ignoreWs = false
+		{
+			p.SetState(178)
+			p.Match(httpspecParserFILEPATH)
 		}
 
 	}

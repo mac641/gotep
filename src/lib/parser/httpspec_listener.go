@@ -41,6 +41,9 @@ type httpspecListener interface {
 	// EnterHeaders is called when entering the headers production.
 	EnterHeaders(c *HeadersContext)
 
+	// EnterHeaderfield is called when entering the headerfield production.
+	EnterHeaderfield(c *HeaderfieldContext)
+
 	// EnterMessagebody is called when entering the messagebody production.
 	EnterMessagebody(c *MessagebodyContext)
 
@@ -55,6 +58,12 @@ type httpspecListener interface {
 
 	// EnterMultipartfield is called when entering the multipartfield production.
 	EnterMultipartfield(c *MultipartfieldContext)
+
+	// EnterHandlerscript is called when entering the handlerscript production.
+	EnterHandlerscript(c *HandlerscriptContext)
+
+	// EnterResponsehandler is called when entering the responsehandler production.
+	EnterResponsehandler(c *ResponsehandlerContext)
 
 	// ExitRequests is called when exiting the requests production.
 	ExitRequests(c *RequestsContext)
@@ -89,6 +98,9 @@ type httpspecListener interface {
 	// ExitHeaders is called when exiting the headers production.
 	ExitHeaders(c *HeadersContext)
 
+	// ExitHeaderfield is called when exiting the headerfield production.
+	ExitHeaderfield(c *HeaderfieldContext)
+
 	// ExitMessagebody is called when exiting the messagebody production.
 	ExitMessagebody(c *MessagebodyContext)
 
@@ -103,4 +115,10 @@ type httpspecListener interface {
 
 	// ExitMultipartfield is called when exiting the multipartfield production.
 	ExitMultipartfield(c *MultipartfieldContext)
+
+	// ExitHandlerscript is called when exiting the handlerscript production.
+	ExitHandlerscript(c *HandlerscriptContext)
+
+	// ExitResponsehandler is called when exiting the responsehandler production.
+	ExitResponsehandler(c *ResponsehandlerContext)
 }

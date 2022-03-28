@@ -28,10 +28,25 @@ import (
 	"log"
 	"os"
 
+	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/mac641/gotep/src/lib/parser"
 	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
+
+// Define httpspec listener based on generated antlr4 source code
+type TreeShapeListener struct {
+	*parser.BasehttpspecListener
+}
+
+func NewTreeShapeListener() *TreeShapeListener {
+	return new(TreeShapeListener)
+}
+
+func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
+	fmt.Println(ctx.GetText())
+}
 
 // rootCmd represents the base command when called without any subcommands
 var (
@@ -110,9 +125,18 @@ func initTests() {
 	}
 
 	// TODO: invoke parsing of test_files here
+	// Parse test file
+	stringContent := string(content)
+	charStream := antlr.NewInputStream(stringContent)
+	lexer := parser.NewhttpspecLexer(charStream)
+	stream := antlr.NewCommonTokenStream(lexer, 0)
+	p := parser.NewhttpspecParser(stream)
+	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
+	p.BuildParseTrees = true
+	tree := p.Requests()
+	antlr.ParseTreeWalkerDefault.Walk(NewTreeShapeListener(), tree)
 
 	// TODO: validate if check has been called - maybe outsource it to check.go
 
-	stringContent := string(content)
-	fmt.Println(stringContent)
+	// fmt.Println(stringContent)
 }

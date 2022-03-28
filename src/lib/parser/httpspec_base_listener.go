@@ -87,6 +87,12 @@ func (s *BasehttpspecListener) EnterHeaders(ctx *HeadersContext) {}
 // ExitHeaders is called when production headers is exited.
 func (s *BasehttpspecListener) ExitHeaders(ctx *HeadersContext) {}
 
+// EnterHeaderfield is called when production headerfield is entered.
+func (s *BasehttpspecListener) EnterHeaderfield(ctx *HeaderfieldContext) {}
+
+// ExitHeaderfield is called when production headerfield is exited.
+func (s *BasehttpspecListener) ExitHeaderfield(ctx *HeaderfieldContext) {}
+
 // EnterMessagebody is called when production messagebody is entered.
 func (s *BasehttpspecListener) EnterMessagebody(ctx *MessagebodyContext) {}
 
@@ -116,3 +122,15 @@ func (s *BasehttpspecListener) EnterMultipartfield(ctx *MultipartfieldContext) {
 
 // ExitMultipartfield is called when production multipartfield is exited.
 func (s *BasehttpspecListener) ExitMultipartfield(ctx *MultipartfieldContext) {}
+
+// EnterHandlerscript is called when production handlerscript is entered.
+func (s *BasehttpspecListener) EnterHandlerscript(ctx *HandlerscriptContext) {}
+
+// ExitHandlerscript is called when production handlerscript is exited.
+func (s *BasehttpspecListener) ExitHandlerscript(ctx *HandlerscriptContext) {}
+
+// EnterResponsehandler is called when production responsehandler is entered.
+func (s *BasehttpspecListener) EnterResponsehandler(ctx *ResponsehandlerContext) {}
+
+// ExitResponsehandler is called when production responsehandler is exited.
+func (s *BasehttpspecListener) ExitResponsehandler(ctx *ResponsehandlerContext) {}

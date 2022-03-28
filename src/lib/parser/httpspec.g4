@@ -6,7 +6,7 @@ grammar httpspec;
 }
 
 // List of multiple requests
-requests: | request REQUESTSEPARATOR requests;
+requests: request REQUESTSEPARATOR requests EOF;
 
 // Line terminators
 fragment CR: '\u000D'; // \r
@@ -72,7 +72,7 @@ REQUESTFRAGMENT:
 	~'\u003F' (NEWLINEWITHINDENT REQUESTFRAGMENT)?; // QUESTIONMARK
 
 request:
-	requestline NEWLINE headers NEWLINE messagebody? RESPONSEHANDLER? RESPONSEREF?;
+	requestline NEWLINE headers NEWLINE messagebody? responsehandler? RESPONSEREF?;
 requestline: (METHOD WHITESPACE {ignoreWs = false })? requesttarget (
 		WHITESPACE {ignoreWs = false } HTTPVERSION
 	)?;
@@ -92,17 +92,16 @@ ipv4addressorregname:
 
 // Headers
 FIELDNAME: ~'\u003A'+; // COLON
-HEADERFIELD:
-	FIELDNAME COLON WHITESPACE {ignoreWs = true } FIELDVALUE WHITESPACE {ignoreWs = true };
 FIELDVALUE: LINETAIL (NEWLINEWITHINDENT FIELDVALUE)?;
 
-headers: (HEADERFIELD NEWLINE)*;
+headers: (headerfield NEWLINE)*;
+headerfield:
+	FIELDNAME COLON WHITESPACE {ignoreWs = true } FIELDVALUE WHITESPACE {ignoreWs = true };
 
 // Message body
-fragment LEFTCURLYBRACKET: '\u007B'; // {
-fragment RIGHTCURLYBRACKET: '\u007D'; // }
-fragment PERCENTSIGN: '\u0025'; // %
-
+LEFTCURLYBRACKET: '\u007B'; // {
+RIGHTCURLYBRACKET: '\u007D'; // }
+PERCENTSIGN: '\u0025'; // %
 LESSTHANSIGN: '\u003C'; // <
 GREATERTHANSIGN: '\u003E'; // >
 FILEPATH: LINETAIL;
@@ -116,13 +115,13 @@ messageline: INPUT INPUT INPUT LINETAIL | INPUTFILEREF;
 // TODO: parse ~('<' | '<>' | '###') in go source code - INPUT INPUT INPUT should not equal them
 multipartformdata: multipartfield multipartformdata? BOUNDARY;
 multipartfield:
-	BOUNDARY (HEADERFIELD NEWLINE)* NEWLINE messages?;
+	BOUNDARY (headerfield NEWLINE)* NEWLINE messages?;
 
 // Response handler
-HANDLERSCRIPT:
-	LINETAIL -> skip; // TODO: prompt error message if used anyways
-RESPONSEHANDLER: // TODO: use parser rule when this will be implemented
-	GREATERTHANSIGN WHITESPACE {ignoreWs = false } LEFTCURLYBRACKET PERCENTSIGN HANDLERSCRIPT
+handlerscript:
+	LINETAIL; // TODO: prompt error message if used anyways
+responsehandler: // TODO: use parser rule when this will be implemented
+	GREATERTHANSIGN WHITESPACE {ignoreWs = false } LEFTCURLYBRACKET PERCENTSIGN handlerscript
 		PERCENTSIGN RIGHTCURLYBRACKET
 	| GREATERTHANSIGN WHITESPACE {ignoreWs = false } FILEPATH;
 
