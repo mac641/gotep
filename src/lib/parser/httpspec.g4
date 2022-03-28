@@ -1,5 +1,10 @@
 grammar httpspec;
 
+// Add additional member toignoreWs whitespace if necessary
+@lexer::members {
+   var ignoreWs = true
+}
+
 // List of multiple requests
 requests: | request REQUESTSEPARATOR requests;
 
@@ -8,7 +13,7 @@ fragment CR: '\u000D'; // \r
 fragment LF: '\u000A'; // \n
 
 NEWLINE: CR? LF | CR;
-NEWLINEWITHINDENT: NEWLINE REQUIREDWHITESPACE;
+NEWLINEWITHINDENT: NEWLINE WHITESPACE {ignoreWs = false };
 LINETAIL: INPUT* NEWLINE;
 
 // Chars: every unicode character except NEWLINE is supported
@@ -23,9 +28,9 @@ ID: (ALPHA | DIGIT | HYPHEN | UNDERSCORE)+;
 
 // Whitespaces
 WHITESPACE:
-	[\u0020\u0009\u000C]; // space, horizontal tab (\t), form feed (\f)
-OPTIONALWHITESPACE: WHITESPACE* -> skip;
-REQUIREDWHITESPACE: WHITESPACE+;
+	[\u0020\u0009\u000C]+ { if ignoreWs {
+        l.Skip()
+    } }; // space, horizontal tab (\t), form feed (\f)
 
 // Comments
 SLASH: '\u002F'; // /
@@ -67,9 +72,9 @@ REQUESTFRAGMENT:
 	~'\u003F' (NEWLINEWITHINDENT REQUESTFRAGMENT)?; // QUESTIONMARK
 
 request:
-	requestline NEWLINE headers NEWLINE messagebody? RESPONSEHANDLER? responseref?;
-requestline: (METHOD REQUIREDWHITESPACE)? requesttarget (
-		REQUIREDWHITESPACE HTTPVERSION
+	requestline NEWLINE headers NEWLINE messagebody? RESPONSEHANDLER? RESPONSEREF?;
+requestline: (METHOD WHITESPACE {ignoreWs = false })? requesttarget (
+		WHITESPACE {ignoreWs = false } HTTPVERSION
 	)?;
 requesttarget: ORIGINFORM | absoluteform | ASTERISKFORM;
 absoluteform: (SCHEME COLON SLASH SLASH)? hierpart (
@@ -87,11 +92,11 @@ ipv4addressorregname:
 
 // Headers
 FIELDNAME: ~'\u003A'+; // COLON
+HEADERFIELD:
+	FIELDNAME COLON WHITESPACE {ignoreWs = true } FIELDVALUE WHITESPACE {ignoreWs = true };
+FIELDVALUE: LINETAIL (NEWLINEWITHINDENT FIELDVALUE)?;
 
-headers: (headerfield NEWLINE)*;
-headerfield:
-	FIELDNAME COLON OPTIONALWHITESPACE fieldvalue OPTIONALWHITESPACE;
-fieldvalue: LINETAIL (NEWLINEWITHINDENT fieldvalue)?;
+headers: (HEADERFIELD NEWLINE)*;
 
 // Message body
 fragment LEFTCURLYBRACKET: '\u007B'; // {
@@ -102,34 +107,33 @@ LESSTHANSIGN: '\u003C'; // <
 GREATERTHANSIGN: '\u003E'; // >
 FILEPATH: LINETAIL;
 BOUNDARY: (HYPHEN HYPHEN)+ INPUT (HYPHEN HYPHEN)? NEWLINE;
+INPUTFILEREF:
+	LESSTHANSIGN WHITESPACE {ignoreWs = false } FILEPATH;
 
 messagebody: messages | multipartformdata;
 messages: messageline (NEWLINE messageline)?;
-messageline:
-	~('<' | '<>' | '###') LINETAIL
-		// TODO: Use unicode chars or figure out if it is necessary to use unicode notation for ascii chars
-	| inputfileref; // LESSTHANSIGN | LESSTHANSIGN GREATERTHANSIGN | HASHTAG HASHTAG HASHTAG
-inputfileref: LESSTHANSIGN REQUIREDWHITESPACE FILEPATH;
+messageline: INPUT INPUT INPUT LINETAIL | INPUTFILEREF;
+// TODO: parse ~('<' | '<>' | '###') in go source code - INPUT INPUT INPUT should not equal them
 multipartformdata: multipartfield multipartformdata? BOUNDARY;
 multipartfield:
-	BOUNDARY (headerfield NEWLINE)* NEWLINE messages?;
+	BOUNDARY (HEADERFIELD NEWLINE)* NEWLINE messages?;
 
 // Response handler
 HANDLERSCRIPT:
 	LINETAIL -> skip; // TODO: prompt error message if used anyways
 RESPONSEHANDLER: // TODO: use parser rule when this will be implemented
-	GREATERTHANSIGN REQUIREDWHITESPACE LEFTCURLYBRACKET PERCENTSIGN HANDLERSCRIPT PERCENTSIGN
-		RIGHTCURLYBRACKET
-	| GREATERTHANSIGN REQUIREDWHITESPACE FILEPATH;
+	GREATERTHANSIGN WHITESPACE {ignoreWs = false } LEFTCURLYBRACKET PERCENTSIGN HANDLERSCRIPT
+		PERCENTSIGN RIGHTCURLYBRACKET
+	| GREATERTHANSIGN WHITESPACE {ignoreWs = false } FILEPATH;
 
 // Response reference
-responseref:
-	LESSTHANSIGN GREATERTHANSIGN REQUIREDWHITESPACE FILEPATH;
+RESPONSEREF:
+	LESSTHANSIGN GREATERTHANSIGN WHITESPACE {ignoreWs = false } FILEPATH;
 
 // Environment variables
 ENVVARIABLE:
-	LEFTCURLYBRACKET LEFTCURLYBRACKET OPTIONALWHITESPACE ID OPTIONALWHITESPACE RIGHTCURLYBRACKET
-		RIGHTCURLYBRACKET; // TODO: string or token based usage?
+	LEFTCURLYBRACKET LEFTCURLYBRACKET WHITESPACE {ignoreWs = true } ID WHITESPACE {ignoreWs = true }
+		RIGHTCURLYBRACKET RIGHTCURLYBRACKET; // TODO: string or token based usage?
 // handle variables like so: https://www.jetbrains.com/help/idea/exploring-http-syntax.html#using_request_vars
 
 // TODO: Investigate Island Grammars further, especially regarding JSON, ECMAScript (maybe HTML
