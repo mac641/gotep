@@ -8,6 +8,9 @@ import "github.com/antlr/antlr4/runtime/Go/antlr"
 type httpspecListener interface {
 	antlr.ParseTreeListener
 
+	// EnterFile is called when entering the file production.
+	EnterFile(c *FileContext)
+
 	// EnterRequests is called when entering the requests production.
 	EnterRequests(c *RequestsContext)
 
@@ -64,6 +67,9 @@ type httpspecListener interface {
 
 	// EnterResponsehandler is called when entering the responsehandler production.
 	EnterResponsehandler(c *ResponsehandlerContext)
+
+	// ExitFile is called when exiting the file production.
+	ExitFile(c *FileContext)
 
 	// ExitRequests is called when exiting the requests production.
 	ExitRequests(c *RequestsContext)

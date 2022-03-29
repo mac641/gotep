@@ -1,27 +1,27 @@
 grammar httpspec;
 
-// Add additional member toignoreWs whitespace if necessary
+// Add additional lexer member to ignoreWs whitespace if necessary
 @lexer::members {
-   var ignoreWs = true
+   var ignoreWs = false
 }
 
 // List of multiple requests
-requests: request REQUESTSEPARATOR requests EOF;
+file: requests EOF;
+requests: (REQUESTSEPARATOR request)+;
 
 // Line terminators
 fragment CR: '\u000D'; // \r
 fragment LF: '\u000A'; // \n
 
 NEWLINE: CR? LF | CR;
-NEWLINEWITHINDENT: NEWLINE WHITESPACE {ignoreWs = false };
+NEWLINEWITHINDENT: NEWLINE WHITESPACE;
 LINETAIL: INPUT* NEWLINE;
 
 // Chars: every unicode character except NEWLINE is supported
 fragment HYPHEN: '\u002D'; // -
 fragment UNDERSCORE: '\u005F'; // _
 
-INPUT:
-	~('\u000D' | '\u000A'); // can't use NEWLINE because negated sets are not supported
+INPUT: ~[\r\n]; //~('\u000D' | '\u000A'); // \r | \n
 ALPHA: [\u0041-\u005A\u0061-\u007A]; // A-Z, a-z
 DIGIT: [\u0030-\u0039]; // 0-9
 ID: (ALPHA | DIGIT | HYPHEN | UNDERSCORE)+;
@@ -73,8 +73,8 @@ REQUESTFRAGMENT:
 
 request:
 	requestline NEWLINE headers NEWLINE messagebody? responsehandler? RESPONSEREF?;
-requestline: (METHOD WHITESPACE {ignoreWs = false })? requesttarget (
-		WHITESPACE {ignoreWs = false } HTTPVERSION
+requestline: (METHOD WHITESPACE)? requesttarget (
+		WHITESPACE HTTPVERSION
 	)?;
 requesttarget: ORIGINFORM | absoluteform | ASTERISKFORM;
 absoluteform: (SCHEME COLON SLASH SLASH)? hierpart (
@@ -96,7 +96,8 @@ FIELDVALUE: LINETAIL (NEWLINEWITHINDENT FIELDVALUE)?;
 
 headers: (headerfield NEWLINE)*;
 headerfield:
-	FIELDNAME COLON WHITESPACE {ignoreWs = true } FIELDVALUE WHITESPACE {ignoreWs = true };
+	FIELDNAME COLON {ignoreWs = true } WHITESPACE {ignoreWs = false } FIELDVALUE {ignoreWs = true}
+		WHITESPACE {ignoreWs = false };
 
 // Message body
 LEFTCURLYBRACKET: '\u007B'; // {
@@ -106,8 +107,7 @@ LESSTHANSIGN: '\u003C'; // <
 GREATERTHANSIGN: '\u003E'; // >
 FILEPATH: LINETAIL;
 BOUNDARY: (HYPHEN HYPHEN)+ INPUT (HYPHEN HYPHEN)? NEWLINE;
-INPUTFILEREF:
-	LESSTHANSIGN WHITESPACE {ignoreWs = false } FILEPATH;
+INPUTFILEREF: LESSTHANSIGN WHITESPACE FILEPATH;
 
 messagebody: messages | multipartformdata;
 messages: messageline (NEWLINE messageline)?;
@@ -121,19 +121,19 @@ multipartfield:
 handlerscript:
 	LINETAIL; // TODO: prompt error message if used anyways
 responsehandler: // TODO: use parser rule when this will be implemented
-	GREATERTHANSIGN WHITESPACE {ignoreWs = false } LEFTCURLYBRACKET PERCENTSIGN handlerscript
-		PERCENTSIGN RIGHTCURLYBRACKET
-	| GREATERTHANSIGN WHITESPACE {ignoreWs = false } FILEPATH;
+	GREATERTHANSIGN WHITESPACE LEFTCURLYBRACKET PERCENTSIGN handlerscript PERCENTSIGN
+		RIGHTCURLYBRACKET
+	| GREATERTHANSIGN WHITESPACE FILEPATH;
 
 // Response reference
-RESPONSEREF:
-	LESSTHANSIGN GREATERTHANSIGN WHITESPACE {ignoreWs = false } FILEPATH;
+RESPONSEREF: LESSTHANSIGN GREATERTHANSIGN WHITESPACE FILEPATH;
 
 // Environment variables
 ENVVARIABLE:
-	LEFTCURLYBRACKET LEFTCURLYBRACKET WHITESPACE {ignoreWs = true } ID WHITESPACE {ignoreWs = true }
-		RIGHTCURLYBRACKET RIGHTCURLYBRACKET; // TODO: string or token based usage?
-// handle variables like so: https://www.jetbrains.com/help/idea/exploring-http-syntax.html#using_request_vars
+	LEFTCURLYBRACKET LEFTCURLYBRACKET {ignoreWs = true} WHITESPACE {ignoreWs = false } ID {ignoreWs = true
+		} WHITESPACE {ignoreWs = false } RIGHTCURLYBRACKET RIGHTCURLYBRACKET;
+// TODO: string or token based usage? handle variables like so:
+// https://www.jetbrains.com/help/idea/exploring-http-syntax.html#using_request_vars
 
 // TODO: Investigate Island Grammars further, especially regarding JSON, ECMAScript (maybe HTML
 // multipart-form-data) parsing

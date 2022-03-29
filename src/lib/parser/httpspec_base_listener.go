@@ -21,6 +21,12 @@ func (s *BasehttpspecListener) EnterEveryRule(ctx antlr.ParserRuleContext) {}
 // ExitEveryRule is called when any rule is exited.
 func (s *BasehttpspecListener) ExitEveryRule(ctx antlr.ParserRuleContext) {}
 
+// EnterFile is called when production file is entered.
+func (s *BasehttpspecListener) EnterFile(ctx *FileContext) {}
+
+// ExitFile is called when production file is exited.
+func (s *BasehttpspecListener) ExitFile(ctx *FileContext) {}
+
 // EnterRequests is called when production requests is entered.
 func (s *BasehttpspecListener) EnterRequests(ctx *RequestsContext) {}
 

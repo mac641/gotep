@@ -133,7 +133,7 @@ func initTests() {
 	p := parser.NewhttpspecParser(stream)
 	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
 	p.BuildParseTrees = true
-	tree := p.Requests()
+	tree := p.File()
 	antlr.ParseTreeWalkerDefault.Walk(NewTreeShapeListener(), tree)
 
 	// TODO: validate if check has been called - maybe outsource it to check.go
