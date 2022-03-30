@@ -33,6 +33,12 @@ func (s *BasehttpspecListener) EnterRequests(ctx *RequestsContext) {}
 // ExitRequests is called when production requests is exited.
 func (s *BasehttpspecListener) ExitRequests(ctx *RequestsContext) {}
 
+// EnterRequestseparator is called when production requestseparator is entered.
+func (s *BasehttpspecListener) EnterRequestseparator(ctx *RequestseparatorContext) {}
+
+// ExitRequestseparator is called when production requestseparator is exited.
+func (s *BasehttpspecListener) ExitRequestseparator(ctx *RequestseparatorContext) {}
+
 // EnterRequest is called when production request is entered.
 func (s *BasehttpspecListener) EnterRequest(ctx *RequestContext) {}
 
@@ -75,17 +81,11 @@ func (s *BasehttpspecListener) EnterHost(ctx *HostContext) {}
 // ExitHost is called when production host is exited.
 func (s *BasehttpspecListener) ExitHost(ctx *HostContext) {}
 
-// EnterIpv6address is called when production ipv6address is entered.
-func (s *BasehttpspecListener) EnterIpv6address(ctx *Ipv6addressContext) {}
+// EnterFieldvalue is called when production fieldvalue is entered.
+func (s *BasehttpspecListener) EnterFieldvalue(ctx *FieldvalueContext) {}
 
-// ExitIpv6address is called when production ipv6address is exited.
-func (s *BasehttpspecListener) ExitIpv6address(ctx *Ipv6addressContext) {}
-
-// EnterIpv4addressorregname is called when production ipv4addressorregname is entered.
-func (s *BasehttpspecListener) EnterIpv4addressorregname(ctx *Ipv4addressorregnameContext) {}
-
-// ExitIpv4addressorregname is called when production ipv4addressorregname is exited.
-func (s *BasehttpspecListener) ExitIpv4addressorregname(ctx *Ipv4addressorregnameContext) {}
+// ExitFieldvalue is called when production fieldvalue is exited.
+func (s *BasehttpspecListener) ExitFieldvalue(ctx *FieldvalueContext) {}
 
 // EnterHeaders is called when production headers is entered.
 func (s *BasehttpspecListener) EnterHeaders(ctx *HeadersContext) {}
@@ -98,6 +98,18 @@ func (s *BasehttpspecListener) EnterHeaderfield(ctx *HeaderfieldContext) {}
 
 // ExitHeaderfield is called when production headerfield is exited.
 func (s *BasehttpspecListener) ExitHeaderfield(ctx *HeaderfieldContext) {}
+
+// EnterFilepath is called when production filepath is entered.
+func (s *BasehttpspecListener) EnterFilepath(ctx *FilepathContext) {}
+
+// ExitFilepath is called when production filepath is exited.
+func (s *BasehttpspecListener) ExitFilepath(ctx *FilepathContext) {}
+
+// EnterInputfileref is called when production inputfileref is entered.
+func (s *BasehttpspecListener) EnterInputfileref(ctx *InputfilerefContext) {}
+
+// ExitInputfileref is called when production inputfileref is exited.
+func (s *BasehttpspecListener) ExitInputfileref(ctx *InputfilerefContext) {}
 
 // EnterMessagebody is called when production messagebody is entered.
 func (s *BasehttpspecListener) EnterMessagebody(ctx *MessagebodyContext) {}
@@ -140,3 +152,9 @@ func (s *BasehttpspecListener) EnterResponsehandler(ctx *ResponsehandlerContext)
 
 // ExitResponsehandler is called when production responsehandler is exited.
 func (s *BasehttpspecListener) ExitResponsehandler(ctx *ResponsehandlerContext) {}
+
+// EnterResponseref is called when production responseref is entered.
+func (s *BasehttpspecListener) EnterResponseref(ctx *ResponserefContext) {}
+
+// ExitResponseref is called when production responseref is exited.
+func (s *BasehttpspecListener) ExitResponseref(ctx *ResponserefContext) {}

@@ -7,7 +7,7 @@ grammar httpspec;
 
 // List of multiple requests
 file: requests EOF;
-requests: (REQUESTSEPARATOR request)+;
+requests: (requestseparator request)+;
 
 // Line terminators
 fragment CR: '\u000D'; // \r
@@ -15,16 +15,15 @@ fragment LF: '\u000A'; // \n
 
 NEWLINE: CR? LF | CR;
 NEWLINEWITHINDENT: NEWLINE WHITESPACE;
-LINETAIL: INPUT* NEWLINE;
 
 // Chars: every unicode character except NEWLINE is supported
 fragment HYPHEN: '\u002D'; // -
 fragment UNDERSCORE: '\u005F'; // _
 
-INPUT: ~[\r\n]; //~('\u000D' | '\u000A'); // \r | \n
+INPUT: ~('\u000D' | '\u000A'); // \r | \n
 ALPHA: [\u0041-\u005A\u0061-\u007A]; // A-Z, a-z
 DIGIT: [\u0030-\u0039]; // 0-9
-ID: (ALPHA | DIGIT | HYPHEN | UNDERSCORE)+;
+ID: (ALPHA | DIGIT | HYPHEN | UNDERSCORE);
 
 // Whitespaces
 WHITESPACE:
@@ -35,7 +34,11 @@ WHITESPACE:
 // Comments
 SLASH: '\u002F'; // /
 HASHTAG: '\u0023'; // #
-LINECOMMENT: (HASHTAG LINETAIL | SLASH SLASH LINETAIL) -> skip;
+// FIXME: figure out way to ignore comments with single hashtag and double slash but not request separators
+LINECOMMENT: (
+		// HASHTAG INPUT NEWLINE |
+		SLASH SLASH INPUT NEWLINE
+	);
 
 // Requests
 fragment ASTERISK: '\u002A'; // *
@@ -45,7 +48,6 @@ COLON: '\u003A'; // :
 QUESTIONMARK: '\u003F'; // ?
 LEFTSQUAREBRACKET: '\u005B'; // [
 RIGHTSQUAREBRACKET: '\u005D'; // ]
-REQUESTSEPARATOR: HASHTAG HASHTAG HASHTAG LINETAIL;
 METHOD:
 	'\u0047' '\u0045' '\u0054' // GET
 	| '\u0048' '\u0045' '\u0041' '\u0044' // HEAD
@@ -70,9 +72,15 @@ HTTPVERSION:
 QUERY: ~'\u0023' (NEWLINEWITHINDENT QUERY)?; // HASHTAG
 REQUESTFRAGMENT:
 	~'\u003F' (NEWLINEWITHINDENT REQUESTFRAGMENT)?; // QUESTIONMARK
+IPV6ADDRESS:
+	~('\u002F' | '\u005D'); // SLASH | RIGHTSQUAREBRACKET
+IPV4ADDRESSORREGNAME:
+	~('\u002F' | '\u003A' | '\u003F' | '\u0023'); // SLASH | COLON | QUESTIONMARK | HASHTAG
 
+requestseparator:
+	'###' ~(HASHTAG | NEWLINE)* NEWLINE; // TODO: why can HASHTAG HASHTAG HASHTAG not be matched?
 request:
-	requestline NEWLINE headers NEWLINE messagebody? responsehandler? RESPONSEREF?;
+	requestline NEWLINE headers NEWLINE messagebody? responsehandler? responseref?;
 requestline: (METHOD WHITESPACE)? requesttarget (
 		WHITESPACE HTTPVERSION
 	)?;
@@ -83,21 +91,17 @@ absoluteform: (SCHEME COLON SLASH SLASH)? hierpart (
 hierpart: authority ABSOLUTEPATH?;
 authority: host (COLON PORT)?;
 host:
-	LEFTSQUAREBRACKET ipv6address RIGHTSQUAREBRACKET
-	| ipv4addressorregname;
-ipv6address:
-	~('\u002F' | '\u005D')+; // SLASH | RIGHTSQUAREBRACKET
-ipv4addressorregname:
-	~('\u002F' | '\u003A' | '\u003F' | '\u0023')+; // SLASH | COLON | QUESTIONMARK | HASHTAG
+	LEFTSQUAREBRACKET IPV6ADDRESS+ RIGHTSQUAREBRACKET
+	| IPV4ADDRESSORREGNAME+;
 
 // Headers
-FIELDNAME: ~'\u003A'+; // COLON
-FIELDVALUE: LINETAIL (NEWLINEWITHINDENT FIELDVALUE)?;
+FIELDNAME: ~'\u003A'; // COLON
 
+fieldvalue: INPUT NEWLINE (NEWLINEWITHINDENT fieldvalue)?;
 headers: (headerfield NEWLINE)*;
 headerfield:
-	FIELDNAME COLON {ignoreWs = true } WHITESPACE {ignoreWs = false } FIELDVALUE {ignoreWs = true}
-		WHITESPACE {ignoreWs = false };
+	FIELDNAME+ COLON {ignoreWs = true } WHITESPACE* {ignoreWs = false } fieldvalue {ignoreWs = true}
+		WHITESPACE* {ignoreWs = false };
 
 // Message body
 LEFTCURLYBRACKET: '\u007B'; // {
@@ -105,33 +109,34 @@ RIGHTCURLYBRACKET: '\u007D'; // }
 PERCENTSIGN: '\u0025'; // %
 LESSTHANSIGN: '\u003C'; // <
 GREATERTHANSIGN: '\u003E'; // >
-FILEPATH: LINETAIL;
 BOUNDARY: (HYPHEN HYPHEN)+ INPUT (HYPHEN HYPHEN)? NEWLINE;
-INPUTFILEREF: LESSTHANSIGN WHITESPACE FILEPATH;
 
+filepath: INPUT NEWLINE;
+inputfileref: LESSTHANSIGN WHITESPACE filepath;
 messagebody: messages | multipartformdata;
 messages: messageline (NEWLINE messageline)?;
-messageline: INPUT INPUT INPUT LINETAIL | INPUTFILEREF;
-// TODO: parse ~('<' | '<>' | '###') in go source code - INPUT INPUT INPUT should not equal them
+messageline: ~('<' | '<>' | '###') INPUT NEWLINE | inputfileref;
+// TODO: test if this works with unicode signs
 multipartformdata: multipartfield multipartformdata? BOUNDARY;
 multipartfield:
 	BOUNDARY (headerfield NEWLINE)* NEWLINE messages?;
 
 // Response handler
 handlerscript:
-	LINETAIL; // TODO: prompt error message if used anyways
+	INPUT NEWLINE; // TODO: prompt error message if used anyways
 responsehandler: // TODO: use parser rule when this will be implemented
 	GREATERTHANSIGN WHITESPACE LEFTCURLYBRACKET PERCENTSIGN handlerscript PERCENTSIGN
 		RIGHTCURLYBRACKET
-	| GREATERTHANSIGN WHITESPACE FILEPATH;
+	| GREATERTHANSIGN WHITESPACE filepath;
 
 // Response reference
-RESPONSEREF: LESSTHANSIGN GREATERTHANSIGN WHITESPACE FILEPATH;
+responseref: LESSTHANSIGN GREATERTHANSIGN WHITESPACE filepath;
 
 // Environment variables
-ENVVARIABLE:
-	LEFTCURLYBRACKET LEFTCURLYBRACKET {ignoreWs = true} WHITESPACE {ignoreWs = false } ID {ignoreWs = true
-		} WHITESPACE {ignoreWs = false } RIGHTCURLYBRACKET RIGHTCURLYBRACKET;
+
+// ENVVARIABLE: LEFTCURLYBRACKET LEFTCURLYBRACKET {ignoreWs = true} WHITESPACE* {ignoreWs = false }
+// ID+ {ignoreWs = true } WHITESPACE* {ignoreWs = false } RIGHTCURLYBRACKET RIGHTCURLYBRACKET;
+
 // TODO: string or token based usage? handle variables like so:
 // https://www.jetbrains.com/help/idea/exploring-http-syntax.html#using_request_vars
 

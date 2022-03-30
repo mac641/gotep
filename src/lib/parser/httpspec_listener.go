@@ -14,6 +14,9 @@ type httpspecListener interface {
 	// EnterRequests is called when entering the requests production.
 	EnterRequests(c *RequestsContext)
 
+	// EnterRequestseparator is called when entering the requestseparator production.
+	EnterRequestseparator(c *RequestseparatorContext)
+
 	// EnterRequest is called when entering the request production.
 	EnterRequest(c *RequestContext)
 
@@ -35,17 +38,20 @@ type httpspecListener interface {
 	// EnterHost is called when entering the host production.
 	EnterHost(c *HostContext)
 
-	// EnterIpv6address is called when entering the ipv6address production.
-	EnterIpv6address(c *Ipv6addressContext)
-
-	// EnterIpv4addressorregname is called when entering the ipv4addressorregname production.
-	EnterIpv4addressorregname(c *Ipv4addressorregnameContext)
+	// EnterFieldvalue is called when entering the fieldvalue production.
+	EnterFieldvalue(c *FieldvalueContext)
 
 	// EnterHeaders is called when entering the headers production.
 	EnterHeaders(c *HeadersContext)
 
 	// EnterHeaderfield is called when entering the headerfield production.
 	EnterHeaderfield(c *HeaderfieldContext)
+
+	// EnterFilepath is called when entering the filepath production.
+	EnterFilepath(c *FilepathContext)
+
+	// EnterInputfileref is called when entering the inputfileref production.
+	EnterInputfileref(c *InputfilerefContext)
 
 	// EnterMessagebody is called when entering the messagebody production.
 	EnterMessagebody(c *MessagebodyContext)
@@ -68,11 +74,17 @@ type httpspecListener interface {
 	// EnterResponsehandler is called when entering the responsehandler production.
 	EnterResponsehandler(c *ResponsehandlerContext)
 
+	// EnterResponseref is called when entering the responseref production.
+	EnterResponseref(c *ResponserefContext)
+
 	// ExitFile is called when exiting the file production.
 	ExitFile(c *FileContext)
 
 	// ExitRequests is called when exiting the requests production.
 	ExitRequests(c *RequestsContext)
+
+	// ExitRequestseparator is called when exiting the requestseparator production.
+	ExitRequestseparator(c *RequestseparatorContext)
 
 	// ExitRequest is called when exiting the request production.
 	ExitRequest(c *RequestContext)
@@ -95,17 +107,20 @@ type httpspecListener interface {
 	// ExitHost is called when exiting the host production.
 	ExitHost(c *HostContext)
 
-	// ExitIpv6address is called when exiting the ipv6address production.
-	ExitIpv6address(c *Ipv6addressContext)
-
-	// ExitIpv4addressorregname is called when exiting the ipv4addressorregname production.
-	ExitIpv4addressorregname(c *Ipv4addressorregnameContext)
+	// ExitFieldvalue is called when exiting the fieldvalue production.
+	ExitFieldvalue(c *FieldvalueContext)
 
 	// ExitHeaders is called when exiting the headers production.
 	ExitHeaders(c *HeadersContext)
 
 	// ExitHeaderfield is called when exiting the headerfield production.
 	ExitHeaderfield(c *HeaderfieldContext)
+
+	// ExitFilepath is called when exiting the filepath production.
+	ExitFilepath(c *FilepathContext)
+
+	// ExitInputfileref is called when exiting the inputfileref production.
+	ExitInputfileref(c *InputfilerefContext)
 
 	// ExitMessagebody is called when exiting the messagebody production.
 	ExitMessagebody(c *MessagebodyContext)
@@ -127,4 +142,7 @@ type httpspecListener interface {
 
 	// ExitResponsehandler is called when exiting the responsehandler production.
 	ExitResponsehandler(c *ResponsehandlerContext)
+
+	// ExitResponseref is called when exiting the responseref production.
+	ExitResponseref(c *ResponserefContext)
 }
