@@ -1,11 +1,24 @@
-### Get all templates
-GET {{origin}}/{{location}}/available
+###
+GET 192.168.178.2/index
 Accept: application/json
 
-### Generate pdf from sent html file
-POST {{origin}}/{{location}}/pdf
+### Test with message body and absolute path
+POST http://www.example.com/test1
 Content-Type: application/json
 
 {
-  "html": "<h1>I'm an example heading!</h1>"
+  "html": "Html message"
 }
+
+//### Get all templates
+//GET {{origin}}/{{location}}/available
+//Accept: application/json
+//
+//### Generate pdf from sent html file
+//POST {{origin}}/{{location}}/pdf
+//Content-Type: application/json
+//
+//{
+//  "html": "<h1>I'm an example heading!</h1>"
+//}
+//
