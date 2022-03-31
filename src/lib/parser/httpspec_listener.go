@@ -11,11 +11,8 @@ type httpspecListener interface {
 	// EnterFile is called when entering the file production.
 	EnterFile(c *FileContext)
 
-	// EnterRequests is called when entering the requests production.
-	EnterRequests(c *RequestsContext)
-
-	// EnterRequestseparator is called when entering the requestseparator production.
-	EnterRequestseparator(c *RequestseparatorContext)
+	// EnterRequestwithseparator is called when entering the requestwithseparator production.
+	EnterRequestwithseparator(c *RequestwithseparatorContext)
 
 	// EnterRequest is called when entering the request production.
 	EnterRequest(c *RequestContext)
@@ -26,26 +23,8 @@ type httpspecListener interface {
 	// EnterRequesttarget is called when entering the requesttarget production.
 	EnterRequesttarget(c *RequesttargetContext)
 
-	// EnterAbsoluteform is called when entering the absoluteform production.
-	EnterAbsoluteform(c *AbsoluteformContext)
-
-	// EnterHierpart is called when entering the hierpart production.
-	EnterHierpart(c *HierpartContext)
-
-	// EnterAuthority is called when entering the authority production.
-	EnterAuthority(c *AuthorityContext)
-
-	// EnterHost is called when entering the host production.
-	EnterHost(c *HostContext)
-
-	// EnterFieldvalue is called when entering the fieldvalue production.
-	EnterFieldvalue(c *FieldvalueContext)
-
 	// EnterHeaders is called when entering the headers production.
 	EnterHeaders(c *HeadersContext)
-
-	// EnterHeaderfield is called when entering the headerfield production.
-	EnterHeaderfield(c *HeaderfieldContext)
 
 	// EnterFilepath is called when entering the filepath production.
 	EnterFilepath(c *FilepathContext)
@@ -80,11 +59,8 @@ type httpspecListener interface {
 	// ExitFile is called when exiting the file production.
 	ExitFile(c *FileContext)
 
-	// ExitRequests is called when exiting the requests production.
-	ExitRequests(c *RequestsContext)
-
-	// ExitRequestseparator is called when exiting the requestseparator production.
-	ExitRequestseparator(c *RequestseparatorContext)
+	// ExitRequestwithseparator is called when exiting the requestwithseparator production.
+	ExitRequestwithseparator(c *RequestwithseparatorContext)
 
 	// ExitRequest is called when exiting the request production.
 	ExitRequest(c *RequestContext)
@@ -95,26 +71,8 @@ type httpspecListener interface {
 	// ExitRequesttarget is called when exiting the requesttarget production.
 	ExitRequesttarget(c *RequesttargetContext)
 
-	// ExitAbsoluteform is called when exiting the absoluteform production.
-	ExitAbsoluteform(c *AbsoluteformContext)
-
-	// ExitHierpart is called when exiting the hierpart production.
-	ExitHierpart(c *HierpartContext)
-
-	// ExitAuthority is called when exiting the authority production.
-	ExitAuthority(c *AuthorityContext)
-
-	// ExitHost is called when exiting the host production.
-	ExitHost(c *HostContext)
-
-	// ExitFieldvalue is called when exiting the fieldvalue production.
-	ExitFieldvalue(c *FieldvalueContext)
-
 	// ExitHeaders is called when exiting the headers production.
 	ExitHeaders(c *HeadersContext)
-
-	// ExitHeaderfield is called when exiting the headerfield production.
-	ExitHeaderfield(c *HeaderfieldContext)
 
 	// ExitFilepath is called when exiting the filepath production.
 	ExitFilepath(c *FilepathContext)

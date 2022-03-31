@@ -27,17 +27,11 @@ func (s *BasehttpspecListener) EnterFile(ctx *FileContext) {}
 // ExitFile is called when production file is exited.
 func (s *BasehttpspecListener) ExitFile(ctx *FileContext) {}
 
-// EnterRequests is called when production requests is entered.
-func (s *BasehttpspecListener) EnterRequests(ctx *RequestsContext) {}
+// EnterRequestwithseparator is called when production requestwithseparator is entered.
+func (s *BasehttpspecListener) EnterRequestwithseparator(ctx *RequestwithseparatorContext) {}
 
-// ExitRequests is called when production requests is exited.
-func (s *BasehttpspecListener) ExitRequests(ctx *RequestsContext) {}
-
-// EnterRequestseparator is called when production requestseparator is entered.
-func (s *BasehttpspecListener) EnterRequestseparator(ctx *RequestseparatorContext) {}
-
-// ExitRequestseparator is called when production requestseparator is exited.
-func (s *BasehttpspecListener) ExitRequestseparator(ctx *RequestseparatorContext) {}
+// ExitRequestwithseparator is called when production requestwithseparator is exited.
+func (s *BasehttpspecListener) ExitRequestwithseparator(ctx *RequestwithseparatorContext) {}
 
 // EnterRequest is called when production request is entered.
 func (s *BasehttpspecListener) EnterRequest(ctx *RequestContext) {}
@@ -57,47 +51,11 @@ func (s *BasehttpspecListener) EnterRequesttarget(ctx *RequesttargetContext) {}
 // ExitRequesttarget is called when production requesttarget is exited.
 func (s *BasehttpspecListener) ExitRequesttarget(ctx *RequesttargetContext) {}
 
-// EnterAbsoluteform is called when production absoluteform is entered.
-func (s *BasehttpspecListener) EnterAbsoluteform(ctx *AbsoluteformContext) {}
-
-// ExitAbsoluteform is called when production absoluteform is exited.
-func (s *BasehttpspecListener) ExitAbsoluteform(ctx *AbsoluteformContext) {}
-
-// EnterHierpart is called when production hierpart is entered.
-func (s *BasehttpspecListener) EnterHierpart(ctx *HierpartContext) {}
-
-// ExitHierpart is called when production hierpart is exited.
-func (s *BasehttpspecListener) ExitHierpart(ctx *HierpartContext) {}
-
-// EnterAuthority is called when production authority is entered.
-func (s *BasehttpspecListener) EnterAuthority(ctx *AuthorityContext) {}
-
-// ExitAuthority is called when production authority is exited.
-func (s *BasehttpspecListener) ExitAuthority(ctx *AuthorityContext) {}
-
-// EnterHost is called when production host is entered.
-func (s *BasehttpspecListener) EnterHost(ctx *HostContext) {}
-
-// ExitHost is called when production host is exited.
-func (s *BasehttpspecListener) ExitHost(ctx *HostContext) {}
-
-// EnterFieldvalue is called when production fieldvalue is entered.
-func (s *BasehttpspecListener) EnterFieldvalue(ctx *FieldvalueContext) {}
-
-// ExitFieldvalue is called when production fieldvalue is exited.
-func (s *BasehttpspecListener) ExitFieldvalue(ctx *FieldvalueContext) {}
-
 // EnterHeaders is called when production headers is entered.
 func (s *BasehttpspecListener) EnterHeaders(ctx *HeadersContext) {}
 
 // ExitHeaders is called when production headers is exited.
 func (s *BasehttpspecListener) ExitHeaders(ctx *HeadersContext) {}
-
-// EnterHeaderfield is called when production headerfield is entered.
-func (s *BasehttpspecListener) EnterHeaderfield(ctx *HeaderfieldContext) {}
-
-// ExitHeaderfield is called when production headerfield is exited.
-func (s *BasehttpspecListener) ExitHeaderfield(ctx *HeaderfieldContext) {}
 
 // EnterFilepath is called when production filepath is entered.
 func (s *BasehttpspecListener) EnterFilepath(ctx *FilepathContext) {}
