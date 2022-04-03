@@ -1,14 +1,15 @@
 default: build
 
-antlr: src/lib/parser/httpspec.g4
-	java -jar ./bin/antlr-4.9-complete.jar -Dlanguage=Go -o . -lib . ./src/lib/parser/httpspec.g4
+antlr: src/lib/parser/httpSpec.g4 src/lib/parser/httpSpecLexer.g4
+	java -jar ./bin/antlr-4.9-complete.jar -Dlanguage=Go -o . -lib . ./src/lib/parser/httpSpecLexer.g4; \
+java -jar ./bin/antlr-4.9-complete.jar -Dlanguage=Go -o . -lib . ./src/lib/parser/httpSpec.g4
 
 .PHONY: grunGuiTree
-grunGuiTree: src/lib/parser/httpspec.g4
+grunGuiTree: src/lib/parser/httpSpec.g4
 	java org.antlr.v4.gui.TestRig httpspec requests -tree -gui
 
 .PHONY: grunTokens
-grunTokens: src/lib/parser/httpspec.g4
+grunTokens: src/lib/parser/httpSpec.g4
 	java org.antlr.v4.gui.TestRig httpspec requests -tokens
 
 .PHONY: build

@@ -37,7 +37,9 @@ import (
 
 // Define httpspec listener based on generated antlr4 source code
 type TreeShapeListener struct {
-	*parser.BasehttpspecListener
+	*parser.BasehttpSpecListener
+
+	*parser.FileContext
 }
 
 func NewTreeShapeListener() *TreeShapeListener {
@@ -45,8 +47,15 @@ func NewTreeShapeListener() *TreeShapeListener {
 }
 
 func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
+	const separator = ","
+	fmt.Println(ctx.GetStart(), separator, ctx.GetStop())
 	fmt.Println(ctx.GetText())
+	fmt.Println()
 }
+
+// func (tsl *TreeShapeListener) ExitFile(ctx parser.FileContext) {
+// 	fmt.Println(ctx.GetText())
+// }
 
 // rootCmd represents the base command when called without any subcommands
 var (
@@ -128,9 +137,9 @@ func initTests() {
 	// Parse test file
 	stringContent := string(content)
 	charStream := antlr.NewInputStream(stringContent)
-	lexer := parser.NewhttpspecLexer(charStream)
+	lexer := parser.NewhttpSpecLexer(charStream)
 	stream := antlr.NewCommonTokenStream(lexer, 0)
-	p := parser.NewhttpspecParser(stream)
+	p := parser.NewhttpSpecParser(stream)
 	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
 	p.BuildParseTrees = true
 	tree := p.File()
