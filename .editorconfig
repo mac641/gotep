@@ -22,5 +22,5 @@ trim_trailing_whitespace = false
 [*.g4]
 end_of_line = lf
 trim_trailing_whitespace = true
-indent_style = space
+indent_style = tab
 indent_size = 4
