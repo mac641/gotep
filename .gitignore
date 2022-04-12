@@ -17,3 +17,7 @@
 
 # compiled binaries
 bin/
+*.java
+
+# include launch.json
+!.vscode/
