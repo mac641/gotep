@@ -1,7 +1,6 @@
 # gotep
 gotep is a terminal-based REST client designed to execute HTTP tests based on the Jetbrains HTTP-Client.
 
-
 ## Contribution guidelines
 Please read and follow the guidelines, if you wish to contribute.
 
@@ -26,10 +25,16 @@ This repo follows the **rebase-merge** workflow. Therefore, feature branches nee
 
 ### Development environment setup
 1. Clone the repository.
-2. Enable git hooks described above.
-3. Inside the repository's root directory, add ANTLR to the Java CLASSPATH:  
+2. Enable git hooks as described above.
+3. Satisfy ANTLR dependencies.
+    ```sh
+    # 1. Install Java 1.7 or higher.
+    # 2. Create a bin folder inside the gotep repo.
+    mkdir -p <PROJECT_ROOT>/bin # Replace <PROJECT_ROOT> with real path (absolute or relative)
+    # 3. Download antlr .jar-file
+    cd bin; curl -O https://www.antlr.org/download/antlr-4.9-complete.jar
+    ```
+4. Inside the repository's root directory, add ANTLR to the Java CLASSPATH:  
   `export CLASSPATH=".:$(pwd)/bin/antlr-4.9-complete.jar:${CLASSPATH}"` (NOTE: add this command also to
   your bash profile, otherwise you have to run it every time you open a new shell.)
-4. Run `go install` inside the `src` directory to install all necessary go modules.
-
-You should be good to go now: ;) 
+5. Run `go install` inside the `src` directory to install all necessary go modules.
