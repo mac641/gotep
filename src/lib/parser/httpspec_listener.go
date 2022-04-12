@@ -17,14 +17,8 @@ type httpSpecListener interface {
 	// EnterRequest is called when entering the request production.
 	EnterRequest(c *RequestContext)
 
-	// EnterRequestline is called when entering the requestline production.
-	EnterRequestline(c *RequestlineContext)
-
-	// EnterMessagebody is called when entering the messagebody production.
-	EnterMessagebody(c *MessagebodyContext)
-
-	// EnterHeaders is called when entering the headers production.
-	EnterHeaders(c *HeadersContext)
+	// EnterLines is called when entering the lines production.
+	EnterLines(c *LinesContext)
 
 	// ExitFile is called when exiting the file production.
 	ExitFile(c *FileContext)
@@ -35,12 +29,6 @@ type httpSpecListener interface {
 	// ExitRequest is called when exiting the request production.
 	ExitRequest(c *RequestContext)
 
-	// ExitRequestline is called when exiting the requestline production.
-	ExitRequestline(c *RequestlineContext)
-
-	// ExitMessagebody is called when exiting the messagebody production.
-	ExitMessagebody(c *MessagebodyContext)
-
-	// ExitHeaders is called when exiting the headers production.
-	ExitHeaders(c *HeadersContext)
+	// ExitLines is called when exiting the lines production.
+	ExitLines(c *LinesContext)
 }

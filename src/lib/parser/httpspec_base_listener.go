@@ -39,20 +39,8 @@ func (s *BasehttpSpecListener) EnterRequest(ctx *RequestContext) {}
 // ExitRequest is called when production request is exited.
 func (s *BasehttpSpecListener) ExitRequest(ctx *RequestContext) {}
 
-// EnterRequestline is called when production requestline is entered.
-func (s *BasehttpSpecListener) EnterRequestline(ctx *RequestlineContext) {}
+// EnterLines is called when production lines is entered.
+func (s *BasehttpSpecListener) EnterLines(ctx *LinesContext) {}
 
-// ExitRequestline is called when production requestline is exited.
-func (s *BasehttpSpecListener) ExitRequestline(ctx *RequestlineContext) {}
-
-// EnterMessagebody is called when production messagebody is entered.
-func (s *BasehttpSpecListener) EnterMessagebody(ctx *MessagebodyContext) {}
-
-// ExitMessagebody is called when production messagebody is exited.
-func (s *BasehttpSpecListener) ExitMessagebody(ctx *MessagebodyContext) {}
-
-// EnterHeaders is called when production headers is entered.
-func (s *BasehttpSpecListener) EnterHeaders(ctx *HeadersContext) {}
-
-// ExitHeaders is called when production headers is exited.
-func (s *BasehttpSpecListener) ExitHeaders(ctx *HeadersContext) {}
+// ExitLines is called when production lines is exited.
+func (s *BasehttpSpecListener) ExitLines(ctx *LinesContext) {}

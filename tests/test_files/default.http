@@ -7,6 +7,7 @@ Accept: application/json
 GET 192.168.178.2/index
 Accept: application/json
   text/html
+From: test@test.com
 ### Test with message body and absolute path
 POST http://www.example.com/test1
 Content-Type: application/json
@@ -21,6 +22,7 @@ Content-Type: application/json
   "html": "Html message"
 }
 
+###
 //### Test ipv6
 //GET [1111:2222:abcd:4444:5a6c:7777:9c9f:6789]/index
 //Accept: application/json
