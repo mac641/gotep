@@ -14,15 +14,21 @@ Content-Type: application/json
   "html": "Html message"
 }
 
-//### Get all templates
-//GET {{origin}}/{{location}}/available
-//Accept: application/json
-//
-//### Generate pdf from sent html file
-//POST {{origin}}/{{location}}/pdf
-//Content-Type: application/json
-//
-//{
-//  "html": "<h1>I'm an example heading!</h1>"
-//}
-//
+###
+### Test ipv6
+GET [1111:2222:abcd:4444:5a6c:7777:9c9f:6789]/index
+Accept: application/json
+
+### Test variables in request line
+GET {{origin}}/{{location}}/available
+Accept: application/json
+
+### Test variables in header / message
+POST {{origin}}/{{location}}/pdf
+Content-Type: {{headervalue}}
+
+{
+  "html": "<h1>I'm an example heading!</h1>",
+  {{jsonvalue}}
+}
+
