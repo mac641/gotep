@@ -29,9 +29,10 @@ import (
 	"os"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr"
-	"github.com/mac641/gotep/src/lib/parser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/mac641/gotep/src/lib/parser"
 )
 
 // runCmd represents the run command
@@ -66,7 +67,7 @@ func init() {
 func initConfig(cmd *cobra.Command) {
 	config, err := cmd.Flags().GetString(config)
 	cobra.CheckErr(err)
-	if config != "" && err == nil {
+	if config != "" {
 		viper.SetConfigFile(config)
 	} else {
 		cwd, err := os.Getwd()
@@ -85,12 +86,6 @@ func initConfig(cmd *cobra.Command) {
 // Define httpspec listener based on generated antlr4 source code
 type TreeShapeListener struct {
 	*parser.BasehttpSpecListener
-
-	*parser.RequestContext
-}
-
-func NewTreeShapeListener() *TreeShapeListener {
-	return new(TreeShapeListener)
 }
 
 // func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
@@ -100,8 +95,8 @@ func NewTreeShapeListener() *TreeShapeListener {
 // 	fmt.Println()
 // }
 
-func (tsl *TreeShapeListener) EnterRequestRule(ctx parser.RequestContext) {
-	fmt.Println(ctx.AllLines())
+func (tsl *TreeShapeListener) ExitRequest(ctx parser.RequestContext) {
+	fmt.Println(ctx.GetText())
 }
 
 func test(cmd *cobra.Command) {
@@ -112,20 +107,18 @@ func test(cmd *cobra.Command) {
 		cobra.CheckErr(err)
 		tests += "default.http"
 	}
-	content, err := ioutil.ReadFile(tests)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// content, err := ioutil.ReadFile(tests)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	// TODO: invoke parsing of test_files here
 	// Parse test file
-	stringContent := string(content)
-	charStream := antlr.NewInputStream(stringContent)
+	// stringContent := string(content)
+	charStream, _ := antlr.NewFileStream(tests)
 	lexer := parser.NewhttpSpecLexer(charStream)
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewhttpSpecParser(stream)
-	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
+	p.AddErrorListener(antlr.NewDiagnosticErrorListener(false)) // TODO: handle parsing errors
 	p.BuildParseTrees = true
-	tree := p.File()
-	antlr.ParseTreeWalkerDefault.Walk(NewTreeShapeListener().BasehttpSpecListener, tree)
+	antlr.ParseTreeWalkerDefault.Walk(&TreeShapeListener{}, p.File())
 }
