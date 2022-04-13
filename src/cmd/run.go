@@ -24,8 +24,14 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
 
+	"github.com/antlr/antlr4/runtime/Go/antlr"
+	"github.com/mac641/gotep/src/lib/parser"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // runCmd represents the run command
@@ -33,10 +39,12 @@ var (
 	runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Execute tests",
-		Long: `Execute tests based on a test file and its associated environment definitions. 
+		Long: `Execute tests based on a test file and its associated environment definitions.
 For example run: gotep run -c http-client.env.json -f tests.http`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("run called")
+			// fmt.Println("run called")
+			initConfig(cmd)
+			test(cmd)
 		},
 	}
 )
@@ -53,4 +61,71 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func initConfig(cmd *cobra.Command) {
+	config, err := cmd.Flags().GetString(config)
+	cobra.CheckErr(err)
+	if config != "" && err == nil {
+		viper.SetConfigFile(config)
+	} else {
+		cwd, err := os.Getwd()
+		cobra.CheckErr(err)
+
+		viper.AddConfigPath(cwd)
+		viper.SetConfigType("json")
+		viper.SetConfigName("http-client.env")
+	}
+
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+// Define httpspec listener based on generated antlr4 source code
+type TreeShapeListener struct {
+	*parser.BasehttpSpecListener
+
+	*parser.RequestContext
+}
+
+func NewTreeShapeListener() *TreeShapeListener {
+	return new(TreeShapeListener)
+}
+
+// func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
+// 	const separator = ","
+// 	fmt.Println(ctx.GetStart(), separator, ctx.GetStop())
+// 	fmt.Println(ctx.GetText())
+// 	fmt.Println()
+// }
+
+func (tsl *TreeShapeListener) EnterRequestRule(ctx parser.RequestContext) {
+	fmt.Println(ctx.AllLines())
+}
+
+func test(cmd *cobra.Command) {
+	tests, err := cmd.Flags().GetString(file)
+	cobra.CheckErr(err)
+	if tests == "" {
+		tests, err := os.Getwd()
+		cobra.CheckErr(err)
+		tests += "default.http"
+	}
+	content, err := ioutil.ReadFile(tests)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO: invoke parsing of test_files here
+	// Parse test file
+	stringContent := string(content)
+	charStream := antlr.NewInputStream(stringContent)
+	lexer := parser.NewhttpSpecLexer(charStream)
+	stream := antlr.NewCommonTokenStream(lexer, 0)
+	p := parser.NewhttpSpecParser(stream)
+	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
+	p.BuildParseTrees = true
+	tree := p.File()
+	antlr.ParseTreeWalkerDefault.Walk(NewTreeShapeListener().BasehttpSpecListener, tree)
 }

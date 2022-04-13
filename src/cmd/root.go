@@ -23,39 +23,10 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
-
-	"github.com/antlr/antlr4/runtime/Go/antlr"
-	"github.com/mac641/gotep/src/lib/parser"
-	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
-
-// Define httpspec listener based on generated antlr4 source code
-type TreeShapeListener struct {
-	*parser.BasehttpSpecListener
-
-	*parser.FileContext
-}
-
-func NewTreeShapeListener() *TreeShapeListener {
-	return new(TreeShapeListener)
-}
-
-func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
-	const separator = ","
-	fmt.Println(ctx.GetStart(), separator, ctx.GetStop())
-	fmt.Println(ctx.GetText())
-	fmt.Println()
-}
-
-// func (tsl *TreeShapeListener) ExitFile(ctx parser.FileContext) {
-// 	fmt.Println(ctx.GetText())
-// }
 
 // rootCmd represents the base command when called without any subcommands
 var (
@@ -67,11 +38,16 @@ var (
 		Use:   "gotep",
 		Short: "gotep is a terminal-based REST client.",
 		Long: `gotep is a terminal-based REST client designed to execute HTTP tests based on the Jetbrains
-HTTP-Client.`,
+		HTTP-Client.`,
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
 		// Run: func(cmd *cobra.Command, args []string) { },
 	}
+)
+
+const (
+	config = "config"
+	file   = "file"
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -88,64 +64,19 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	cobra.OnInitialize(initConfig, initTests)
+	// cobra.OnInitialize(initConfig, initTests)
 
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false,
 		"print log messages (default is false)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	checkCmd.Flags().StringVarP(&configFile, "config", "c", "",
+	checkCmd.Flags().StringVarP(&configFile, config, "c", "",
 		"config file path (default is current working directory + \"http-client.env.json\")")
-	checkCmd.Flags().StringVarP(&testFile, "file", "f", "",
+	checkCmd.Flags().StringVarP(&testFile, file, "f", "",
 		"test file path (default is current working directory + \"default.http\")")
-	runCmd.Flags().StringVarP(&configFile, "config", "c", "",
+	runCmd.Flags().StringVarP(&configFile, config, "c", "",
 		"config file path (default is current working directory + \"http-client.env.json\")")
-	runCmd.Flags().StringVarP(&testFile, "file", "f", "",
+	runCmd.Flags().StringVarP(&testFile, file, "f", "",
 		"test file path (default is current working directory + \"default.http\")")
-}
-
-func initConfig() {
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
-	} else {
-		cwd, err := os.Getwd()
-		cobra.CheckErr(err)
-
-		viper.AddConfigPath(cwd)
-		viper.SetConfigType("json")
-		viper.SetConfigName("http-client.env")
-	}
-
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
-}
-
-func initTests() {
-	if testFile == "" {
-		testFile, err := os.Getwd()
-		cobra.CheckErr(err)
-		testFile += "default.http"
-	}
-	content, err := ioutil.ReadFile(testFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// TODO: invoke parsing of test_files here
-	// Parse test file
-	stringContent := string(content)
-	charStream := antlr.NewInputStream(stringContent)
-	lexer := parser.NewhttpSpecLexer(charStream)
-	stream := antlr.NewCommonTokenStream(lexer, 0)
-	p := parser.NewhttpSpecParser(stream)
-	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
-	p.BuildParseTrees = true
-	tree := p.File()
-	antlr.ParseTreeWalkerDefault.Walk(NewTreeShapeListener(), tree)
-
-	// TODO: validate if check has been called - maybe outsource it to check.go
-
-	// fmt.Println(stringContent)
 }
