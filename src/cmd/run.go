@@ -131,7 +131,6 @@ func prepareHttpRequests(file string, conEnv string) []string {
 		removedComments = append(removedComments, removed)
 	}
 
-	// TODO: add env var support, panic if one does not exist
 	regEnv := regexp.MustCompile("{{[ \u0009\u000C]*[A-Za-z0-9\\-_]+[ \u0009\u000C]*}}") // space\t\f
 	insertEnv := []string{}
 	allConfigKeys := viper.AllKeys()
@@ -154,12 +153,16 @@ func prepareHttpRequests(file string, conEnv string) []string {
 				}
 			}
 
-			// FIXME: figure out why matches in lines are not replaced using strings.ReplaceAll
-			var inserted string
+			// TODO: use one by comparison to ensure every match is represented in env variable config
+			if len(envMatches) != len(matchedConfigKeys) {
+				log.Fatal("There are undefined env variables present in your requests file!")
+				os.Exit(1)
+			}
+
+			inserted := env
 			for j := range matchedConfigKeys {
 				configValue := viper.GetString(matchedConfigKeys[j])
-				fmt.Println("{{" + strings.TrimLeft(matchedConfigKeys[j], conEnv+".") + "}}")
-				inserted = strings.ReplaceAll(env, "{{"+strings.TrimLeft(matchedConfigKeys[j], conEnv+".")+"}}",
+				inserted = strings.ReplaceAll(inserted, "{{"+strings.TrimPrefix(matchedConfigKeys[j], conEnv+".")+"}}",
 					configValue)
 			}
 			insertEnv = append(insertEnv, inserted)
