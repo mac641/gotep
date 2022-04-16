@@ -28,6 +28,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -97,7 +98,9 @@ func test(cmd *cobra.Command) {
 	// TODO: invoke parsing of test_files here
 	// Parse test file
 	stringContent := string(content)
-	requests := readHttpRequests(stringContent)
+	conEnv, err := cmd.Flags().GetString(configEnv)
+	cobra.CheckErr(err)
+	requests := prepareHttpRequests(stringContent, conEnv)
 	for i := range requests {
 		fmt.Print(requests[i])
 		fmt.Println("--------------------------------------------")
@@ -106,12 +109,16 @@ func test(cmd *cobra.Command) {
 	// TODO: replace file refs with their contents and panic if they don't exist
 }
 
-// Reads http requests from given string, splits them by separators, removes comments and
-// inserts env variables if possible, otherwise returns error
-func readHttpRequests(file string) []string {
+// Takes string containing http requests and splits them by separators, removes comments and
+// inserts env variable values if possible, otherwise returns error
+func prepareHttpRequests(file string, conEnv string) []string {
 	// NOTE: enable multi-line mode flag (?m) to match all occurrences in string
 	regSeparator := regexp.MustCompile("(?m)^(###[^\u000D\u000A]*\u000D?\u000A)") // \r\n
 	splitSeparator := regSeparator.Split(file, -1)
+	if len(splitSeparator) == 0 {
+		log.Fatal("No requests could be parsed!")
+		os.Exit(1)
+	}
 
 	regComments := regexp.MustCompile("(?m)^(//|#)([^\u000D\u000A]*\u000D?\u000A)") // \r\n
 	removedComments := []string{}
@@ -125,31 +132,41 @@ func readHttpRequests(file string) []string {
 	}
 
 	// TODO: add env var support, panic if one does not exist
-	// regEnv := regexp.MustCompile("{{[ \u0009\u000C]*[A-Za-z0-9\\-_]+[ \u0009\u000C]*}}") // space\t\f
-	// insertEnv := []string{}
-	// allConfigKeys := viper.AllKeys()
-	// for i := range removedComments {
-	// 	env := removedComments[i]
-	// 	envMatches := regEnv.FindAllString(env, -1)
-	// 	if envMatches != nil {
+	regEnv := regexp.MustCompile("{{[ \u0009\u000C]*[A-Za-z0-9\\-_]+[ \u0009\u000C]*}}") // space\t\f
+	insertEnv := []string{}
+	allConfigKeys := viper.AllKeys()
 
-	// 		matchedConfigKeys := []string{}
-	// 		x := 0
-	// 		for j := range envMatches {
-	// 			match := strings.TrimLeft(envMatches[j], "{")
-	// 			match = strings.TrimRight(match, "}")
-	// 			x := sort.Search(len(allConfigKeys), func(i int) bool { return allConfigKeys[x] == match })
-	// 			if x < len(allConfigKeys) {
-	// 				matchedConfigKeys = append(matchedConfigKeys, allConfigKeys[x])
-	// 			}
-	// 		}
+	for i := range removedComments {
+		env := removedComments[i]
+		envMatches := regEnv.FindAllString(env, -1)
 
-	// 		for j := range matchedConfigKeys {
-	// 			insertEnv = append(insertEnv, regEnv.ReplaceAllString(env, matchedConfigKeys[j]))
-	// 		}
-	// 	}
+		if envMatches != nil {
+			matchedConfigKeys := []string{}
 
-	// }
+			for j := range envMatches {
+				match := strings.TrimLeft(envMatches[j], "{")
+				match = strings.TrimRight(match, "}")
 
-	return removedComments
+				for k := range allConfigKeys {
+					if strings.Contains(allConfigKeys[k], match) && strings.Contains(allConfigKeys[k], conEnv) {
+						matchedConfigKeys = append(matchedConfigKeys, allConfigKeys[k])
+					}
+				}
+			}
+
+			// FIXME: figure out why matches in lines are not replaced using strings.ReplaceAll
+			var inserted string
+			for j := range matchedConfigKeys {
+				configValue := viper.GetString(matchedConfigKeys[j])
+				fmt.Println("{{" + strings.TrimLeft(matchedConfigKeys[j], conEnv+".") + "}}")
+				inserted = strings.ReplaceAll(env, "{{"+strings.TrimLeft(matchedConfigKeys[j], conEnv+".")+"}}",
+					configValue)
+			}
+			insertEnv = append(insertEnv, inserted)
+		}
+
+	}
+
+	// TODO: concat requests which do not contain env variables
+	return insertEnv
 }
