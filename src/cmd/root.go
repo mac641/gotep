@@ -30,9 +30,10 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	testFile   string
-	configFile string
-	verbose    bool
+	testFile          string
+	configFile        string
+	configEnvironment string
+	verbose           bool
 
 	rootCmd = &cobra.Command{
 		Use:   "gotep",
@@ -46,8 +47,9 @@ var (
 )
 
 const (
-	config = "config"
-	file   = "file"
+	config    = "config"
+	configEnv = "configEnv"
+	file      = "file"
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -66,6 +68,7 @@ func init() {
 
 	// cobra.OnInitialize(initConfig, initTests)
 
+	// TODO: check verbose flag before printing to command line
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false,
 		"print log messages (default is false)")
 
@@ -77,6 +80,8 @@ func init() {
 		"test file path (default is current working directory + \"default.http\")")
 	runCmd.Flags().StringVarP(&configFile, config, "c", "",
 		"config file path (default is current working directory + \"http-client.env.json\")")
+	runCmd.Flags().StringVarP(&configEnvironment, configEnv, "e", "default",
+		"environment name specified in config file (default is 'default')")
 	runCmd.Flags().StringVarP(&testFile, file, "f", "",
 		"test file path (default is current working directory + \"default.http\")")
 }
