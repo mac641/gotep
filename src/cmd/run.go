@@ -24,8 +24,10 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -87,15 +89,67 @@ func test(cmd *cobra.Command) {
 		cobra.CheckErr(err)
 		tests += "default.http"
 	}
-	content, err := os.Open(tests)
+	content, err := ioutil.ReadFile(tests)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer content.Close()
 
 	// TODO: invoke parsing of test_files here
 	// Parse test file
-	// result, _ := parser.Parse(content)
-	// cobra.CheckErr(err)
-	// fmt.Println(result.Requests[0])
+	stringContent := string(content)
+	requests := readHttpRequests(stringContent)
+	for i := range requests {
+		fmt.Print(requests[i])
+		fmt.Println("--------------------------------------------")
+	}
+
+	// TODO: replace file refs with their contents and panic if they don't exist
+}
+
+// Reads http requests from given string, splits them by separators, removes comments and
+// inserts env variables if possible, otherwise returns error
+func readHttpRequests(file string) []string {
+	// NOTE: enable multi-line mode flag (?m) to match all occurrences in string
+	regSeparator := regexp.MustCompile("(?m)^(###[^\u000D\u000A]*\u000D?\u000A)") // \r\n
+	splitSeparator := regSeparator.Split(file, -1)
+
+	regComments := regexp.MustCompile("(?m)^(//|#)([^\u000D\u000A]*\u000D?\u000A)") // \r\n
+	removedComments := []string{}
+	for i := range splitSeparator {
+		if len(splitSeparator[i]) == 0 {
+			continue
+		}
+
+		removed := regComments.ReplaceAllLiteralString(splitSeparator[i], "")
+		removedComments = append(removedComments, removed)
+	}
+
+	// TODO: add env var support, panic if one does not exist
+	// regEnv := regexp.MustCompile("{{[ \u0009\u000C]*[A-Za-z0-9\\-_]+[ \u0009\u000C]*}}") // space\t\f
+	// insertEnv := []string{}
+	// allConfigKeys := viper.AllKeys()
+	// for i := range removedComments {
+	// 	env := removedComments[i]
+	// 	envMatches := regEnv.FindAllString(env, -1)
+	// 	if envMatches != nil {
+
+	// 		matchedConfigKeys := []string{}
+	// 		x := 0
+	// 		for j := range envMatches {
+	// 			match := strings.TrimLeft(envMatches[j], "{")
+	// 			match = strings.TrimRight(match, "}")
+	// 			x := sort.Search(len(allConfigKeys), func(i int) bool { return allConfigKeys[x] == match })
+	// 			if x < len(allConfigKeys) {
+	// 				matchedConfigKeys = append(matchedConfigKeys, allConfigKeys[x])
+	// 			}
+	// 		}
+
+	// 		for j := range matchedConfigKeys {
+	// 			insertEnv = append(insertEnv, regEnv.ReplaceAllString(env, matchedConfigKeys[j]))
+	// 		}
+	// 	}
+
+	// }
+
+	return removedComments
 }
