@@ -24,12 +24,9 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
-	"github.com/antlr/antlr4/runtime/Go/antlr"
-	"github.com/mac641/gotep/src/lib/parser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -82,28 +79,6 @@ func initConfig(cmd *cobra.Command) {
 	}
 }
 
-// Define httpspec listener based on generated antlr4 source code
-type TreeShapeListener struct {
-	*parser.BasehttpSpecListener
-
-	*parser.RequestContext
-}
-
-func NewTreeShapeListener() *TreeShapeListener {
-	return new(TreeShapeListener)
-}
-
-// func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
-// 	const separator = ","
-// 	fmt.Println(ctx.GetStart(), separator, ctx.GetStop())
-// 	fmt.Println(ctx.GetText())
-// 	fmt.Println()
-// }
-
-func (tsl *TreeShapeListener) EnterRequestRule(ctx parser.RequestContext) {
-	fmt.Println(ctx.AllLines())
-}
-
 func test(cmd *cobra.Command) {
 	tests, err := cmd.Flags().GetString(file)
 	cobra.CheckErr(err)
@@ -112,20 +87,15 @@ func test(cmd *cobra.Command) {
 		cobra.CheckErr(err)
 		tests += "default.http"
 	}
-	content, err := ioutil.ReadFile(tests)
+	content, err := os.Open(tests)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer content.Close()
 
 	// TODO: invoke parsing of test_files here
 	// Parse test file
-	stringContent := string(content)
-	charStream := antlr.NewInputStream(stringContent)
-	lexer := parser.NewhttpSpecLexer(charStream)
-	stream := antlr.NewCommonTokenStream(lexer, 0)
-	p := parser.NewhttpSpecParser(stream)
-	p.AddErrorListener(antlr.NewDiagnosticErrorListener(true))
-	p.BuildParseTrees = true
-	tree := p.File()
-	antlr.ParseTreeWalkerDefault.Walk(NewTreeShapeListener().BasehttpSpecListener, tree)
+	// result, _ := parser.Parse(content)
+	// cobra.CheckErr(err)
+	// fmt.Println(result.Requests[0])
 }
