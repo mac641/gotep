@@ -107,36 +107,48 @@ func test(cmd *cobra.Command) {
 	}
 
 	// TODO: replace file refs with their contents and panic if they don't exist
+
+	// TODO: remove possible responsehandlers from requests and print to the terminal that they're not currently supported
+
+	// TODO: use http.ReadRequest to read and send requests after preparing them
+
+	// TODO: use http.ReadResponse to compare possible response refs
 }
 
-// Takes string containing http requests and splits them by separators, removes comments and
-// inserts env variable values if possible, otherwise returns error
+// Takes string containing http requests and splits them by separators, removes comments and empty requests
+// and inserts env variable values, if possible.
+// Otherwise, exits program with exit code != 0
 func prepareHttpRequests(file string, conEnv string) []string {
-	// NOTE: enable multi-line mode flag (?m) to match all occurrences in string
+	// Split file by request separators.
+	// Exit, if no requests can be found after splitting.
+	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
 	regSeparator := regexp.MustCompile("(?m)^(###[^\u000D\u000A]*\u000D?\u000A)") // \r\n
-	splitSeparator := regSeparator.Split(file, -1)
-	if len(splitSeparator) == 0 {
+	result := regSeparator.Split(file, -1)
+	if len(result) == 0 {
 		log.Fatal("No requests could be parsed!")
 		os.Exit(1)
 	}
 
+	// Remove empty requests and comments
+	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
 	regComments := regexp.MustCompile("(?m)^(//|#)([^\u000D\u000A]*\u000D?\u000A)") // \r\n
 	removedComments := []string{}
-	for i := range splitSeparator {
-		if len(splitSeparator[i]) == 0 {
+	for i := range result {
+		if len(result[i]) == 0 {
 			continue
 		}
 
-		removed := regComments.ReplaceAllLiteralString(splitSeparator[i], "")
+		removed := regComments.ReplaceAllLiteralString(result[i], "")
 		removedComments = append(removedComments, removed)
 	}
+	result = removedComments
 
+	// Insert env variable values from json config.
+	// Exit, if one variable does not exist in json config.
 	regEnv := regexp.MustCompile("{{[ \u0009\u000C]*[A-Za-z0-9\\-_]+[ \u0009\u000C]*}}") // space\t\f
-	insertEnv := []string{}
 	allConfigKeys := viper.AllKeys()
-
-	for i := range removedComments {
-		env := removedComments[i]
+	for i := range result {
+		env := result[i]
 		envMatches := regEnv.FindAllString(env, -1)
 
 		if envMatches != nil {
@@ -153,7 +165,7 @@ func prepareHttpRequests(file string, conEnv string) []string {
 				}
 			}
 
-			// TODO: use one by comparison to ensure every match is represented in env variable config
+			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfigKeys) {
 				log.Fatal("There are undefined env variables present in your requests file!")
 				os.Exit(1)
@@ -165,11 +177,9 @@ func prepareHttpRequests(file string, conEnv string) []string {
 				inserted = strings.ReplaceAll(inserted, "{{"+strings.TrimPrefix(matchedConfigKeys[j], conEnv+".")+"}}",
 					configValue)
 			}
-			insertEnv = append(insertEnv, inserted)
+			result[i] = inserted
 		}
-
 	}
 
-	// TODO: concat requests which do not contain env variables
-	return insertEnv
+	return result
 }
