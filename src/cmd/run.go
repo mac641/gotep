@@ -108,8 +108,6 @@ func test(cmd *cobra.Command) {
 
 	// TODO: replace file refs with their contents and panic if they don't exist
 
-	// TODO: remove possible responsehandlers from requests and print to the terminal that they're not currently supported
-
 	// TODO: use http.ReadRequest to read and send requests after preparing them
 
 	// TODO: use http.ReadResponse to compare possible response refs
@@ -178,6 +176,27 @@ func prepareHttpRequests(file string, conEnv string) []string {
 					configValue)
 			}
 			result[i] = inserted
+		}
+	}
+
+	// Remove responsehandler from requests and prompt user that they are not going to be used
+	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
+	regResponseHandler := regexp.MustCompile("(?m)^>[ \t\f]+([^\r\n]*\r?\n$|{%(.|\r?\n)+%})")
+	for i := range result {
+		request := result[i]
+		responseHandlerMatches := regResponseHandler.FindAllString(request, -1)
+
+		if len(responseHandlerMatches) > 1 {
+			log.Fatal(`Some of your requests contain too many response handlers!\n
+			Ensure there's only one handler per request.`)
+			os.Exit(1)
+		}
+
+		if responseHandlerMatches != nil {
+			fmt.Println("Currently response handlers can't be validated and, therefore, will be ignored!")
+			result[i] = regResponseHandler.ReplaceAllLiteralString(request, "")
+
+			// TODO: enhance response handler regex to be able to determine, if '###' and '%}' literals have been used inside the handler block
 		}
 	}
 
