@@ -13,7 +13,8 @@
 				"-c",
 				"${workspaceFolder}/tests/test_files/http-client.env.json",
 				"-f",
-				"${workspaceFolder}/tests/test_files/default.http"
+				"${workspaceFolder}/tests/test_files/default.http",
+        "-v"
 			]
 		}
 	]
