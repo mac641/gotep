@@ -26,7 +26,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -111,28 +113,19 @@ func test(cmd *cobra.Command) {
 
 	preparedRequests := prepareHttpRequests(stringContent, conEnv)
 	parseHttpRequests(preparedRequests)
-	// for i := range preparedRequests {
-	// 	fmt.Print(preparedRequests[i])
-	// 	fmt.Println("--------------------------------------------")
-	// }
-
-	// TODO: replace file refs with their contents and panic if they don't exist
-
-	// TODO: use http.ReadRequest to read and send requests after preparing them
-
-	// TODO: use http.ReadResponse to compare possible response refs
+	// fmt.Println(preparedRequests)
 }
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests
 func parseHttpRequests(requests []string) []http.Request {
-	regRequestline := regexp.MustCompile("(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([0-9/\\[]|http|https)[^ \t\f]+)([ \t\f]+(HTTP/\\d+(\\.\\d+)?))?\r?\n|\r$")
+	regRequestline := regexp.MustCompile(`(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([\d/\[*]|http|https)[^ \t\f]*)([ \t\f]+(HTTP/\d+(\.\d+)?))?\r?\n|\r$`)
 	// regHeaders := regexp.MustCompile("(?m)^([^:]+):[ \t\f]*(([^\r\n]+((\r?\n|\r)($^[ \t\f]+)?))+)[ \t\f]*$")
 	// regBody :=
 
 	resultRequests := []http.Request{}
 	for i := range requests {
 		stringRequest := requests[i]
-		requestLineMatches := strings.Split(regRequestline.FindString(stringRequest), " ")
+		requestLineMatches := strings.Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), " ")
 
 		method := ""
 		url := ""
@@ -151,7 +144,6 @@ func parseHttpRequests(requests []string) []http.Request {
 		case 3:
 			method = requestLineMatches[0]
 			url = requestLineMatches[1]
-			// FIXME: prevent httpVersion from getting assigned to single new line
 			httpVersion = requestLineMatches[2]
 		default:
 			log.Fatal("One of your request lines could not be parsed!")
@@ -160,12 +152,16 @@ func parseHttpRequests(requests []string) []http.Request {
 			os.Exit(1)
 		}
 		stringRequest = regRequestline.ReplaceAllLiteralString(stringRequest, "")
-		fmt.Println(stringRequest+",", method+",", url+",", httpVersion)
+		fmt.Println(method+",", url+",", httpVersion)
 
 		if !isUrlValid(url) {
-			log.Fatal(url, "is not a valid URL. Exiting...")
+			log.Fatal(url + " is not a valid URL. Exiting...")
 			os.Exit(1)
 		}
+		// TODO: extract headers and store them in array
+		// TODO: extract message body and add them to requests
+		// TODO: remove response ref and prompt user that they're going to be ignored - instead every response code 200 will be treated as successful
+
 		// switch method {
 		// case "", "GET":
 		// 	req, err := http.NewRequest(http.MethodGet, url)
@@ -207,7 +203,7 @@ func prepareHttpRequests(file string, conEnv string) []string {
 
 	// Insert env variable values from json config.
 	// Exit, if one variable does not exist in json config.
-	regEnv := regexp.MustCompile("{{[ \u0009\u000C]*[A-Za-z0-9\\-_]+[ \u0009\u000C]*}}") // space\t\f
+	regEnv := regexp.MustCompile(`{{[ \\u0009\\u000C]*[\w\-]+[ \\u0009\\u000C]*}}`) // space\t\f
 	allConfigKeys := viper.AllKeys()
 	for i := range result {
 		env := result[i]
@@ -272,7 +268,22 @@ func prepareHttpRequests(file string, conEnv string) []string {
 }
 
 func isUrlValid(s string) bool {
-	// TODO: use uri.ParseRequestURI(s) to parse urls and afterwards use net.ParseIP(s) to parse IP if needed
-
+	regIp := regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[([A-Fa-f\d]{0,4}:?)*\]`)
+	_, err := url.Parse(s)
+	if err != nil {
+		ip := regIp.FindString(s)
+		ip = strings.TrimLeft(ip, "[")
+		ip = strings.TrimRight(ip, "]")
+		if ip == "" {
+			return false
+		}
+		address := net.ParseIP(ip)
+		if address == nil {
+			return false
+		}
+		s = regIp.ReplaceAllLiteralString(s, "")
+		_, err := url.Parse(s)
+		return err == nil
+	}
 	return true
 }
