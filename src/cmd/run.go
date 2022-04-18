@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -109,10 +110,11 @@ func test(cmd *cobra.Command) {
 	}
 
 	preparedRequests := prepareHttpRequests(stringContent, conEnv)
-	for i := range preparedRequests {
-		fmt.Print(preparedRequests[i])
-		fmt.Println("--------------------------------------------")
-	}
+	parseHttpRequests(preparedRequests)
+	// for i := range preparedRequests {
+	// 	fmt.Print(preparedRequests[i])
+	// 	fmt.Println("--------------------------------------------")
+	// }
 
 	// TODO: replace file refs with their contents and panic if they don't exist
 
@@ -122,9 +124,58 @@ func test(cmd *cobra.Command) {
 }
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests
-// func parseHttpRequests(requests []string) []http.Request {
+func parseHttpRequests(requests []string) []http.Request {
+	regRequestline := regexp.MustCompile("(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([0-9/\\[]|http|https)[^ \t\f]+)([ \t\f]+(HTTP/\\d+(\\.\\d+)?))?\r?\n|\r$")
+	// regHeaders := regexp.MustCompile("(?m)^([^:]+):[ \t\f]*(([^\r\n]+((\r?\n|\r)($^[ \t\f]+)?))+)[ \t\f]*$")
+	// regBody :=
 
-// }
+	resultRequests := []http.Request{}
+	for i := range requests {
+		stringRequest := requests[i]
+		requestLineMatches := strings.Split(regRequestline.FindString(stringRequest), " ")
+
+		method := ""
+		url := ""
+		httpVersion := ""
+		switch len(requestLineMatches) {
+		case 1:
+			url = requestLineMatches[0]
+		case 2:
+			if strings.Contains(requestLineMatches[1], "HTTP/") {
+				url = requestLineMatches[0]
+				httpVersion = requestLineMatches[1]
+			} else {
+				method = requestLineMatches[0]
+				url = requestLineMatches[1]
+			}
+		case 3:
+			method = requestLineMatches[0]
+			url = requestLineMatches[1]
+			// FIXME: prevent httpVersion from getting assigned to single new line
+			httpVersion = requestLineMatches[2]
+		default:
+			log.Fatal("One of your request lines could not be parsed!")
+			fmt.Println(Yellow + "Check request below for errors:" + Reset)
+			fmt.Println(stringRequest)
+			os.Exit(1)
+		}
+		stringRequest = regRequestline.ReplaceAllLiteralString(stringRequest, "")
+		fmt.Println(stringRequest+",", method+",", url+",", httpVersion)
+
+		if !isUrlValid(url) {
+			log.Fatal(url, "is not a valid URL. Exiting...")
+			os.Exit(1)
+		}
+		// switch method {
+		// case "", "GET":
+		// 	req, err := http.NewRequest(http.MethodGet, url)
+		// 	cobra.CheckErr(err)
+		// }
+
+	}
+
+	return resultRequests
+}
 
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
@@ -208,7 +259,7 @@ func prepareHttpRequests(file string, conEnv string) []string {
 
 		if responseHandlerMatches != nil {
 			if totalResponseHandlerCount == 0 {
-				fmt.Println(Yellow + "Currently response handlers can't be validated and, therefore, will be ignored!" + Reset)
+				fmt.Println(Yellow + "NOTE: Currently response handlers can't be validated and, therefore, will be ignored!" + Reset)
 			}
 			totalResponseHandlerCount++
 			result[i] = regResponseHandler.ReplaceAllLiteralString(request, "")
@@ -218,4 +269,10 @@ func prepareHttpRequests(file string, conEnv string) []string {
 	}
 
 	return result
+}
+
+func isUrlValid(s string) bool {
+	// TODO: use uri.ParseRequestURI(s) to parse urls and afterwards use net.ParseIP(s) to parse IP if needed
+
+	return true
 }
