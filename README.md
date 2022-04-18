@@ -22,3 +22,8 @@ Communicating throughout the source code can be done using one of the following 
 
 ### Git workflow
 This repo follows the **rebase-merge** workflow. Therefore, feature branches need to be rebased onto the *main* branch before they can be merged.
+
+### Development environment setup
+1. Clone the repository.
+2. Enable git hooks as described above.
+3. Run `go install` inside the `src` directory to install all necessary go dependencies.
