@@ -1,9 +1,10 @@
 ###
-GET 192.168.178.2/index
+### Test ipv4
+192.168.178.2/index
 Accept: application/json
 
-###
-GET 1111:2222:abcd:4444:5a6c:7777:9c9f:6789/index
+### Test multiple headers
+GET 192.168.178.3/index
 Accept: application/json
   text/html
 // Comment 1
@@ -15,7 +16,7 @@ Content-Type: application/json
 < ./input.json
 
 ### Test with message body and absolute path
-POST http://www.example.com/test1
+POST http://www.example.com/test1 HTTP/2
 Content-Type: application/json
 
 {
