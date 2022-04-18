@@ -118,6 +118,7 @@ func test(cmd *cobra.Command) {
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests
 func parseHttpRequests(requests []string) []http.Request {
+	// NOTE: enable multi-line mode flag (?m) to match all occurrences in string
 	regRequestline := regexp.MustCompile(`(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([\d/\[*]|http|https)[^ \t\f]*)([ \t\f]+(HTTP/\d+(\.\d+)?))?\r?\n|\r$`)
 	// regHeaders := regexp.MustCompile("(?m)^([^:]+):[ \t\f]*(([^\r\n]+((\r?\n|\r)($^[ \t\f]+)?))+)[ \t\f]*$")
 	// regBody :=
@@ -125,7 +126,8 @@ func parseHttpRequests(requests []string) []http.Request {
 	resultRequests := []http.Request{}
 	for i := range requests {
 		stringRequest := requests[i]
-		requestLineMatches := strings.Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), " ")
+		// TODO: check for \t, \f and maybe multiple spaces when splitting
+		requestLineMatches := strings.Split(strings.Trim(regRequestline.FindString(stringRequest), "\r\n"), " ")
 
 		method := ""
 		url := ""
@@ -213,8 +215,7 @@ func prepareHttpRequests(file string, conEnv string) []string {
 			matchedConfigKeys := []string{}
 
 			for j := range envMatches {
-				match := strings.TrimLeft(envMatches[j], "{")
-				match = strings.TrimRight(match, "}")
+				match := strings.Trim(envMatches[j], "{}")
 
 				for k := range allConfigKeys {
 					if strings.Contains(allConfigKeys[k], match) && strings.Contains(allConfigKeys[k], conEnv) {
@@ -272,15 +273,16 @@ func isUrlValid(s string) bool {
 	_, err := url.Parse(s)
 	if err != nil {
 		ip := regIp.FindString(s)
-		ip = strings.TrimLeft(ip, "[")
-		ip = strings.TrimRight(ip, "]")
+		ip = strings.Trim(ip, "[]")
 		if ip == "" {
 			return false
 		}
+
 		address := net.ParseIP(ip)
 		if address == nil {
 			return false
 		}
+
 		s = regIp.ReplaceAllLiteralString(s, "")
 		_, err := url.Parse(s)
 		return err == nil
