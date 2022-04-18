@@ -44,6 +44,17 @@ var (
 		// has an action associated with it:
 		// Run: func(cmd *cobra.Command, args []string) { },
 	}
+
+	// Terminal output colors
+	Reset  = "\033[0m"
+	Red    = "\033[31m"
+	Green  = "\033[32m"
+	Yellow = "\033[33m"
+	Blue   = "\033[34m"
+	Purple = "\033[35m"
+	Cyan   = "\033[36m"
+	Gray   = "\033[37m"
+	White  = "\033[97m"
 )
 
 const (
@@ -68,7 +79,7 @@ func init() {
 
 	// cobra.OnInitialize(initConfig, initTests)
 
-	// TODO: check verbose flag before printing to command line
+	// TODO: implement custom print queue for better formatted output
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false,
 		"print log messages (default is false)")
 

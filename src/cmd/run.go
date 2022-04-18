@@ -77,7 +77,7 @@ func initConfig(cmd *cobra.Command) {
 		viper.SetConfigName("http-client.env")
 	}
 
-	if err := viper.ReadInConfig(); err == nil {
+	if err := viper.ReadInConfig(); err == nil && verbose {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 }
@@ -90,6 +90,10 @@ func test(cmd *cobra.Command) {
 		cobra.CheckErr(err)
 		tests += "default.http"
 	}
+	if verbose {
+		fmt.Println("Using requests file:", tests)
+	}
+
 	content, err := ioutil.ReadFile(tests)
 	if err != nil {
 		log.Fatal(err)
@@ -100,9 +104,13 @@ func test(cmd *cobra.Command) {
 	stringContent := string(content)
 	conEnv, err := cmd.Flags().GetString(configEnv)
 	cobra.CheckErr(err)
-	requests := prepareHttpRequests(stringContent, conEnv)
-	for i := range requests {
-		fmt.Print(requests[i])
+	if verbose {
+		fmt.Println("Using environment config:", conEnv)
+	}
+
+	preparedRequests := prepareHttpRequests(stringContent, conEnv)
+	for i := range preparedRequests {
+		fmt.Print(preparedRequests[i])
 		fmt.Println("--------------------------------------------")
 	}
 
@@ -113,6 +121,11 @@ func test(cmd *cobra.Command) {
 	// TODO: use http.ReadResponse to compare possible response refs
 }
 
+// Takes array of strings representing prepared http requests and parses them into array of http.Requests
+// func parseHttpRequests(requests []string) []http.Request {
+
+// }
+
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
 // Otherwise, exits program with exit code != 0
@@ -120,7 +133,7 @@ func prepareHttpRequests(file string, conEnv string) []string {
 	// Split file by request separators.
 	// Exit, if no requests can be found after splitting.
 	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
-	regSeparator := regexp.MustCompile("(?m)^(###[^\u000D\u000A]*\u000D?\u000A)") // \r\n
+	regSeparator := regexp.MustCompile("(?m)^(###[^\u000D\u000A]*(\u000D?\u000A|\u000D))") // \r\n
 	result := regSeparator.Split(file, -1)
 	if len(result) == 0 {
 		log.Fatal("No requests could be parsed!")
@@ -129,7 +142,7 @@ func prepareHttpRequests(file string, conEnv string) []string {
 
 	// Remove empty requests and comments
 	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
-	regComments := regexp.MustCompile("(?m)^(//|#)([^\u000D\u000A]*\u000D?\u000A)") // \r\n
+	regComments := regexp.MustCompile("(?m)^(//|#)([^\u000D\u000A]*(\u000D?\u000A|\u000D))") // \r\n
 	removedComments := []string{}
 	for i := range result {
 		if len(result[i]) == 0 {
@@ -181,7 +194,8 @@ func prepareHttpRequests(file string, conEnv string) []string {
 
 	// Remove responsehandler from requests and prompt user that they are not going to be used
 	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
-	regResponseHandler := regexp.MustCompile("(?m)^>[ \t\f]+([^\r\n]*\r?\n$|{%(.|\r?\n)+%})")
+	regResponseHandler := regexp.MustCompile("(?m)^>[ \t\f]+([^\r\n]*(\u000D?\u000A|\u000D)$|{%(.|(\u000D?\u000A|\u000D))+%})(\u000D?\u000A|\u000D)")
+	totalResponseHandlerCount := 0
 	for i := range result {
 		request := result[i]
 		responseHandlerMatches := regResponseHandler.FindAllString(request, -1)
@@ -193,7 +207,10 @@ func prepareHttpRequests(file string, conEnv string) []string {
 		}
 
 		if responseHandlerMatches != nil {
-			fmt.Println("Currently response handlers can't be validated and, therefore, will be ignored!")
+			if totalResponseHandlerCount == 0 {
+				fmt.Println(Yellow + "Currently response handlers can't be validated and, therefore, will be ignored!" + Reset)
+			}
+			totalResponseHandlerCount++
 			result[i] = regResponseHandler.ReplaceAllLiteralString(request, "")
 
 			// TODO: enhance response handler regex to be able to determine, if '###' and '%}' literals have been used inside the handler block
