@@ -120,15 +120,16 @@ func test(cmd *cobra.Command) {
 func parseHttpRequests(requests []string) []http.Request {
 	// NOTE: enable multi-line mode flag (?m) to match all occurrences in string
 	regRequestline := regexp.MustCompile(`(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([\d/\[*]|http|https)[^ \t\f]*)([ \t\f]+(HTTP/\d+(\.\d+)?))?\r?\n|\r$`)
-	// regHeaders := regexp.MustCompile("(?m)^([^:]+):[ \t\f]*(([^\r\n]+((\r?\n|\r)($^[ \t\f]+)?))+)[ \t\f]*$")
-	// regBody :=
+	regEmptyNewline := regexp.MustCompile(`(?m)^\r?\n|\r$`)
+	regHeaders := regexp.MustCompile(`(?m)^(?P<Fieldname>[\w\-]+):[ \t\f]*(?P<Fieldvalue>[^\r\n]+[ \t\f]*)$`)
+	regInputFileRef := regexp.MustCompile(`(?m)^<[ \t\f]+(?P<Filepath>[^\r\n]+)$`)
 
 	resultRequests := []http.Request{}
 	for i := range requests {
 		stringRequest := requests[i]
-		// TODO: check for \t, \f and maybe multiple spaces when splitting
-		requestLineMatches := strings.Split(strings.Trim(regRequestline.FindString(stringRequest), "\r\n"), " ")
 
+		// Parse request line
+		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), -1)
 		method := ""
 		url := ""
 		httpVersion := ""
@@ -153,26 +154,105 @@ func parseHttpRequests(requests []string) []http.Request {
 			fmt.Println(stringRequest)
 			os.Exit(1)
 		}
-		stringRequest = regRequestline.ReplaceAllLiteralString(stringRequest, "")
-		fmt.Println(method+",", url+",", httpVersion)
+		stringHeaderMessage := strings.Trim(regRequestline.ReplaceAllLiteralString(stringRequest, ""), "\r\n")
 
 		if !isUrlValid(url) {
 			log.Fatal(url + " is not a valid URL. Exiting...")
 			os.Exit(1)
 		}
-		// TODO: extract headers and store them in array
+
+		// Separate headers / message body and parse them afterwards
+		// TODO: validate and reduce code duplication of case 1 and case 2
+		splitEmptyNewline := regEmptyNewline.Split(stringHeaderMessage, -1)
+		var parsedHeaders []string
+		switch len(splitEmptyNewline) {
+		case 0:
+			if verbose {
+				fmt.Println("No headers / message body have been provided for\\n" + stringRequest)
+			}
+			// TODO: create request directly in here
+		case 1:
+			match := splitEmptyNewline[0]
+			if regHeaders.MatchString(match) {
+				if verbose {
+					fmt.Println("No message has been provided for\n" + stringRequest)
+				}
+
+				headers := regexp.MustCompile("\r?\n|\r").Split(match, -1)
+				// fmt.Println(headerSplitNewline)
+				parsedHeaders = parseHeaders(headers, *regHeaders)
+				if len(parsedHeaders) <= 0 {
+					log.Fatal("Misconfigured headers found!")
+					fmt.Println(Yellow + "Check request below for errors:" + Reset)
+					fmt.Println(stringRequest)
+					os.Exit(1)
+				}
+				// TODO: create request directly in here
+			} else {
+				if verbose {
+					fmt.Println("No headers have been provided for\n" + stringRequest)
+				}
+
+				if regInputFileRef.MatchString(match) {
+					fmt.Println(match)
+					// TODO: use io.Reader to create request directly in here
+				} else {
+					fmt.Println(match)
+					// TODO: use message to create request directly in here; maybe write to message to temp file and use io.Reader, too
+				}
+			}
+		case 2:
+			message := splitEmptyNewline[1]
+
+			headers := regexp.MustCompile("\r?\n|\r").Split(splitEmptyNewline[0], -1)
+			// fmt.Println(headerSplitNewline)
+			parsedHeaders = parseHeaders(headers, *regHeaders)
+			if len(parsedHeaders) <= 0 {
+				log.Fatal("Misconfigured headers found!")
+				fmt.Println(Yellow + "Check request below for errors:" + Reset)
+				fmt.Println(stringRequest)
+				os.Exit(1)
+			}
+
+			if regInputFileRef.MatchString(message) {
+				fmt.Println(message)
+				// TODO: use io.Reader to create request directly in here
+			} else {
+				fmt.Println(message)
+				// TODO: use message to create request directly in here; maybe write to message to temp file and use io.Reader, too
+			}
+		default:
+			log.Fatal("Too many in-between line breaks detected!")
+			fmt.Println(Yellow + "Check request below for errors:" + Reset)
+			fmt.Println(stringRequest)
+			os.Exit(1)
+		}
 		// TODO: extract message body and add them to requests
-		// TODO: remove response ref and prompt user that they're going to be ignored - instead every response code 200 will be treated as successful
-
-		// switch method {
-		// case "", "GET":
-		// 	req, err := http.NewRequest(http.MethodGet, url)
-		// 	cobra.CheckErr(err)
-		// }
-
 	}
 
 	return resultRequests
+}
+
+// Takes array of header strings splitted by new line, detects related header values and concats them
+func parseHeaders(s []string, regHeaders regexp.Regexp) []string {
+	result := []string{}
+
+	for j := range s {
+		headerMatch := strings.Trim(s[j], "\r\n \t\f")
+		if regHeaders.MatchString(headerMatch) {
+			result = append(result, headerMatch)
+		} else {
+			if len(result) > 0 && headerMatch != "" {
+				result[len(result)-1] += ", " + headerMatch
+			} else if headerMatch == "" {
+				continue
+			} else {
+
+			}
+		}
+	}
+
+	return result
 }
 
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
@@ -264,6 +344,8 @@ func prepareHttpRequests(file string, conEnv string) []string {
 			// TODO: enhance response handler regex to be able to determine, if '###' and '%}' literals have been used inside the handler block
 		}
 	}
+
+	// TODO: remove response ref and prompt user that they're going to be ignored - instead every response code 200 will be treated as successful
 
 	return result
 }
