@@ -54,3 +54,12 @@ console.log('Hello world!'); %}
 ### Test asterisk form
 OPTIONS * HTTP/1.1
 Host: http://example.com:8080
+### Test no header and message
+OPTIONS * HTTP/1.1
+### Test message only
+OPTIONS * HTTP/1.1
+
+{
+  "html": "<h1>I'm an example heading!</h1>",
+  {{jsonvalue}}
+}
