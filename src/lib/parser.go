@@ -13,48 +13,42 @@ import (
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests
 func ParseHttpRequests(requests []string, verbose bool) []http.Request {
-	// NOTE: enable multi-line mode flag (?m) to match all occurrences in string
-	regRequestline := regexp.MustCompile(`(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([\d/\[*]|http|https)[^ \t\f]*)([ \t\f]+(HTTP/\d+(\.\d+)?))?\r?\n|\r$`)
-	regEmptyNewline := regexp.MustCompile(`(?m)^\r?\n|\r$`)
-	regHeaders := regexp.MustCompile(`(?m)^(?P<Fieldname>[\w\-]+):[ \t\f]*(?P<Fieldvalue>[^\r\n]+[ \t\f]*)$`)
-	regInputFileRef := regexp.MustCompile(`(?m)^<[ \t\f]+(?P<Filepath>[^\r\n]+)$`)
-
 	resultRequests := []http.Request{}
 	for i := range requests {
 		stringRequest := requests[i]
 
 		// Parse request line
-		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), -1)
-		method := ""
-		url := ""
-		httpVersion := ""
-		switch len(requestLineMatches) {
-		case 1:
-			url = requestLineMatches[0]
-		case 2:
-			if strings.Contains(requestLineMatches[1], "HTTP/") {
-				url = requestLineMatches[0]
-				httpVersion = requestLineMatches[1]
-			} else {
-				method = requestLineMatches[0]
-				url = requestLineMatches[1]
-			}
-		case 3:
-			method = requestLineMatches[0]
-			url = requestLineMatches[1]
-			httpVersion = requestLineMatches[2]
-		default:
-			log.Fatal("One of your request lines could not be parsed!")
-			fmt.Println(Yellow + "Check request below for errors:" + Reset)
-			fmt.Println(stringRequest)
-			os.Exit(1)
-		}
+		// requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), -1)
+		// method := ""
+		// url := ""
+		// httpVersion := ""
+		// switch len(requestLineMatches) {
+		// case 1:
+		// 	url = requestLineMatches[0]
+		// case 2:
+		// 	if strings.Contains(requestLineMatches[1], "HTTP/") {
+		// 		url = requestLineMatches[0]
+		// 		httpVersion = requestLineMatches[1]
+		// 	} else {
+		// 		method = requestLineMatches[0]
+		// 		url = requestLineMatches[1]
+		// 	}
+		// case 3:
+		// 	method = requestLineMatches[0]
+		// 	url = requestLineMatches[1]
+		// 	httpVersion = requestLineMatches[2]
+		// default:
+		// 	log.Fatal("One of your request lines could not be parsed!")
+		// 	fmt.Println(Yellow + "Check request below for errors:" + Reset)
+		// 	fmt.Println(stringRequest)
+		// 	os.Exit(1)
+		// }
 		stringHeaderMessage := strings.Trim(regRequestline.ReplaceAllLiteralString(stringRequest, ""), "\r\n")
 
-		if !IsUrlValid(url) {
-			log.Fatal(url + " is not a valid URL. Exiting...")
-			os.Exit(1)
-		}
+		// if !IsUrlValid(url) {
+		// 	log.Fatal(url + " is not a valid URL. Exiting...")
+		// 	os.Exit(1)
+		// }
 
 		// Separate headers / message body and parse them afterwards
 		// TODO: validate and reduce code duplication of case 1 and case 2
@@ -73,7 +67,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 					fmt.Println("No message has been provided for\n" + stringRequest)
 				}
 
-				headers := regexp.MustCompile("\r?\n|\r").Split(match, -1)
+				headers := regLineEnding.Split(match, -1)
 				// fmt.Println(headerSplitNewline)
 				parsedHeaders = parseHeaders(headers, *regHeaders)
 				if len(parsedHeaders) <= 0 {
@@ -99,7 +93,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 		case 2:
 			message := splitEmptyNewline[1]
 
-			headers := regexp.MustCompile("\r?\n|\r").Split(splitEmptyNewline[0], -1)
+			headers := regLineEnding.Split(splitEmptyNewline[0], -1)
 			// fmt.Println(headerSplitNewline)
 			parsedHeaders = parseHeaders(headers, *regHeaders)
 			if len(parsedHeaders) <= 0 {
@@ -111,6 +105,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 
 			if regInputFileRef.MatchString(message) {
 				fmt.Println(message)
+				// TODO: validate file path
 				// TODO: use io.Reader to create request directly in here
 			} else {
 				fmt.Println(message)
@@ -134,8 +129,6 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 func PrepareHttpRequests(file string, conEnv string) []string {
 	// Split file by request separators.
 	// Exit, if no requests can be found after splitting.
-	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
-	regSeparator := regexp.MustCompile("(?m)^(###[^\u000D\u000A]*(\u000D?\u000A|\u000D))") // \r\n
 	result := regSeparator.Split(file, -1)
 	if len(result) == 0 {
 		log.Fatal("No requests could be parsed!")
@@ -143,8 +136,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 	}
 
 	// Remove empty requests and comments
-	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
-	regComments := regexp.MustCompile("(?m)^(//|#)([^\u000D\u000A]*(\u000D?\u000A|\u000D))") // \r\n
 	removedComments := []string{}
 	for i := range result {
 		if len(result[i]) == 0 {
@@ -158,7 +149,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 
 	// Insert env variable values from json config.
 	// Exit, if one variable does not exist in json config.
-	regEnv := regexp.MustCompile(`{{[ \\u0009\\u000C]*[\w\-]+[ \\u0009\\u000C]*}}`) // space\t\f
 	allConfigKeys := viper.AllKeys()
 	for i := range result {
 		env := result[i]
@@ -194,8 +184,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 	}
 
 	// Remove responsehandler from requests and prompt user that they are not going to be used
-	// NOTE: enable multi-line mode flag (?m) to match all occurrences in file string
-	regResponseHandler := regexp.MustCompile("(?m)^>[ \t\f]+([^\r\n]*(\u000D?\u000A|\u000D)$|{%(.|(\u000D?\u000A|\u000D))+%})(\u000D?\u000A|\u000D)")
 	totalResponseHandlerCount := 0
 	for i := range result {
 		request := result[i]
@@ -219,7 +207,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 	}
 
 	// TODO: remove response ref and prompt user that they're going to be ignored - instead every response code 200 will be treated as successful
-	regResponseRef := regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
 	totalResponseRefCount := 0
 	for i := range result {
 		request := result[i]

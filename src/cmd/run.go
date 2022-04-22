@@ -109,6 +109,6 @@ func test(cmd *cobra.Command) {
 	}
 
 	preparedRequests := lib.PrepareHttpRequests(stringContent, conEnv)
+	fmt.Println(preparedRequests)
 	lib.ParseHttpRequests(preparedRequests, verbose)
-	// fmt.Println(preparedRequests)
 }
