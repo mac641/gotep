@@ -88,9 +88,58 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 			fmt.Println(Red + "Too many in-between line breaks detected!" + Reset)
 			fmt.Println(Yellow + "Check request below for errors:" + Reset)
 			fmt.Println(stringRequest)
+			os.Exit(1)
 		}
 
 		// TODO: use message and parsedHeaders to assemble request
+		// Assemble request
+		var httpRequest *http.Request
+		var err error
+		switch method {
+		case "", "GET":
+			httpRequest, err = http.NewRequest(http.MethodGet, url, message)
+		case "HEAD":
+			httpRequest, err = http.NewRequest(http.MethodHead, url, message)
+		case "POST":
+			httpRequest, err = http.NewRequest(http.MethodPost, url, message)
+		case "PUT":
+			httpRequest, err = http.NewRequest(http.MethodPut, url, message)
+		case "DELETE":
+			httpRequest, err = http.NewRequest(http.MethodDelete, url, message)
+		case "CONNECT":
+			httpRequest, err = http.NewRequest(http.MethodConnect, url, message)
+		case "PATCH":
+			httpRequest, err = http.NewRequest(http.MethodPatch, url, message)
+		case "OPTIONS":
+			httpRequest, err = http.NewRequest(http.MethodOptions, url, message)
+		case "TRACE":
+			httpRequest, err = http.NewRequest(http.MethodTrace, url, message)
+		default:
+			log.Fatal("Undefined http method value found in\n" + stringRequest)
+		}
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		// NOTE: http version can only be set when acting as server
+		if httpVersion != "" {
+			fmt.Println(Yellow + "NOTE: Http version can not be set. Therefore, it will be ignored!" + Reset)
+			// httpRequest.Proto = httpVersion
+		}
+
+		if len(parsedHeaders) > 0 {
+			for i := range parsedHeaders {
+				header := parsedHeaders[i]
+				splitHeader := strings.Split(header, ": ")
+				if len(splitHeader) > 2 {
+					fmt.Println(header)
+					log.Fatal("The header shown above is invalid!")
+				}
+				httpRequest.Header.Add(splitHeader[0], splitHeader[1])
+			}
+		}
+
+		resultRequests = append(resultRequests, *httpRequest)
 	}
 
 	return resultRequests
@@ -105,7 +154,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 	result := regSeparator.Split(file, -1)
 	if len(result) == 0 {
 		log.Fatal("No requests could be parsed!")
-		os.Exit(1)
 	}
 
 	// Remove empty requests and comments
@@ -197,6 +245,7 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 }
 
 // Takes array of header strings splitted by new line, detects related header values and concats them
+// TODO: return headers in appropriate http.Headers formatted map (map[string][]string)
 func parseHeaders(headers []string) []string {
 	result := []string{}
 
@@ -226,7 +275,8 @@ func parseMessage(message string) io.Reader {
 	var file io.Reader
 	var err error
 	if regInputFileRef.MatchString(message) {
-		file, err = os.Open(message)
+		// FIXME: adjust path to be readable from within the application (prepend workdir or something like that)
+		file, err = os.Open(strings.TrimPrefix(message, "< "))
 	} else {
 		file, err = strings.NewReader(message), nil
 	}
