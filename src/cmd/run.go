@@ -346,6 +346,26 @@ func prepareHttpRequests(file string, conEnv string) []string {
 	}
 
 	// TODO: remove response ref and prompt user that they're going to be ignored - instead every response code 200 will be treated as successful
+	regResponseRef := regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
+	totalResponseRefCount := 0
+	for i := range result {
+		request := result[i]
+		responseRefMatches := regResponseRef.FindAllString(request, -1)
+
+		if len(responseRefMatches) > 1 {
+			log.Fatal(`Some of your requests contain too many response refs!\n
+			Ensure there is only one reference per request.`)
+			os.Exit(1)
+		}
+
+		if responseRefMatches != nil {
+			if totalResponseRefCount == 0 {
+				fmt.Println(Yellow + "NOTE: Currently response references can't be validated and, therefore, will be ignored!" + Reset)
+			}
+			totalResponseRefCount++
+			result[i] = regResponseRef.ReplaceAllLiteralString(request, "")
+		}
+	}
 
 	return result
 }
