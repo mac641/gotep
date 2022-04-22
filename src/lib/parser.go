@@ -1,7 +1,9 @@
 package lib
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -18,106 +20,77 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 		stringRequest := requests[i]
 
 		// Parse request line
-		// requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), -1)
-		// method := ""
-		// url := ""
-		// httpVersion := ""
-		// switch len(requestLineMatches) {
-		// case 1:
-		// 	url = requestLineMatches[0]
-		// case 2:
-		// 	if strings.Contains(requestLineMatches[1], "HTTP/") {
-		// 		url = requestLineMatches[0]
-		// 		httpVersion = requestLineMatches[1]
-		// 	} else {
-		// 		method = requestLineMatches[0]
-		// 		url = requestLineMatches[1]
-		// 	}
-		// case 3:
-		// 	method = requestLineMatches[0]
-		// 	url = requestLineMatches[1]
-		// 	httpVersion = requestLineMatches[2]
-		// default:
-		// 	log.Fatal("One of your request lines could not be parsed!")
-		// 	fmt.Println(Yellow + "Check request below for errors:" + Reset)
-		// 	fmt.Println(stringRequest)
-		// 	os.Exit(1)
-		// }
+		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), -1)
+		method := ""
+		url := ""
+		httpVersion := ""
+		switch len(requestLineMatches) {
+		case 1:
+			url = requestLineMatches[0]
+		case 2:
+			if strings.Contains(requestLineMatches[1], "HTTP/") {
+				url = requestLineMatches[0]
+				httpVersion = requestLineMatches[1]
+			} else {
+				method = requestLineMatches[0]
+				url = requestLineMatches[1]
+			}
+		case 3:
+			method = requestLineMatches[0]
+			url = requestLineMatches[1]
+			httpVersion = requestLineMatches[2]
+		default:
+			fmt.Println(Red + "One of your request lines could not be parsed!" + Reset)
+			fmt.Println(Yellow + "Check request below for errors:" + Reset)
+			fmt.Println(stringRequest)
+			os.Exit(1)
+		}
 		stringHeaderMessage := strings.Trim(regRequestline.ReplaceAllLiteralString(stringRequest, ""), "\r\n")
 
-		// if !IsUrlValid(url) {
-		// 	log.Fatal(url + " is not a valid URL. Exiting...")
-		// 	os.Exit(1)
-		// }
+		if !IsUrlValid(url) {
+			log.Fatal(url + " is not a valid URL. Exiting...")
+		}
 
 		// Separate headers / message body and parse them afterwards
-		// TODO: validate and reduce code duplication of case 1 and case 2
 		splitEmptyNewline := regEmptyNewline.Split(stringHeaderMessage, -1)
-		var parsedHeaders []string
+		parsedHeaders := []string{}
+		var message io.Reader
 		switch len(splitEmptyNewline) {
 		case 0:
 			if verbose {
-				fmt.Println("No headers / message body have been provided for\\n" + stringRequest)
+				fmt.Println("Neither headers, nor a message body have/has been provided for\\n" + stringRequest)
 			}
-			// TODO: create request directly in here
 		case 1:
 			match := splitEmptyNewline[0]
 			if regHeaders.MatchString(match) {
 				if verbose {
-					fmt.Println("No message has been provided for\n" + stringRequest)
+					fmt.Println("No message body has been provided for\n" + stringRequest)
 				}
 
-				headers := regLineEnding.Split(match, -1)
-				// fmt.Println(headerSplitNewline)
-				parsedHeaders = parseHeaders(headers, *regHeaders)
-				if len(parsedHeaders) <= 0 {
-					log.Fatal("Misconfigured headers found!")
-					fmt.Println(Yellow + "Check request below for errors:" + Reset)
-					fmt.Println(stringRequest)
-					os.Exit(1)
-				}
-				// TODO: create request directly in here
+				parsedHeaders = parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
+
 			} else {
 				if verbose {
 					fmt.Println("No headers have been provided for\n" + stringRequest)
 				}
 
-				if regInputFileRef.MatchString(match) {
-					fmt.Println(match)
-					// TODO: use io.Reader to create request directly in here
-				} else {
-					fmt.Println(match)
-					// TODO: use message to create request directly in here; maybe write to message to temp file and use io.Reader, too
-				}
+				message = parseMessage(match)
 			}
 		case 2:
-			message := splitEmptyNewline[1]
-
-			headers := regLineEnding.Split(splitEmptyNewline[0], -1)
-			// fmt.Println(headerSplitNewline)
-			parsedHeaders = parseHeaders(headers, *regHeaders)
-			if len(parsedHeaders) <= 0 {
-				log.Fatal("Misconfigured headers found!")
-				fmt.Println(Yellow + "Check request below for errors:" + Reset)
-				fmt.Println(stringRequest)
-				os.Exit(1)
+			if verbose {
+				fmt.Println("Headers and message body detected in\n" + stringRequest)
 			}
 
-			if regInputFileRef.MatchString(message) {
-				fmt.Println(message)
-				// TODO: validate file path
-				// TODO: use io.Reader to create request directly in here
-			} else {
-				fmt.Println(message)
-				// TODO: use message to create request directly in here; maybe write to message to temp file and use io.Reader, too
-			}
+			parsedHeaders = parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
+			message = parseMessage(splitEmptyNewline[1])
+
 		default:
-			log.Fatal("Too many in-between line breaks detected!")
+			fmt.Println(Red + "Too many in-between line breaks detected!" + Reset)
 			fmt.Println(Yellow + "Check request below for errors:" + Reset)
 			fmt.Println(stringRequest)
-			os.Exit(1)
 		}
-		// TODO: extract message body and add them to requests
+
+		// TODO: use message and parsedHeaders to assemble request
 	}
 
 	return resultRequests
@@ -125,7 +98,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
-// Otherwise, exits program with exit code != 0
+// Otherwise, exits program with exit code != 0.
 func PrepareHttpRequests(file string, conEnv string) []string {
 	// Split file by request separators.
 	// Exit, if no requests can be found after splitting.
@@ -136,16 +109,13 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 	}
 
 	// Remove empty requests and comments
-	removedComments := []string{}
 	for i := range result {
 		if len(result[i]) == 0 {
 			continue
 		}
 
-		removed := regComments.ReplaceAllLiteralString(result[i], "")
-		removedComments = append(removedComments, removed)
+		result[i] = regComments.ReplaceAllLiteralString(result[i], "")
 	}
-	result = removedComments
 
 	// Insert env variable values from json config.
 	// Exit, if one variable does not exist in json config.
@@ -170,7 +140,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfigKeys) {
 				log.Fatal("There are undefined env variables present in your requests file!")
-				os.Exit(1)
 			}
 
 			inserted := env
@@ -192,7 +161,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 		if len(responseHandlerMatches) > 1 {
 			log.Fatal(`Some of your requests contain too many response handlers!\n
 			Ensure there's only one handler per request.`)
-			os.Exit(1)
 		}
 
 		if responseHandlerMatches != nil {
@@ -206,7 +174,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 		}
 	}
 
-	// TODO: remove response ref and prompt user that they're going to be ignored - instead every response code 200 will be treated as successful
 	totalResponseRefCount := 0
 	for i := range result {
 		request := result[i]
@@ -215,7 +182,6 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 		if len(responseRefMatches) > 1 {
 			log.Fatal(`Some of your requests contain too many response refs!\n
 			Ensure there is only one reference per request.`)
-			os.Exit(1)
 		}
 
 		if responseRefMatches != nil {
@@ -231,11 +197,11 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 }
 
 // Takes array of header strings splitted by new line, detects related header values and concats them
-func parseHeaders(s []string, regHeaders regexp.Regexp) []string {
+func parseHeaders(headers []string) []string {
 	result := []string{}
 
-	for j := range s {
-		headerMatch := strings.Trim(s[j], "\r\n \t\f")
+	for j := range headers {
+		headerMatch := strings.Trim(headers[j], "\r\n \t\f")
 		if regHeaders.MatchString(headerMatch) {
 			result = append(result, headerMatch)
 		} else {
@@ -244,10 +210,30 @@ func parseHeaders(s []string, regHeaders regexp.Regexp) []string {
 			} else if headerMatch == "" {
 				continue
 			} else {
-
+				fmt.Println(Red + "Misconfigured header found!" + Reset)
+				fmt.Println(Yellow + "Check header below for errors:" + Reset)
+				fmt.Println(headerMatch)
+				os.Exit(1)
 			}
 		}
 	}
 
 	return result
+}
+
+// Takes message string, detects whether it is a filepath or direct message strings and wraps them as io.Reader
+func parseMessage(message string) io.Reader {
+	var file io.Reader
+	var err error
+	if regInputFileRef.MatchString(message) {
+		file, err = os.Open(message)
+	} else {
+		file, err = strings.NewReader(message), nil
+	}
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	return bufio.NewReader(file)
 }
