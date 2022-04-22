@@ -42,7 +42,7 @@ Content-Type: {{headervalue}}
   {{jsonvalue}}
 }
 
-### Test response handler
+### Test response handler / ref
 POST http://example.com/auth
 Content-Type: application/json
 
