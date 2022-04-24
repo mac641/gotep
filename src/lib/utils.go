@@ -3,12 +3,14 @@ package lib
 import (
 	"net"
 	"net/url"
-	"regexp"
+	"path"
+	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 func IsUrlValid(s string) bool {
-	regIp := regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[([A-Fa-f\d]{0,4}:?)*\]`)
 	_, err := url.Parse(s)
 	if err != nil {
 		ip := regIp.FindString(s)
@@ -27,4 +29,18 @@ func IsUrlValid(s string) bool {
 		return err == nil
 	}
 	return true
+}
+
+func ConvertToAbsolutePath(p string, prefix string) string {
+	if filepath.IsAbs(p) {
+		return p
+	}
+
+	if prefix != "." && prefix != "" {
+		p = path.Join(prefix, p)
+	}
+	absPath, err := filepath.Abs(p)
+	cobra.CheckErr(err)
+
+	return absPath
 }

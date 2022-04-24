@@ -10,11 +10,12 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests
-func ParseHttpRequests(requests []string, verbose bool) []http.Request {
+func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []http.Request {
 	resultRequests := []http.Request{}
 	for i := range requests {
 		stringRequest := requests[i]
@@ -74,7 +75,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 					fmt.Println("No headers have been provided for\n" + stringRequest)
 				}
 
-				message = parseMessage(match)
+				message = parseMessage(match, pathPrefix)
 			}
 		case 2:
 			if verbose {
@@ -82,7 +83,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 			}
 
 			parsedHeaders = parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
-			message = parseMessage(splitEmptyNewline[1])
+			message = parseMessage(splitEmptyNewline[1], pathPrefix)
 
 		default:
 			fmt.Println(Red + "Too many in-between line breaks detected!" + Reset)
@@ -117,9 +118,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 		default:
 			log.Fatal("Undefined http method value found in\n" + stringRequest)
 		}
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		cobra.CheckErr(err)
 
 		// NOTE: http version can only be set when acting as server
 		if httpVersion != "" {
@@ -133,7 +132,7 @@ func ParseHttpRequests(requests []string, verbose bool) []http.Request {
 				splitHeader := strings.Split(header, ": ")
 				if len(splitHeader) > 2 {
 					fmt.Println(header)
-					log.Fatal("The header shown above is invalid!")
+					log.Fatal("The header displayed above is invalid!")
 				}
 				httpRequest.Header.Add(splitHeader[0], splitHeader[1])
 			}
@@ -217,11 +216,10 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 			}
 			totalResponseHandlerCount++
 			result[i] = regResponseHandler.ReplaceAllLiteralString(request, "")
-
-			// TODO: enhance response handler regex to be able to determine, if '###' and '%}' literals have been used inside the handler block
 		}
 	}
 
+	// Remove response ref from requests and prompt user that they are not going to be used
 	totalResponseRefCount := 0
 	for i := range result {
 		request := result[i]
@@ -271,19 +269,18 @@ func parseHeaders(headers []string) []string {
 }
 
 // Takes message string, detects whether it is a filepath or direct message strings and wraps them as io.Reader
-func parseMessage(message string) io.Reader {
+func parseMessage(message string, pathPrefix string) io.Reader {
 	var file io.Reader
 	var err error
 	if regInputFileRef.MatchString(message) {
-		// FIXME: adjust path to be readable from within the application (prepend workdir or something like that)
-		file, err = os.Open(strings.TrimPrefix(message, "< "))
+		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
+		absMessagePath := ConvertToAbsolutePath(message, pathPrefix)
+		file, err = os.Open(absMessagePath)
 	} else {
 		file, err = strings.NewReader(message), nil
 	}
 
-	if err != nil {
-		log.Fatal(err.Error())
-	}
+	cobra.CheckErr(err)
 
 	return bufio.NewReader(file)
 }

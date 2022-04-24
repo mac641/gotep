@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -84,10 +85,13 @@ func initConfig(cmd *cobra.Command) {
 
 func test(cmd *cobra.Command) {
 	tests, err := cmd.Flags().GetString(file)
+	pathPrefix := filepath.Dir(tests)
 	cobra.CheckErr(err)
 	if tests == "" {
 		tests, err := os.Getwd()
 		cobra.CheckErr(err)
+		pathPrefix = tests
+
 		tests += "default.http"
 	}
 	if verbose {
@@ -98,10 +102,10 @@ func test(cmd *cobra.Command) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	stringContent := string(content)
 
 	// TODO: invoke parsing of test_files here
 	// Parse test file
-	stringContent := string(content)
 	conEnv, err := cmd.Flags().GetString(configEnv)
 	cobra.CheckErr(err)
 	if verbose {
@@ -110,6 +114,7 @@ func test(cmd *cobra.Command) {
 
 	preparedRequests := lib.PrepareHttpRequests(stringContent, conEnv)
 	// fmt.Println(preparedRequests)
-	parsedHttpRequests := lib.ParseHttpRequests(preparedRequests, verbose)
+	// TODO: Implement global logging
+	parsedHttpRequests := lib.ParseHttpRequests(preparedRequests, verbose, pathPrefix)
 	fmt.Println(parsedHttpRequests)
 }
