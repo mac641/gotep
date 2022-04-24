@@ -16,11 +16,12 @@ const (
 )
 
 var (
-	// Parser regex
+	// Lib regex
 	// NOTE: multi-line mode flag (?m) enables ^ and $ to match line beginnings and endings, rather than string beginnings and endings
-	regSeparator       = regexp.MustCompile(`(?m)^(###[^\r\n]*(\r?\n|\r))`)
-	regComments        = regexp.MustCompile(`(?m)^(//|#)([^\r\n]*(\r?\n|\r))`)
-	regEnv             = regexp.MustCompile(`{{[ \t\f]*[\w\-]+[ \t\f]*}}`)
+	regSeparator = regexp.MustCompile(`(?m)^(###[^\r\n]*(\r?\n|\r))`)
+	regComments  = regexp.MustCompile(`(?m)^(//|#)([^\r\n]*(\r?\n|\r))`)
+	regEnv       = regexp.MustCompile(`{{[ \t\f]*[\w\-]+[ \t\f]*}}`)
+	// TODO: enhance response handler regex to be able to determine, if '###' and '%}' literals have been used inside the handler block
 	regResponseHandler = regexp.MustCompile(`(?m)^>[ \t\f]+([^\r\n]*(\r?\n|\r)$|{%(.|(\r?\n|\r))+%})(\r?\n|\r)`)
 	regResponseRef     = regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
 	regRequestline     = regexp.MustCompile(`(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([\d/\[*]|http|https)[^ \t\f]*)([ \t\f]+(HTTP/\d+(\.\d+)?))?\r?\n|\r$`)
@@ -28,4 +29,5 @@ var (
 	regLineEnding      = regexp.MustCompile(`\r?\n|\r`)
 	regHeaders         = regexp.MustCompile(`(?m)^(?P<Fieldname>[\w\-]+):[ \t\f]*(?P<Fieldvalue>[^\r\n]+[ \t\f]*)$`)
 	regInputFileRef    = regexp.MustCompile(`(?m)^<[ \t\f]+(?P<Filepath>[^\r\n]+)$`)
+	regIp              = regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[([A-Fa-f\d]{0,4}:?)*\]`)
 )
