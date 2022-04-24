@@ -117,4 +117,12 @@ func test(cmd *cobra.Command) {
 	// TODO: Implement global logging
 	parsedHttpRequests := lib.ParseHttpRequests(preparedRequests, verbose, pathPrefix)
 	fmt.Println(parsedHttpRequests)
+
+	// TODO: collect requests and print ALL results on console, rather than exiting at every failed requests
+	// client := &http.Client{}
+	// for i := range parsedHttpRequests {
+	// 	r, err := client.Do(&parsedHttpRequests[i])
+	// 	cobra.CheckErr(err)
+	// 	fmt.Println(r)
+	// }
 }

@@ -1,6 +1,6 @@
 ###
 ### Test ipv4
-192.168.178.2/index
+192.168.178.2/index/https
 Accept: application/json
 
 ### Test multiple headers
