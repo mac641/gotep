@@ -29,5 +29,6 @@ var (
 	regLineEnding      = regexp.MustCompile(`\r?\n|\r`)
 	regHeaders         = regexp.MustCompile(`(?m)^(?P<Fieldname>[\w\-]+):[ \t\f]*(?P<Fieldvalue>[^\r\n]+[ \t\f]*)$`)
 	regInputFileRef    = regexp.MustCompile(`(?m)^<[ \t\f]+(?P<Filepath>[^\r\n]+)$`)
-	regIp              = regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[([A-Fa-f\d]{0,4}:?)*\]`)
+	regIp              = regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[([A-Fa-f\d%]{0,4}:?){0,8}\]`)
+	regUrlScheme       = regexp.MustCompile(`(?m)^(http|https)://`)
 )

@@ -51,6 +51,10 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 		if !IsUrlValid(url) {
 			log.Fatal(url + " is not a valid URL. Exiting...")
 		}
+		// NOTE: Ensure ip addresses will be stored as hosts, otherwise creating requests fails
+		if !regUrlScheme.MatchString(url) && regIp.MatchString(url) {
+			url = "http://" + url
+		}
 
 		// Separate headers / message body and parse them afterwards
 		splitEmptyNewline := regEmptyNewline.Split(stringHeaderMessage, -1)
@@ -122,7 +126,7 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 
 		// NOTE: http version can only be set when acting as server
 		if httpVersion != "" {
-			fmt.Println(Yellow + "NOTE: Http version can not be set. Therefore, it will be ignored!" + Reset)
+			fmt.Println(Yellow + "NOTE: Http version can't be set and, therefore, will be ignored!" + Reset)
 			// httpRequest.Proto = httpVersion
 		}
 
@@ -156,13 +160,15 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 	}
 
 	// Remove empty requests and comments
+	noEmptyRequests := []string{}
 	for i := range result {
 		if len(result[i]) == 0 {
 			continue
 		}
 
-		result[i] = regComments.ReplaceAllLiteralString(result[i], "")
+		noEmptyRequests = append(noEmptyRequests, regComments.ReplaceAllLiteralString(result[i], ""))
 	}
+	result = noEmptyRequests
 
 	// Insert env variable values from json config.
 	// Exit, if one variable does not exist in json config.
