@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
 # An example hook script to verify what is about to be committed.
 # Called by "git commit" with no arguments.  The hook should
 # exit with non-zero status after issuing an appropriate message if
@@ -7,11 +9,17 @@
 #
 # To enable this hook, rename this file to "pre-commit".
 
+# TODO: only check files staged for commit
 # Check if all go files have been formatted
-if [ $(make check-linting | wc -l | grep -q 0) ]; then
+cd "${SCRIPT_DIR}"/../ || exit 1
+PRE_COMMIT_RESULT="$(make check-linting)"
+if [ $? != 0 ]; then
   tput setaf 1
   echo "Your go files have not been formatted properly!"
   echo "Run 'make fmt' in project root directory to do so."
   tput setaf 7
+  echo ""
+  echo "Linter output:"
+  echo "$PRE_COMMIT_RESULT"
   exit 1
 fi
