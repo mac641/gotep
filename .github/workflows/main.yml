@@ -1,0 +1,33 @@
+name: lint, test and build gotep
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  lint-test-and-build:
+    name: Lint, test and build gotep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.18'
+      - name: Install dependencies
+        run: cd src; go install
+      - name: Lint
+        run: make check-linting
+      - name: Test
+        run: make test
+      - name: Build
+        run: make
+      - name: Archive gotep release
+        uses: actions/upload-artifact@v2
+        with:
+          name: gotep
+          path: bin/gotep
