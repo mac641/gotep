@@ -17,6 +17,7 @@ import (
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests
 func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []http.Request {
 	resultRequests := []http.Request{}
+	isFirstHttpVersionOccurrence := true
 	for i := range requests {
 		stringRequest := requests[i]
 
@@ -126,7 +127,10 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 
 		// NOTE: http version can only be set when acting as server
 		if httpVersion != "" {
-			fmt.Println(Yellow + "NOTE: Http version can't be set and, therefore, will be ignored!" + Reset)
+			if isFirstHttpVersionOccurrence {
+				fmt.Println(Yellow + "NOTE: Http versions can't be set and, therefore, will be ignored!" + Reset)
+				isFirstHttpVersionOccurrence = false
+			}
 			// httpRequest.Proto = httpVersion
 		}
 
@@ -205,44 +209,43 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 		}
 	}
 
-	// Remove responsehandler from requests and prompt user that they are not going to be used
-	totalResponseHandlerCount := 0
+	// Remove responsehandler / response ref from requests and prompt user that they are not going to be used
+	isFirstResponseHandlerOccurrence := true
+	isFirstResponseRefOccurrence := true
 	for i := range result {
 		request := result[i]
-		responseHandlerMatches := regResponseHandler.FindAllString(request, -1)
 
+		// Remove response handler
+		responseHandlerMatches := regResponseHandler.FindAllString(request, -1)
 		if len(responseHandlerMatches) > 1 {
 			log.Fatal(`Some of your requests contain too many response handlers!\n
 			Ensure there's only one handler per request.`)
 		}
 
 		if responseHandlerMatches != nil {
-			if totalResponseHandlerCount == 0 {
+			if isFirstResponseHandlerOccurrence {
 				fmt.Println(Yellow + "NOTE: Currently response handlers can't be validated and, therefore, will be ignored!" + Reset)
+				isFirstResponseHandlerOccurrence = false
 			}
-			totalResponseHandlerCount++
-			result[i] = regResponseHandler.ReplaceAllLiteralString(request, "")
+			request = regResponseHandler.ReplaceAllLiteralString(request, "")
 		}
-	}
 
-	// Remove response ref from requests and prompt user that they are not going to be used
-	totalResponseRefCount := 0
-	for i := range result {
-		request := result[i]
+		// Remove response ref
 		responseRefMatches := regResponseRef.FindAllString(request, -1)
-
 		if len(responseRefMatches) > 1 {
 			log.Fatal(`Some of your requests contain too many response refs!\n
 			Ensure there is only one reference per request.`)
 		}
 
 		if responseRefMatches != nil {
-			if totalResponseRefCount == 0 {
+			if isFirstResponseRefOccurrence {
 				fmt.Println(Yellow + "NOTE: Currently response references can't be validated and, therefore, will be ignored!" + Reset)
+				isFirstResponseRefOccurrence = false
 			}
-			totalResponseRefCount++
-			result[i] = regResponseRef.ReplaceAllLiteralString(request, "")
+			request = regResponseRef.ReplaceAllLiteralString(request, "")
 		}
+
+		result[i] = request
 	}
 
 	return result
