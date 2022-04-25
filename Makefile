@@ -9,17 +9,27 @@ go build -o ../gotep
 check-updates: src/go.mod
 	cd src; \
 go list -u -m all; \
-cd ..
 
-clean: gotep
-	trash-put gotep
+.PHONY: check-linting
+check-linting:
+	gofmt -l .
 
-.PHONY: fmt
-fmt:
+clean: bin/gotep
+	trash-put bin/gotep
+
+fmt: check-linting
 	gofmt -w -s .
 
-.PHONY: update
-update: check-updates src/go.mod
+.PHONY: mod-tidy
+mod-tidy: src/go.mod
 	cd src; \
-go get -t -u ./...; \
-cd ..
+go mod tidy -e
+
+.PHONY: test
+test:
+	cd src; \
+go test
+
+update: check-updates src/go.mod mod-tidy
+	cd src; \
+go get -u ./...; \
