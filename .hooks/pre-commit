@@ -8,9 +8,9 @@
 # To enable this hook, rename this file to "pre-commit".
 
 # Check if all go files have been formatted
-if [ $(gofmt -l . | wc -l | grep -q 0) ]; then
+if [ $(make check-linting | wc -l | grep -q 0) ]; then
   tput setaf 1
-  echo "You go files have not been formatted!"
+  echo "Your go files have not been formatted properly!"
   echo "Run 'make fmt' in project root directory to do so."
   tput setaf 7
   exit 1
