@@ -88,12 +88,12 @@ type TreeShapeListener struct {
 	*parser.BasehttpSpecListener
 }
 
-// func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
-// 	const separator = ","
-// 	fmt.Println(ctx.GetStart(), separator, ctx.GetStop())
-// 	fmt.Println(ctx.GetText())
-// 	fmt.Println()
-// }
+func (tsl *TreeShapeListener) EnterEveryRule(ctx antlr.ParserRuleContext) {
+	const separator = ","
+	fmt.Println(ctx.GetStart(), separator, ctx.GetStop())
+	fmt.Println(ctx.GetText())
+	fmt.Println()
+}
 
 func (tsl *TreeShapeListener) ExitRequest(ctx parser.RequestContext) {
 	fmt.Println(ctx.GetText())
@@ -107,18 +107,18 @@ func test(cmd *cobra.Command) {
 		cobra.CheckErr(err)
 		tests += "default.http"
 	}
-	// content, err := ioutil.ReadFile(tests)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	content, err := ioutil.ReadFile(tests)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Parse test file
-	// stringContent := string(content)
-	charStream, _ := antlr.NewFileStream(tests)
+	stringContent := string(content)
+	charStream, _ := antlr.NewFileStream(stringContent)
 	lexer := parser.NewhttpSpecLexer(charStream)
 	stream := antlr.NewCommonTokenStream(lexer, 0)
 	p := parser.NewhttpSpecParser(stream)
 	p.AddErrorListener(antlr.NewDiagnosticErrorListener(false)) // TODO: handle parsing errors
 	p.BuildParseTrees = true
-	antlr.ParseTreeWalkerDefault.Walk(&TreeShapeListener{}, p.File())
+	antlr.ParseTreeWalkerDefault.Walk(&TreeShapeListener{}, p.Requestfile())
 }

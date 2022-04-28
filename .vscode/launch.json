@@ -22,7 +22,7 @@
 			"request": "launch",
 			"input": "tests/test_files/default.http",
 			"grammar": "src/lib/parser/httpSpec.g4",
-			"startRule": "file",
+			"startRule": "requestfile",
 			"printParseTree": true,
 			"visualParseTree": true
 		}
