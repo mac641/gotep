@@ -11,24 +11,47 @@ import (
 )
 
 func IsUrlValid(s string) bool {
-	_, err := url.Parse(s)
-	if err != nil {
-		ip := regIp.FindString(s)
-		ip = strings.Trim(ip, "[]")
-		if ip == "" {
-			return false
-		}
-
-		address := net.ParseIP(ip)
-		if address == nil {
-			return false
-		}
-
-		s = regIp.ReplaceAllLiteralString(s, "")
-		_, err := url.Parse(s)
-		return err == nil
+	// Return false on empty string
+	if s == "" {
+		return false
 	}
-	return true
+
+	// Check asterisk form
+	if s == "*" {
+		return true
+	}
+
+	// Check absolute / origin form
+	_, err := url.ParseRequestURI(s)                                      // returns true if absolute URI or absolute path
+	if err == nil && (regUrlScheme.MatchString(s) || filepath.IsAbs(s)) { // Check for misspelled url schemes since ParseRequestUri does accept these
+		return true
+	}
+
+	// Check if relative url (not relative path) by prepending "http://"
+	if !(strings.Contains(s, ":/") || strings.Contains(s, "//") || regIp.MatchString(s)) && len(strings.Split(s, ".")) > 1 { // Exclude misspelled urls schemes, urls containing ip addresses and relative paths
+		absoluteUrl := "http://" + s
+		_, err = url.ParseRequestURI(absoluteUrl)
+		if err == nil {
+			return true
+		}
+	}
+
+	// Check if ip is valid
+	ip := regIp.FindString(s)
+	ip = strings.Trim(ip, "[]")
+	if ip == "" {
+		return false
+	}
+
+	address := net.ParseIP(ip)
+	if address == nil {
+		return false
+	}
+
+	// Check if remaining path segment is valid
+	s = regIp.ReplaceAllLiteralString(s, "")
+	_, err = url.ParseRequestURI(s)
+	return err == nil
 }
 
 func ConvertToAbsolutePath(p string, prefix string) string {
