@@ -1,11 +1,9 @@
-package lib_test
+package lib
 
 import (
 	"path"
 	"path/filepath"
 	"testing"
-
-	"github.com/mac641/gotep/src/lib"
 )
 
 func TestIsUrlValid(t *testing.T) {
@@ -30,14 +28,14 @@ func TestIsUrlValid(t *testing.T) {
 	)
 
 	for i := range validUrls {
-		valid := lib.IsUrlValid(validUrls[i])
+		valid := IsUrlValid(validUrls[i])
 		if !valid {
 			t.Errorf("Expected %s to be valid url.", validUrls[i])
 		}
 	}
 
 	for i := range invalidUrls {
-		invalid := lib.IsUrlValid(invalidUrls[i])
+		invalid := IsUrlValid(invalidUrls[i])
 		if invalid {
 			t.Errorf("Expected %s to be invalid url.", invalidUrls[i])
 		}
@@ -50,19 +48,19 @@ func TestConvertToAbsolutePath(t *testing.T) {
 		p      = "a/relative/path"
 	)
 
-	result := lib.ConvertToAbsolutePath(prefix, prefix)
+	result := ConvertToAbsolutePath(prefix, prefix)
 	if result != prefix {
 		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s", prefix, result)
 	}
 
-	result = lib.ConvertToAbsolutePath(p, prefix)
+	result = ConvertToAbsolutePath(p, prefix)
 	assertValueJoin := path.Join(prefix, p)
 	if result != assertValueJoin {
 		t.Errorf("Absolute paths using given prefixes have to be joined properly! Expected: %s, Got %s",
 			assertValueJoin, result)
 	}
 
-	result = lib.ConvertToAbsolutePath(p, "")
+	result = ConvertToAbsolutePath(p, "")
 	assertValueAbs, err := filepath.Abs(p)
 	if err != nil {
 		t.Errorf("Error while generating absolute path. Error: %s", err.Error())

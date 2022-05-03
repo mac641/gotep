@@ -112,7 +112,7 @@ func test(cmd *cobra.Command) {
 		fmt.Println("Using environment config:", conEnv)
 	}
 
-	preparedRequests := lib.PrepareHttpRequests(stringContent, conEnv)
+	preparedRequests := lib.PrepareHttpRequests(stringContent, conEnv, lib.PrepareHttpRequestsHelper{})
 	// fmt.Println(preparedRequests)
 	// TODO: Implement global logging
 	parsedHttpRequests := lib.ParseHttpRequests(preparedRequests, verbose, pathPrefix)

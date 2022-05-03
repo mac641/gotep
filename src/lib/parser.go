@@ -14,9 +14,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Takes array of strings representing prepared http requests and parses them into array of http.Requests
+// Interfaces and structs needed for mocked unit testing
+type PrepareHttpRequestsHelperInterface interface {
+	getConfig(envMatches []string, conEnv string) map[string]string
+}
+
+type PrepareHttpRequestsHelper struct{}
+
+// Takes array of strings representing prepared http requests and parses them into array of http.Requests.
 func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []http.Request {
-	resultRequests := []http.Request{}
+	httpRequests := []http.Request{}
 	isFirstHttpVersionOccurrence := true
 	for i := range requests {
 		stringRequest := requests[i]
@@ -146,76 +153,58 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 			}
 		}
 
-		resultRequests = append(resultRequests, *httpRequest)
+		httpRequests = append(httpRequests, *httpRequest)
 	}
 
-	return resultRequests
+	return httpRequests
 }
 
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
 // Otherwise, exits program with exit code != 0.
-func PrepareHttpRequests(file string, conEnv string) []string {
+func PrepareHttpRequests(file string, conEnv string, helper PrepareHttpRequestsHelperInterface) []string {
 	// Split file by request separators.
 	// Exit, if no requests can be found after splitting.
-	result := regSeparator.Split(file, -1)
-	if len(result) == 0 {
+	requests := regSeparator.Split(file, -1)
+	if len(requests) == 0 {
 		log.Fatal("No requests could be parsed!")
 	}
 
 	// Remove empty requests and comments
 	noEmptyRequests := []string{}
-	for i := range result {
-		if len(result[i]) == 0 {
+	for i := range requests {
+		if len(requests[i]) == 0 {
 			continue
 		}
 
-		noEmptyRequests = append(noEmptyRequests, regComments.ReplaceAllLiteralString(result[i], ""))
+		noEmptyRequests = append(noEmptyRequests, regComments.ReplaceAllLiteralString(requests[i], ""))
 	}
-	result = noEmptyRequests
+	requests = noEmptyRequests
 
-	// Insert env variable values from json config.
-	// Exit, if one variable does not exist in json config.
-	allConfigKeys := viper.AllKeys()
-	for i := range result {
-		env := result[i]
-		envMatches := regEnv.FindAllString(env, -1)
+	isFirstResponseHandlerOccurrence := true
+	isFirstResponseRefOccurrence := true
+	for i := range requests {
+		request := requests[i]
+
+		// Insert env variable values from json config.
+		// Exit, if one variable does not exist in json config.
+		envMatches := regEnv.FindAllString(request, -1)
 
 		if envMatches != nil {
-			matchedConfigKeys := []string{}
-
-			for j := range envMatches {
-				match := strings.Trim(envMatches[j], "{}")
-
-				for k := range allConfigKeys {
-					if strings.Contains(allConfigKeys[k], match) && strings.Contains(allConfigKeys[k], conEnv) {
-						matchedConfigKeys = append(matchedConfigKeys, allConfigKeys[k])
-					}
-				}
-			}
+			matchedConfig := helper.getConfig(envMatches, conEnv)
 
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
-			if len(envMatches) != len(matchedConfigKeys) {
+			if len(envMatches) != len(matchedConfig) {
 				log.Fatal("There are undefined env variables present in your requests file!")
 			}
 
-			inserted := env
-			for j := range matchedConfigKeys {
-				configValue := viper.GetString(matchedConfigKeys[j])
-				inserted = strings.ReplaceAll(inserted, "{{"+strings.TrimPrefix(matchedConfigKeys[j], conEnv+".")+"}}",
+			for configKey, configValue := range matchedConfig {
+				request = strings.ReplaceAll(request, "{{"+strings.TrimPrefix(configKey, conEnv+".")+"}}",
 					configValue)
 			}
-			result[i] = inserted
 		}
-	}
 
-	// Remove responsehandler / response ref from requests and prompt user that they are not going to be used
-	isFirstResponseHandlerOccurrence := true
-	isFirstResponseRefOccurrence := true
-	for i := range result {
-		request := result[i]
-
-		// Remove response handler
+		// Remove response handler from request and prompt user that they are not going to be used
 		responseHandlerMatches := regResponseHandler.FindAllString(request, -1)
 		if len(responseHandlerMatches) > 1 {
 			log.Fatal(`Some of your requests contain too many response handlers!\n
@@ -230,7 +219,7 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 			request = regResponseHandler.ReplaceAllLiteralString(request, "")
 		}
 
-		// Remove response ref
+		// Remove response ref from request and prompt user that they are not going to be used
 		responseRefMatches := regResponseRef.FindAllString(request, -1)
 		if len(responseRefMatches) > 1 {
 			log.Fatal(`Some of your requests contain too many response refs!\n
@@ -245,24 +234,45 @@ func PrepareHttpRequests(file string, conEnv string) []string {
 			request = regResponseRef.ReplaceAllLiteralString(request, "")
 		}
 
-		result[i] = request
+		requests[i] = request
 	}
 
-	return result
+	return requests
+}
+
+// Takes array of environment variable matches and compares them to keys stored in config.
+// It returns an array of all config keys that have been matched.
+func (h PrepareHttpRequestsHelper) getConfig(envMatches []string, conEnv string) map[string]string {
+	matchedConfig := make(map[string]string)
+	configKeys := viper.AllKeys()
+
+	for i := range envMatches {
+		match := strings.Trim(envMatches[i], "{}")
+
+		for j := range configKeys {
+			configKey := configKeys[j]
+			configValue := viper.GetString(configKey)
+			if strings.Contains(configKey, conEnv+"."+match) {
+				matchedConfig[match] = configValue
+			}
+		}
+	}
+
+	return matchedConfig
 }
 
 // Takes array of header strings splitted by new line, detects related header values and concats them
 // TODO: return headers in appropriate http.Headers formatted map (map[string][]string)
 func parseHeaders(headers []string) []string {
-	result := []string{}
+	parsedHeaders := []string{}
 
-	for j := range headers {
-		headerMatch := strings.Trim(headers[j], "\r\n \t\f")
+	for i := range headers {
+		headerMatch := strings.Trim(headers[i], "\r\n \t\f")
 		if regHeaders.MatchString(headerMatch) {
-			result = append(result, headerMatch)
+			parsedHeaders = append(parsedHeaders, headerMatch)
 		} else {
-			if len(result) > 0 && headerMatch != "" {
-				result[len(result)-1] += ", " + headerMatch
+			if len(parsedHeaders) > 0 && headerMatch != "" {
+				parsedHeaders[len(parsedHeaders)-1] += ", " + headerMatch
 			} else if headerMatch == "" {
 				continue
 			} else {
@@ -274,7 +284,7 @@ func parseHeaders(headers []string) []string {
 		}
 	}
 
-	return result
+	return parsedHeaders
 }
 
 // Takes message string, detects whether it is a filepath or direct message strings and wraps them as io.Reader
