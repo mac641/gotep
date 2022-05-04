@@ -28,7 +28,7 @@ go mod tidy -e
 .PHONY: test
 test:
 	cd src; \
-go test
+go test ./... -cover
 
 update: check-updates src/go.mod mod-tidy
 	cd src; \

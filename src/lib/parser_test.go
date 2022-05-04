@@ -100,6 +100,69 @@ OPTIONS * HTTP/1.1
 }
 `
 
+var testDataForParsing = []string{
+	`192.168.178.2/index/https
+Accept: application/json
+
+`,
+	`GET 192.168.178.3/index
+Accept: application/json
+ text/html
+From: test@test.com
+`,
+	`POST http://www.example.com/test1
+Content-Type: application/json
+
+< ./input.json
+
+`,
+	`POST http://www.example.com/test1 HTTP/2
+Content-Type: application/json
+
+{
+  "html": "Html message"
+}
+
+`,
+	`GET [1111:2222:abcd:4444:5a6c:7777:9c9f:6789]/index
+Accept: application/json
+
+`,
+	`GET http://localhost:3333/tests/available
+Accept: application/json
+
+`,
+	`POST http://localhost:3333/tests/pdf
+Content-Type: 1234
+
+{
+  "html": "<h1>I'm an example heading!</h1>",
+  "test": "some text with
+line break"
+}
+
+`,
+	`POST http://example.com/auth
+Content-Type: application/json
+
+< input.json
+
+`,
+	`OPTIONS * HTTP/1.1
+Host: http://example.com:8080
+`,
+	`OPTIONS * HTTP/1.1
+`,
+	`OPTIONS * HTTP/1.1
+
+{
+  "html": "<h1>I'm an example heading!</h1>",
+  "test": "some text with
+line break"
+}
+`,
+}
+
 func TestPrepareHttpRequests(t *testing.T) {
 	requests := PrepareHttpRequests(testDataForPreparing, "default", PrepareHttpRequestsHelperMock{})
 
@@ -128,6 +191,19 @@ func TestPrepareHttpRequests(t *testing.T) {
 
 		if regResponseRef.MatchString(result) {
 			t.Errorf("Expected %s not to contain response refs!", result)
+		}
+	}
+}
+
+func TestParseHttpRequests(t *testing.T) {
+	httpRequests := ParseHttpRequests(testDataForParsing, false, "../../test_files")
+
+	for i := range httpRequests {
+		request := httpRequests[i]
+
+		// TODO: use better url validation for testing
+		if request.URL.String() == "" {
+			t.Errorf("Expected requests to contain valid url!")
 		}
 	}
 }

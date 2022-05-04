@@ -29,7 +29,8 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 		stringRequest := requests[i]
 
 		// Parse request line
-		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n"), -1)
+		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(
+			regRequestline.FindString(stringRequest), "\r\n"), -1)
 		method := ""
 		url := ""
 		httpVersion := ""
