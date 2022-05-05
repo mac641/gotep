@@ -11,18 +11,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
-// Interfaces and structs needed for mocked unit testing
-type PrepareHttpRequestsHelperInterface interface {
-	getConfig(envMatches []string, conEnv string) map[string]string
+type Parser struct {
+	ConEnv     string
+	Verbose    bool
+	PathPrefix string
+	Config     map[string]string
 }
 
-type PrepareHttpRequestsHelper struct{}
-
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests.
-func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []http.Request {
+func (p *Parser) Parse(requests []string) []http.Request {
 	httpRequests := []http.Request{}
 	isFirstHttpVersionOccurrence := true
 	for i := range requests {
@@ -77,32 +76,32 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 		var message io.Reader
 		switch len(splitEmptyNewline) {
 		case 0:
-			if verbose {
+			if p.Verbose {
 				fmt.Println("Neither headers, nor a message body have/has been provided for\\n" + stringRequest)
 			}
 		case 1:
 			match := splitEmptyNewline[0]
 			if regHeaders.MatchString(match) {
-				if verbose {
+				if p.Verbose {
 					fmt.Println("No message body has been provided for\n" + stringRequest)
 				}
 
-				parsedHeaders = parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
+				parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 
 			} else {
-				if verbose {
+				if p.Verbose {
 					fmt.Println("No headers have been provided for\n" + stringRequest)
 				}
 
-				message = parseMessage(match, pathPrefix)
+				message = p.parseMessage(match)
 			}
 		case 2:
-			if verbose {
+			if p.Verbose {
 				fmt.Println("Headers and message body detected in\n" + stringRequest)
 			}
 
-			parsedHeaders = parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
-			message = parseMessage(splitEmptyNewline[1], pathPrefix)
+			parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
+			message = p.parseMessage(splitEmptyNewline[1])
 		default:
 			fmt.Println(Red + "Too many in-between line breaks detected!" + Reset)
 			fmt.Println(Yellow + "Check request below for errors:" + Reset)
@@ -167,7 +166,7 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
 // Otherwise, exits program with exit code != 0.
-func PrepareHttpRequests(file string, conEnv string, helper PrepareHttpRequestsHelperInterface) []string {
+func (p *Parser) Prepare(file string) []string {
 	// Split file by request separators.
 	// Exit, if no requests can be found after splitting.
 	requests := regSeparator.Split(file, -1)
@@ -196,7 +195,7 @@ func PrepareHttpRequests(file string, conEnv string, helper PrepareHttpRequestsH
 		envMatches := regEnv.FindAllString(request, -1)
 
 		if envMatches != nil {
-			matchedConfig := helper.getConfig(envMatches, conEnv)
+			matchedConfig := p.getConfig(envMatches)
 
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfig) {
@@ -204,8 +203,7 @@ func PrepareHttpRequests(file string, conEnv string, helper PrepareHttpRequestsH
 			}
 
 			for configKey, configValue := range matchedConfig {
-				request = strings.ReplaceAll(request, "{{"+strings.TrimPrefix(configKey, conEnv+".")+"}}",
-					configValue)
+				request = strings.ReplaceAll(request, fmt.Sprintf("{{%s}}", configKey), configValue)
 			}
 		}
 
@@ -249,17 +247,14 @@ func PrepareHttpRequests(file string, conEnv string, helper PrepareHttpRequestsH
 
 // Takes array of environment variable matches and compares them to keys stored in config.
 // It returns an array of all config keys that have been matched.
-func (h PrepareHttpRequestsHelper) getConfig(envMatches []string, conEnv string) map[string]string {
+func (p *Parser) getConfig(envMatches []string) map[string]string {
 	matchedConfig := make(map[string]string)
-	configKeys := viper.AllKeys()
 
 	for i := range envMatches {
 		match := strings.Trim(envMatches[i], "{}")
 
-		for j := range configKeys {
-			configKey := configKeys[j]
-			configValue := viper.GetString(configKey)
-			if strings.Contains(configKey, conEnv+"."+match) {
+		for configKey, configValue := range p.Config {
+			if strings.Contains(configKey, match) {
 				matchedConfig[match] = configValue
 			}
 		}
@@ -277,7 +272,7 @@ func (h PrepareHttpRequestsHelper) getConfig(envMatches []string, conEnv string)
 
 // Takes array of header strings splitted by new line, detects related header values and concats them
 // TODO: return headers in appropriate http.Headers formatted map (map[string][]string)
-func parseHeaders(headers []string) []string {
+func (p *Parser) parseHeaders(headers []string) []string {
 	parsedHeaders := []string{}
 
 	for i := range headers {
@@ -302,12 +297,12 @@ func parseHeaders(headers []string) []string {
 }
 
 // Takes message string, detects whether it is a filepath or direct message strings and wraps them as io.Reader
-func parseMessage(message string, pathPrefix string) io.Reader {
+func (p *Parser) parseMessage(message string) io.Reader {
 	var file io.Reader
 	var err error
 	if regInputFileRef.MatchString(message) {
 		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
-		absMessagePath := ConvertToAbsolutePath(message, pathPrefix)
+		absMessagePath := ConvertToAbsolutePath(message, p.PathPrefix)
 		file, err = os.Open(absMessagePath)
 	} else {
 		file, err = strings.NewReader(message), nil
