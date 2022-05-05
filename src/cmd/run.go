@@ -104,18 +104,30 @@ func test(cmd *cobra.Command) {
 	}
 	stringContent := string(content)
 
-	// TODO: invoke parsing of test_files here
-	// Parse test file
+	// Check if environment config exists and use it, if so
 	conEnv, err := cmd.Flags().GetString(configEnv)
 	cobra.CheckErr(err)
+	if !viper.IsSet(conEnv) {
+		log.Fatalf("%s does not exist in your config file!", conEnv)
+	}
 	if verbose {
-		fmt.Println("Using environment config:", conEnv)
+		fmt.Println("Using config environment:", conEnv)
+	}
+	currentConfig := viper.GetStringMapString(conEnv)
+
+	// Create parser
+	parser := lib.Parser{
+		ConEnv:     conEnv,
+		Verbose:    verbose,
+		PathPrefix: pathPrefix,
+		Config:     currentConfig,
 	}
 
-	preparedRequests := lib.PrepareHttpRequests(stringContent, conEnv, lib.PrepareHttpRequestsHelper{})
+	// Parse test file
+	preparedRequests := parser.Prepare(stringContent)
 	// fmt.Println(preparedRequests)
 	// TODO: Implement global logging
-	parsedHttpRequests := lib.ParseHttpRequests(preparedRequests, verbose, pathPrefix)
+	parsedHttpRequests := parser.Parse(preparedRequests)
 	fmt.Println(parsedHttpRequests)
 
 	// TODO: collect requests and print ALL results on console, rather than exiting at every failed request

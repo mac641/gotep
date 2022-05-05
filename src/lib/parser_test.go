@@ -1,36 +1,11 @@
-package lib
+package lib_test
 
 import (
-	"log"
-	"strings"
+	"regexp"
 	"testing"
+
+	"github.com/mac641/gotep/src/lib"
 )
-
-type PrepareHttpRequestsHelperMock struct{}
-
-// TODO: check if it is better practice to only mock viper calls, rather than the whole getConfig function
-func (hm PrepareHttpRequestsHelperMock) getConfig(envMatches []string, conEnv string) map[string]string {
-	mockedMatchedConfig := make(map[string]string)
-
-	for i := range envMatches {
-		match := strings.Trim(envMatches[i], "{}")
-
-		switch match {
-		case "origin":
-			mockedMatchedConfig["origin"] = "http://localhost:3333"
-		case "location":
-			mockedMatchedConfig["location"] = "tests"
-		case "headervalue":
-			mockedMatchedConfig["headervalue"] = "1234"
-		case "jsonvalue":
-			mockedMatchedConfig["jsonvalue"] = "\"test\": \"some text with\nline break\""
-		default:
-			log.Fatal("Something's wrong with your function mock! Compare mock and test files.")
-		}
-	}
-
-	return mockedMatchedConfig
-}
 
 const testDataForPreparing = `
 ###
@@ -100,23 +75,24 @@ OPTIONS * HTTP/1.1
 }
 `
 
-var testDataForParsing = []string{
-	`192.168.178.2/index/https
+var (
+	testDataForParsing = []string{
+		`192.168.178.2/index/https
 Accept: application/json
 
 `,
-	`GET 192.168.178.3/index
+		`GET 192.168.178.3/index
 Accept: application/json
  text/html
 From: test@test.com
 `,
-	`POST http://www.example.com/test1
+		`POST http://www.example.com/test1
 Content-Type: application/json
 
 < ./input.json
 
 `,
-	`POST http://www.example.com/test1 HTTP/2
+		`POST http://www.example.com/test1 HTTP/2
 Content-Type: application/json
 
 {
@@ -124,15 +100,15 @@ Content-Type: application/json
 }
 
 `,
-	`GET [1111:2222:abcd:4444:5a6c:7777:9c9f:6789]/index
+		`GET [1111:2222:abcd:4444:5a6c:7777:9c9f:6789]/index
 Accept: application/json
 
 `,
-	`GET http://localhost:3333/tests/available
+		`GET http://localhost:3333/tests/available
 Accept: application/json
 
 `,
-	`POST http://localhost:3333/tests/pdf
+		`POST http://localhost:3333/tests/pdf
 Content-Type: 1234
 
 {
@@ -142,18 +118,18 @@ line break"
 }
 
 `,
-	`POST http://example.com/auth
+		`POST http://example.com/auth
 Content-Type: application/json
 
 < input.json
 
 `,
-	`OPTIONS * HTTP/1.1
+		`OPTIONS * HTTP/1.1
 Host: http://example.com:8080
 `,
-	`OPTIONS * HTTP/1.1
+		`OPTIONS * HTTP/1.1
 `,
-	`OPTIONS * HTTP/1.1
+		`OPTIONS * HTTP/1.1
 
 {
   "html": "<h1>I'm an example heading!</h1>",
@@ -161,10 +137,28 @@ Host: http://example.com:8080
 line break"
 }
 `,
-}
+	}
+	parser = lib.Parser{
+		ConEnv:     "default",
+		Verbose:    false,
+		PathPrefix: "../../test_files",
+		Config: map[string]string{
+			"origin":      "http://localhost:3333",
+			"location":    "tests",
+			"headervalue": "1234",
+			"jsonvalue":   "\"test\": \"some text with\nline break\"",
+		},
+	}
+	regSeparator = regexp.MustCompile(`(?m)^(###[^\r\n]*(\r?\n|\r))`)
+	regComments  = regexp.MustCompile(`(?m)^(//|#)([^\r\n]*(\r?\n|\r))`)
+	regEnv       = regexp.MustCompile(`{{[ \t\f]*[\w\-]+[ \t\f]*}}`)
+	// TODO: enhance response handler regex to be able to determine, if '###' and '%}' literals have been used inside the handler block
+	regResponseHandler = regexp.MustCompile(`(?m)^>[ \t\f]+([^\r\n]*(\r?\n|\r)$|{%(.|(\r?\n|\r))+%})(\r?\n|\r)`)
+	regResponseRef     = regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
+)
 
-func TestPrepareHttpRequests(t *testing.T) {
-	requests := PrepareHttpRequests(testDataForPreparing, "default", PrepareHttpRequestsHelperMock{})
+func TestPrepare(t *testing.T) {
+	requests := parser.Prepare(testDataForPreparing)
 
 	for i := range requests {
 		result := requests[i]
@@ -195,8 +189,8 @@ func TestPrepareHttpRequests(t *testing.T) {
 	}
 }
 
-func TestParseHttpRequests(t *testing.T) {
-	httpRequests := ParseHttpRequests(testDataForParsing, false, "../../test_files")
+func TestParse(t *testing.T) {
+	httpRequests := parser.Parse(testDataForParsing)
 
 	for i := range httpRequests {
 		request := httpRequests[i]
