@@ -31,4 +31,9 @@ var (
 	regInputFileRef    = regexp.MustCompile(`(?m)^<[ \t\f]+(?P<Filepath>[^\r\n]+)$`)
 	regIp              = regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[([A-Fa-f\d%]{0,4}:?){0,8}\]`)
 	regUrlScheme       = regexp.MustCompile(`(?m)^(http|https)://`)
+	// Boundary chars:
+	// https://stackoverflow.com/questions/147451/what-are-valid-characters-for-creating-a-multipart-form-boundary
+	// Boundary length:
+	// https://stackoverflow.com/questions/3508338/what-is-the-boundary-in-multipart-form-data
+	regMultipartFormDataHeader = regexp.MustCompile(`(?m)^Content-Type: multipart\/form-data(; boundary=(?P<Boundary>[0-9a-zA-Z'()+_,\-.\/:=?]{1,70}))?$`)
 )

@@ -60,12 +60,18 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 		if !IsUrlValid(url) {
 			log.Fatal(url + " is not a valid URL. Exiting...")
 		}
-		// NOTE: Ensure ip addresses will be stored as hosts, otherwise creating requests fails
+		// Ensure ip addresses will be stored as hosts, otherwise creating requests fails
 		if !regUrlScheme.MatchString(url) && regIp.MatchString(url) {
 			url = "http://" + url
 		}
 
 		// Separate headers / message body and parse them afterwards
+		if regMultipartFormDataHeader.MatchString(stringHeaderMessage) {
+			// TODO: Add multipart/form-data support
+			fmt.Println(Yellow +
+				"NOTE: Currently multipart/form-data can't be parsed. Therefore, this request will be skipped!" + Reset)
+			continue
+		}
 		splitEmptyNewline := regEmptyNewline.Split(stringHeaderMessage, -1)
 		parsedHeaders := []string{}
 		var message io.Reader
@@ -97,7 +103,6 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 
 			parsedHeaders = parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 			message = parseMessage(splitEmptyNewline[1], pathPrefix)
-
 		default:
 			fmt.Println(Red + "Too many in-between line breaks detected!" + Reset)
 			fmt.Println(Yellow + "Check request below for errors:" + Reset)
@@ -105,7 +110,6 @@ func ParseHttpRequests(requests []string, verbose bool, pathPrefix string) []htt
 			os.Exit(1)
 		}
 
-		// TODO: use message and parsedHeaders to assemble request
 		// Assemble request
 		var httpRequest *http.Request
 		var err error
@@ -214,7 +218,8 @@ func PrepareHttpRequests(file string, conEnv string, helper PrepareHttpRequestsH
 
 		if responseHandlerMatches != nil {
 			if isFirstResponseHandlerOccurrence {
-				fmt.Println(Yellow + "NOTE: Currently response handlers can't be validated and, therefore, will be ignored!" + Reset)
+				fmt.Println(Yellow +
+					"NOTE: Currently response handlers can't be validated and, therefore, will be ignored!" + Reset)
 				isFirstResponseHandlerOccurrence = false
 			}
 			request = regResponseHandler.ReplaceAllLiteralString(request, "")
@@ -229,7 +234,8 @@ func PrepareHttpRequests(file string, conEnv string, helper PrepareHttpRequestsH
 
 		if responseRefMatches != nil {
 			if isFirstResponseRefOccurrence {
-				fmt.Println(Yellow + "NOTE: Currently response references can't be validated and, therefore, will be ignored!" + Reset)
+				fmt.Println(Yellow +
+					"NOTE: Currently response references can't be validated and, therefore, will be ignored!" + Reset)
 				isFirstResponseRefOccurrence = false
 			}
 			request = regResponseRef.ReplaceAllLiteralString(request, "")
@@ -261,6 +267,13 @@ func (h PrepareHttpRequestsHelper) getConfig(envMatches []string, conEnv string)
 
 	return matchedConfig
 }
+
+// Takes string containing headers and message and separates them.
+// It returns headers as string array and message body as single string.
+// TODO: Outsource separating headers and messages from ParseHttpRequests when adding multipart/form-data support
+// func separateHeadersFromMessage(headersMessage string) ([]string, string) {
+
+// }
 
 // Takes array of header strings splitted by new line, detects related header values and concats them
 // TODO: return headers in appropriate http.Headers formatted map (map[string][]string)

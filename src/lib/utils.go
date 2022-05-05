@@ -22,13 +22,16 @@ func IsUrlValid(s string) bool {
 	}
 
 	// Check absolute / origin form
-	_, err := url.ParseRequestURI(s)                                      // returns true if absolute URI or absolute path
-	if err == nil && (regUrlScheme.MatchString(s) || filepath.IsAbs(s)) { // Check for misspelled url schemes since ParseRequestUri does accept these
+	_, err := url.ParseRequestURI(s) // returns true if absolute URI or absolute path
+	// Check for misspelled url schemes since ParseRequestUri does accept these
+	if err == nil && (regUrlScheme.MatchString(s) || filepath.IsAbs(s)) {
 		return true
 	}
 
 	// Check if relative url (not relative path) by prepending "http://"
-	if !(strings.Contains(s, ":/") || strings.Contains(s, "//") || regIp.MatchString(s)) && len(strings.Split(s, ".")) > 1 { // Exclude misspelled urls schemes, urls containing ip addresses and relative paths
+	// Exclude misspelled urls schemes, urls containing ip addresses and relative paths
+	if !(strings.Contains(s, ":/") || strings.Contains(s, "//") || regIp.MatchString(s)) &&
+		len(strings.Split(s, ".")) > 1 {
 		absoluteUrl := "http://" + s
 		_, err = url.ParseRequestURI(absoluteUrl)
 		if err == nil {

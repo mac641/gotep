@@ -24,7 +24,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -98,7 +97,8 @@ func test(cmd *cobra.Command) {
 		fmt.Println("Using requests file:", tests)
 	}
 
-	content, err := ioutil.ReadFile(tests)
+	// TODO: don't load whole files into RAM -> read by byte
+	content, err := os.ReadFile(tests)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func test(cmd *cobra.Command) {
 	parsedHttpRequests := lib.ParseHttpRequests(preparedRequests, verbose, pathPrefix)
 	fmt.Println(parsedHttpRequests)
 
-	// TODO: collect requests and print ALL results on console, rather than exiting at every failed requests
+	// TODO: collect requests and print ALL results on console, rather than exiting at every failed request
 	// client := &http.Client{}
 	// for i := range parsedHttpRequests {
 	// 	r, err := client.Do(&parsedHttpRequests[i])
