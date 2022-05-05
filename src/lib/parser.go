@@ -28,8 +28,8 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		stringRequest := requests[i]
 
 		// Parse request line
-		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(strings.TrimRight(
-			regRequestline.FindString(stringRequest), "\r\n"), -1)
+		requestLine := strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n")
+		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(requestLine, -1)
 		method := ""
 		url := ""
 		httpVersion := ""
@@ -54,7 +54,7 @@ func (p *Parser) Parse(requests []string) []http.Request {
 			fmt.Println(stringRequest)
 			os.Exit(1)
 		}
-		stringHeaderMessage := strings.Trim(regRequestline.ReplaceAllLiteralString(stringRequest, ""), "\r\n")
+		stringHeaderMessage := strings.Trim(strings.ReplaceAll(stringRequest, requestLine, ""), "\r\n")
 
 		if !IsUrlValid(url) {
 			log.Fatal(url + " is not a valid URL. Exiting...")
@@ -72,7 +72,7 @@ func (p *Parser) Parse(requests []string) []http.Request {
 			continue
 		}
 		splitEmptyNewline := regEmptyNewline.Split(stringHeaderMessage, -1)
-		parsedHeaders := []string{}
+		parsedHeaders := make(map[string][]string)
 		var message io.Reader
 		switch len(splitEmptyNewline) {
 		case 0:
@@ -135,15 +135,7 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		}
 
 		if len(parsedHeaders) > 0 {
-			for i := range parsedHeaders {
-				header := parsedHeaders[i]
-				splitHeader := strings.Split(header, ": ")
-				if len(splitHeader) > 2 {
-					fmt.Println(header)
-					log.Fatal("The header displayed above is invalid!")
-				}
-				httpRequest.Header.Add(splitHeader[0], splitHeader[1])
-			}
+			httpRequest.Header = parsedHeaders
 		}
 
 		httpRequests = append(httpRequests, *httpRequest)
@@ -203,6 +195,10 @@ func (p *Parser) Prepare(file string) []string {
 			Ensure there's only one handler per request.`)
 		}
 
+		// NOTE: Following TODOs are only relevant when adding response handler validation support
+		// TODO: Trim '{%%}' from response handler match
+		// TODO: Check if request separators or '%}' have been used inside the handler block
+
 		if responseHandlerMatches != nil {
 			if isFirstResponseHandlerOccurrence {
 				fmt.Println(Yellow +
@@ -260,17 +256,34 @@ func (p *Parser) getConfig(envMatches []string) map[string]string {
 // }
 
 // Takes array of header strings splitted by new line, detects related header values and concats them
-// TODO: return headers in appropriate http.Headers formatted map (map[string][]string)
-func (p *Parser) parseHeaders(headers []string) []string {
-	parsedHeaders := []string{}
+func (p *Parser) parseHeaders(headers []string) map[string][]string {
+	parsedHeaders := make(map[string][]string)
 
+	var fieldName string
 	for i := range headers {
 		headerMatch := strings.Trim(headers[i], "\r\n \t\f")
 		if regHeaders.MatchString(headerMatch) {
-			parsedHeaders = append(parsedHeaders, headerMatch)
+			headerSubMatch := regHeaders.FindStringSubmatch(headerMatch)
+			for i, name := range regHeaders.SubexpNames() {
+				// NOTE: Start at index == 1 because first value of array is full match which is irrelevant
+				if i >= 1 && i < len(headerSubMatch) {
+					switch name {
+					case "Fieldname":
+						parsedHeaders[headerSubMatch[i]] = []string{}
+						fieldName = headerSubMatch[i]
+					case "Fieldvalue":
+						parsedHeaders[fieldName] = append(parsedHeaders[fieldName], headerSubMatch[i])
+					default:
+						fmt.Println(Red + "Misconfigured header found!" + Reset)
+						fmt.Println(Yellow + "Check header below for errors:" + Reset)
+						fmt.Println(headerMatch)
+						os.Exit(1)
+					}
+				}
+			}
 		} else {
-			if len(parsedHeaders) > 0 && headerMatch != "" {
-				parsedHeaders[len(parsedHeaders)-1] += ", " + headerMatch
+			if len(parsedHeaders) > 0 && headerMatch != "" && fieldName != "" {
+				parsedHeaders[fieldName] = append(parsedHeaders[fieldName], headerMatch)
 			} else if headerMatch == "" {
 				continue
 			} else {
