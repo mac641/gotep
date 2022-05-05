@@ -63,3 +63,17 @@ OPTIONS * HTTP/1.1
   "html": "<h1>I'm an example heading!</h1>",
   {{jsonvalue}}
 }
+
+### Test multipart/form-data
+POST http://example.com/api/upload
+Content-Type: multipart/form-data; boundary=abcd
+
+--abcd
+Content-Disposition: form-data; name="text"
+
+Text
+--abcd
+Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
+
+< ./input.txt
+--abcd--
