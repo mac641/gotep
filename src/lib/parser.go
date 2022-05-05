@@ -76,30 +76,19 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		var message io.Reader
 		switch len(splitEmptyNewline) {
 		case 0:
-			if p.Verbose {
-				fmt.Println("Neither headers, nor a message body have/has been provided for\\n" + stringRequest)
-			}
+			LogVerbose("Neither headers, nor a message body have/has been provided for\\n"+stringRequest, p.Verbose)
 		case 1:
 			match := splitEmptyNewline[0]
 			if regHeaders.MatchString(match) {
-				if p.Verbose {
-					fmt.Println("No message body has been provided for\n" + stringRequest)
-				}
-
+				LogVerbose("No message body has been provided for\n"+stringRequest, p.Verbose)
 				parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 
 			} else {
-				if p.Verbose {
-					fmt.Println("No headers have been provided for\n" + stringRequest)
-				}
-
+				LogVerbose("No headers have been provided for\n"+stringRequest, p.Verbose)
 				message = p.parseMessage(match)
 			}
 		case 2:
-			if p.Verbose {
-				fmt.Println("Headers and message body detected in\n" + stringRequest)
-			}
-
+			LogVerbose("Headers and message body detected in\n"+stringRequest, p.Verbose)
 			parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 			message = p.parseMessage(splitEmptyNewline[1])
 		default:

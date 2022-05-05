@@ -1,10 +1,12 @@
 package lib
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -62,11 +64,17 @@ func ConvertToAbsolutePath(p string, prefix string) string {
 		return p
 	}
 
-	if prefix != "." && prefix != "" {
+	if !regexp.MustCompile(`^\.\/?$`).MatchString(prefix) && prefix != "" {
 		p = path.Join(prefix, p)
 	}
 	absPath, err := filepath.Abs(p)
 	cobra.CheckErr(err)
 
 	return absPath
+}
+
+func LogVerbose(msg string, verbose bool) {
+	if verbose {
+		fmt.Println(msg)
+	}
 }
