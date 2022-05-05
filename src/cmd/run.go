@@ -77,8 +77,8 @@ func initConfig(cmd *cobra.Command) {
 		viper.SetConfigName("http-client.env")
 	}
 
-	if err := viper.ReadInConfig(); err == nil && verbose {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err == nil {
+		lib.LogVerbose("Using config file: "+viper.ConfigFileUsed(), verbose)
 	}
 }
 
@@ -93,9 +93,7 @@ func test(cmd *cobra.Command) {
 
 		tests += "default.http"
 	}
-	if verbose {
-		fmt.Println("Using requests file:", tests)
-	}
+	lib.LogVerbose("Using requests file: "+tests, verbose)
 
 	// TODO: don't load whole files into RAM -> read by byte
 	content, err := os.ReadFile(tests)
@@ -110,9 +108,7 @@ func test(cmd *cobra.Command) {
 	if !viper.IsSet(conEnv) {
 		log.Fatalf("%s does not exist in your config file!", conEnv)
 	}
-	if verbose {
-		fmt.Println("Using config environment:", conEnv)
-	}
+	lib.LogVerbose("Using config environment: "+conEnv, verbose)
 	currentConfig := viper.GetStringMapString(conEnv)
 
 	// Create parser
@@ -126,7 +122,6 @@ func test(cmd *cobra.Command) {
 	// Parse test file
 	preparedRequests := parser.Prepare(stringContent)
 	// fmt.Println(preparedRequests)
-	// TODO: Implement global logging
 	parsedHttpRequests := parser.Parse(preparedRequests)
 	fmt.Println(parsedHttpRequests)
 
