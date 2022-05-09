@@ -28,6 +28,7 @@ go mod tidy -e
 .PHONY: test
 test:
 	cd src; \
+go clean -testcache; \
 go test ./... -cover
 
 update: check-updates src/go.mod mod-tidy
