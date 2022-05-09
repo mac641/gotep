@@ -1,14 +1,16 @@
 default: build
 
+module := src
+
 .PHONY: build
-build: src/main.go
-	cd src; \
-go build -o ../gotep
+build: $(module)/main.go
+	cd $(module); \
+go build -o ../bin/gotep
 
 .PHONY: check-updates
-check-updates: src/go.mod
-	cd src; \
-go list -u -m all; \
+check-updates: $(module)/go.mod
+	cd $(module); \
+go list -u -m all
 
 .PHONY: check-linting
 check-linting:
@@ -21,16 +23,16 @@ fmt: check-linting
 	gofmt -w -s .
 
 .PHONY: mod-tidy
-mod-tidy: src/go.mod
-	cd src; \
+mod-tidy: $(module)/go.mod
+	cd $(module); \
 go mod tidy -e
 
 .PHONY: test
 test:
-	cd src; \
+	cd $(module); \
 go clean -testcache; \
 go test ./... -cover
 
-update: check-updates src/go.mod mod-tidy
-	cd src; \
+update: check-updates $(module)/go.mod mod-tidy
+	cd $(module); \
 go get -u ./...; \
