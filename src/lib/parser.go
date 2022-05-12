@@ -57,7 +57,7 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		stringHeaderMessage := strings.Trim(strings.ReplaceAll(stringRequest, requestLine, ""), "\r\n")
 
 		if !IsUrlValid(url) {
-			log.Fatal(url + " is not a valid URL. Exiting...")
+			log.Fatalf("%s is not a valid URL. Exiting...", url)
 		}
 		// Ensure ip addresses will be stored as hosts, otherwise creating requests fails
 		if !regUrlScheme.MatchString(url) && regIp.MatchString(url) {
@@ -180,9 +180,11 @@ func (p *Parser) Prepare(file string) []string {
 
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfig) {
-				log.Fatal("There are undefined env variables present in your requests file!")
+				log.Fatal("There are undefined env variables present in your requests file!\n",
+					"Ensure your config variable keys use lowercase letters only.")
 			}
 
+			// TODO: check if jetbrains config allows uppercase json keys and implement it, if so
 			for configKey, configValue := range matchedConfig {
 				request = strings.ReplaceAll(request, fmt.Sprintf("{{%s}}", configKey), configValue)
 			}

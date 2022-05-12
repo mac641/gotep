@@ -27,6 +27,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -64,7 +65,6 @@ func init() {
 }
 
 func initConfig(cmd *cobra.Command) {
-	// TODO: exit on error if json config contains elements other than string or bool
 	config, err := cmd.Flags().GetString(config)
 	cobra.CheckErr(err)
 	if config != "" && err == nil {
@@ -79,7 +79,16 @@ func initConfig(cmd *cobra.Command) {
 	}
 
 	if err := viper.ReadInConfig(); err == nil {
-		lib.LogVerbose("Using config file: "+viper.ConfigFileUsed(), verbose)
+		lib.LogVerbose(fmt.Sprintf("Using config file: %s", viper.ConfigFileUsed()), verbose)
+	}
+
+	currentConfig := viper.GetStringMap(configEnvironment)
+	for key, val := range currentConfig {
+		typeOfVal := reflect.TypeOf(val).Kind().String()
+		if typeOfVal != "string" && typeOfVal != "bool" {
+			log.Fatalf("Your config contains key \"%s\" with value \"%s\" which is not of type string or bool!",
+				key, val)
+		}
 	}
 }
 
