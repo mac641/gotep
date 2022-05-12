@@ -255,7 +255,7 @@ func (p *Parser) getConfig(envMatches []string) map[string]string {
 
 // }
 
-// Takes array of header strings splitted by new line, detects related header values and concats them
+// Takes array of header strings splitted by new line, detects related header values and adds them to map
 func (p *Parser) parseHeaders(headers []string) map[string][]string {
 	parsedHeaders := make(map[string][]string)
 
@@ -298,7 +298,7 @@ func (p *Parser) parseHeaders(headers []string) map[string][]string {
 	return parsedHeaders
 }
 
-// Takes message string, detects whether it is a filepath or direct message strings and wraps them as io.Reader
+// Takes message string, detects whether it is a filepath or direct message strings and returns them as io.Reader
 func (p *Parser) parseMessage(message string) io.Reader {
 	var file io.Reader
 	var err error

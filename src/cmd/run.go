@@ -64,6 +64,7 @@ func init() {
 }
 
 func initConfig(cmd *cobra.Command) {
+	// TODO: exit on error if json config contains elements other than string or bool
 	config, err := cmd.Flags().GetString(config)
 	cobra.CheckErr(err)
 	if config != "" && err == nil {
