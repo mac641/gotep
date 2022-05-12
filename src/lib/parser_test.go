@@ -1,13 +1,29 @@
 package lib_test
 
 import (
+	"io"
 	"regexp"
 	"testing"
 
 	"github.com/mac641/gotep/src/lib"
 )
 
-const testDataForPreparing = `
+var (
+	parser = lib.Parser{
+		ConEnv:     "default",
+		Verbose:    false,
+		PathPrefix: "../../test_files",
+		Config: map[string]string{
+			"origin":      "http://localhost:3333",
+			"location":    "tests",
+			"headervalue": "1234",
+			"jsonvalue":   "\"test\": \"some text with\nline break\"",
+		},
+	}
+)
+
+func TestPrepare(t *testing.T) {
+	const testDataForPreparing = `
 ###
 ### Test ipv4
 192.168.178.2/index/https
@@ -75,26 +91,14 @@ OPTIONS * HTTP/1.1
 }
 `
 
-var (
-	parser = lib.Parser{
-		ConEnv:     "default",
-		Verbose:    false,
-		PathPrefix: "../../test_files",
-		Config: map[string]string{
-			"origin":      "http://localhost:3333",
-			"location":    "tests",
-			"headervalue": "1234",
-			"jsonvalue":   "\"test\": \"some text with\nline break\"",
-		},
-	}
-	regSeparator       = regexp.MustCompile(`(?m)^(###[^\r\n]*(\r?\n|\r))`)
-	regComments        = regexp.MustCompile(`(?m)^(//|#)([^\r\n]*(\r?\n|\r))`)
-	regEnv             = regexp.MustCompile(`{{[ \t\f]*[\w\-]+[ \t\f]*}}`)
-	regResponseHandler = regexp.MustCompile(`(?m)^>[ \t\f]+([^\r\n]*(\r?\n|\r)$|{%(.|(\r?\n|\r))+%})(\r?\n|\r)`)
-	regResponseRef     = regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
-)
+	var (
+		regSeparator       = regexp.MustCompile(`(?m)^(###[^\r\n]*(\r?\n|\r))`)
+		regComments        = regexp.MustCompile(`(?m)^(//|#)([^\r\n]*(\r?\n|\r))`)
+		regEnv             = regexp.MustCompile(`{{[ \t\f]*[\w\-]+[ \t\f]*}}`)
+		regResponseHandler = regexp.MustCompile(`(?m)^>[ \t\f]+([^\r\n]*(\r?\n|\r)$|{%(.|(\r?\n|\r))+%})(\r?\n|\r)`)
+		regResponseRef     = regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
+	)
 
-func TestPrepare(t *testing.T) {
 	requests := parser.Prepare(testDataForPreparing)
 
 	for i := range requests {
@@ -138,30 +142,30 @@ func TestParse(t *testing.T) {
 		requestLineMultipleHeaders = []string{
 			"GET 192.168.178.2/index/https\nAccept: application/json\nFrom: test@test.com"}
 
-		// 		requestLineHeaderBody = []string{`POST http://www.example.com/test1 HTTP/2
-		// Content-Type: application/json
+		requestLineHeaderBody = []string{`POST http://www.example.com/test1 HTTP/2
+Content-Type: application/json
 
-		// {
-		//   "html": "Html message"
-		// }
+{
+	"html": "Html message"
+}
 
-		// `}
-		// 		requestLineHeaderBodyLineBreak = []string{`POST http://localhost:3333/tests/pdf
-		// Content-Type: 1234
+`}
+		requestLineHeaderBodyLineBreak = []string{`POST http://localhost:3333/tests/pdf
+Content-Type: 1234
 
-		// {
-		// "html": "<h1>I'm an example heading!</h1>",
-		// "test": "some text with
-		// line break"
-		// }
+{
+	"html": "<h1>I'm an example heading!</h1>",
+	"test": "some text with
+	line break"
+}
 
-		// `}
-		// 		requestLineHeaderBodyInputFileRef = []string{`POST http://www.example.com/test1
-		// Content-Type: application/json
+`}
+		requestLineHeaderBodyInputFileRef = []string{`POST http://www.example.com/test1
+Content-Type: application/json
 
-		// < ./input.json
+< ../test_files/input.json
 
-		// `}
+`}
 		requestLineHeaderMultipartFormData = []string{`POST http://example.com/api/upload
 Content-Type: multipart/form-data; boundary=abcd
 
@@ -176,156 +180,301 @@ Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
 --abcd--
 
 `}
+		assertValues = []string{}
 	)
 
 	// Request line only
 	requestLineOnlyParsed := parser.Parse(requestLineOnly)
-	requestLineOnlyAssertValue := "http://192.168.178.2/index/https"
+	assertValues = []string{"http://192.168.178.2/index/https"}
 	if len(requestLineOnlyParsed) != 1 {
 		t.Errorf("Expected requestLineOnly to have one request but got %d!", len(requestLineOnlyParsed))
 	}
-	if requestLineOnlyParsed[0].URL.String() != requestLineOnlyAssertValue {
-		t.Errorf("Expected requestLineOnly to be %s but got %s!", requestLineOnlyAssertValue,
+	if requestLineOnlyParsed[0].URL.String() != assertValues[0] {
+		t.Errorf("Expected requestLineOnly to be %s but got %s!", assertValues[0],
 			requestLineOnlyParsed[0].URL.String())
 	}
 
+	// Request line with method prepended
 	requestLineOnlyMethodParsed := parser.Parse(requestLineOnlyMethod)
-	requestLineOnlyMethodAssertValues := []string{"PUT", "http://192.168.178.2/index/https"}
+	assertValues = []string{"PUT", "http://192.168.178.2/index/https"}
 	if len(requestLineOnlyMethodParsed) != 1 {
 		t.Errorf("Expected requestLineOnlyMethod to have one request but got %d!", len(requestLineOnlyMethodParsed))
 	}
-	if requestLineOnlyMethodParsed[0].Method != requestLineOnlyMethodAssertValues[0] {
-		t.Errorf("Expected requestLineOnlyMethod to use method %s but got %s!", requestLineOnlyMethodAssertValues[0],
+	if requestLineOnlyMethodParsed[0].Method != assertValues[0] {
+		t.Errorf("Expected requestLineOnlyMethod to use method %s but got %s!", assertValues[0],
 			requestLineOnlyMethodParsed[0].Method)
 	}
-	if requestLineOnlyMethodParsed[0].URL.String() != requestLineOnlyMethodAssertValues[1] {
-		t.Errorf("Expected requestLineOnlyMethod to use url %s but got %s!", requestLineOnlyMethodAssertValues[1],
+	if requestLineOnlyMethodParsed[0].URL.String() != assertValues[1] {
+		t.Errorf("Expected requestLineOnlyMethod to use url %s but got %s!", assertValues[1],
 			requestLineOnlyMethodParsed[0].URL.String())
 	}
 
+	// Request line with method and HTTP version
 	requestLineOnlyMethodHttpParsed := parser.Parse(requestLineOnlyMethodHttp)
-	requestLineOnlyMethodHttpAssertValues := []string{"GET", "http://192.168.178.2/index/https", "HTTP/1"}
+	assertValues = []string{"GET", "http://192.168.178.2/index/https"}
 	if len(requestLineOnlyMethodHttpParsed) != 1 {
 		t.Errorf("Expected requestLineOnlyMethodHttp to have one request but got %d!", len(requestLineOnlyMethodHttpParsed))
 	}
-	if requestLineOnlyMethodHttpParsed[0].Method != requestLineOnlyMethodHttpAssertValues[0] {
+	if requestLineOnlyMethodHttpParsed[0].Method != assertValues[0] {
 		t.Errorf("Expected requestLineOnlyMethodHttp to use method %s but got %s!",
-			requestLineOnlyMethodHttpAssertValues[0], requestLineOnlyMethodHttpParsed[0].Method)
+			assertValues[0], requestLineOnlyMethodHttpParsed[0].Method)
 	}
-	if requestLineOnlyMethodHttpParsed[0].URL.String() != requestLineOnlyMethodHttpAssertValues[1] {
+	if requestLineOnlyMethodHttpParsed[0].URL.String() != assertValues[1] {
 		t.Errorf("Expected requestLineOnlyMethodHttp to use url %s but got %s!",
-			requestLineOnlyMethodHttpAssertValues[1], requestLineOnlyMethodHttpParsed[0].URL.String())
+			assertValues[1], requestLineOnlyMethodHttpParsed[0].URL.String())
 	}
 	if requestLineOnlyMethodHttpParsed[0].Proto != "HTTP/1.1" && requestLineOnlyMethodHttpParsed[0].Proto != "HTTP/2" {
 		t.Errorf("Expected requestLineOnlyMethodHttp to use proto HTTP/1.1 or HTTP/2 but got %s!",
 			requestLineOnlyMethodHttpParsed[0].Proto)
 	}
 
-	// Request line and headers combined
+	// Request line and one header
 	requestLineHeaderParsed := parser.Parse(requestLineHeader)
-	requestLineHeaderAssertValues := []string{"GET", "http://192.168.178.2/index/https", "Accept", "application/json"}
+	assertValues = []string{"GET", "http://192.168.178.2/index/https", "Accept", "application/json"}
 	if len(requestLineHeaderParsed) != 1 {
 		t.Errorf("Expected requestLineHeader to have one request but got %d!", len(requestLineHeaderParsed))
 	}
-	if requestLineHeaderParsed[0].Method != requestLineHeaderAssertValues[0] {
+	if requestLineHeaderParsed[0].Method != assertValues[0] {
 		t.Errorf("Expected requestLineHeader to use method %s but got %s!",
-			requestLineHeaderAssertValues[0], requestLineHeaderParsed[0].Method)
+			assertValues[0], requestLineHeaderParsed[0].Method)
 	}
-	if requestLineHeaderParsed[0].URL.String() != requestLineHeaderAssertValues[1] {
+	if requestLineHeaderParsed[0].URL.String() != assertValues[1] {
 		t.Errorf("Expected requestLineHeader to use url %s but got %s!",
-			requestLineHeaderAssertValues[1], requestLineHeaderParsed[0].URL.String())
+			assertValues[1], requestLineHeaderParsed[0].URL.String())
 	}
 	if len(requestLineHeaderParsed[0].Header) != 1 {
 		t.Errorf("Expected requestLineHeader to have only one header but got %d!",
 			len(requestLineHeaderParsed[0].Header))
 	}
 	for key, value := range requestLineHeaderParsed[0].Header {
-		if key != requestLineHeaderAssertValues[2] {
+		if key != assertValues[2] {
 			t.Errorf("Expected requestLineHeader to have header key %s but got %s!",
-				requestLineHeaderAssertValues[2], key)
+				assertValues[2], key)
 		}
 		if len(value) != 1 {
 			t.Errorf("Expected requestLineHeader to have one header value but got %d!", len(value))
 		}
-		if value[0] != requestLineHeaderAssertValues[3] {
+		if value[0] != assertValues[3] {
 			t.Errorf("Expected requestLineHeader to have header value %s but got %s!",
-				requestLineHeaderAssertValues[3], value[0])
+				assertValues[3], value[0])
 		}
 	}
 
+	// Request line with one header and multiple header values
 	requestLineHeaderMultipleValuesParsed := parser.Parse(requestLineHeaderMultipleValues)
-	requestLineHeaderMultipleValuesAssertValues := []string{"GET", "http://192.168.178.2/index/https", "Accept",
-		"application/json", "text/html"}
+	assertValues = []string{"GET", "http://192.168.178.2/index/https", "Accept", "application/json", "text/html"}
 	if len(requestLineHeaderMultipleValuesParsed) != 1 {
 		t.Errorf("Expected requestLineHeaderMultipleValues to have one request but got %d!",
 			len(requestLineHeaderMultipleValuesParsed))
 	}
-	if requestLineHeaderMultipleValuesParsed[0].Method != requestLineHeaderMultipleValuesAssertValues[0] {
+	if requestLineHeaderMultipleValuesParsed[0].Method != assertValues[0] {
 		t.Errorf("Expected requestLineHeaderMultipleValues to use method %s but got %s!",
-			requestLineHeaderMultipleValuesAssertValues[0], requestLineHeaderMultipleValuesParsed[0].Method)
+			assertValues[0], requestLineHeaderMultipleValuesParsed[0].Method)
 	}
-	if requestLineHeaderMultipleValuesParsed[0].URL.String() != requestLineHeaderMultipleValuesAssertValues[1] {
+	if requestLineHeaderMultipleValuesParsed[0].URL.String() != assertValues[1] {
 		t.Errorf("Expected requestLineHeaderMultipleValues to use url %s but got %s!",
-			requestLineHeaderMultipleValuesAssertValues[1], requestLineHeaderMultipleValuesParsed[0].URL.String())
+			assertValues[1], requestLineHeaderMultipleValuesParsed[0].URL.String())
 	}
 	if len(requestLineHeaderMultipleValuesParsed[0].Header) != 1 {
 		t.Errorf("Expected requestLineHeaderMultipleValues to have only one header but got %d!",
 			len(requestLineHeaderMultipleValuesParsed[0].Header))
 	}
 	for key, value := range requestLineHeaderMultipleValuesParsed[0].Header {
-		if key != requestLineHeaderMultipleValuesAssertValues[2] {
+		if key != assertValues[2] {
 			t.Errorf("Expected requestLineHeaderMultipleValues to have header key %s but got %s!",
-				requestLineHeaderMultipleValuesAssertValues[2], key)
+				assertValues[2], key)
 		}
 		if len(value) != 2 {
 			t.Errorf("Expected requestLineHeaderMultipleValues to have two header values but got %d!", len(value))
 		}
-		if value[0] != requestLineHeaderMultipleValuesAssertValues[3] {
+		if value[0] != assertValues[3] {
 			t.Errorf("Expected requestLineHeaderMultipleValues' first header value to be %s but got %s!",
-				requestLineHeaderAssertValues[3], value[0])
+				assertValues[3], value[0])
 		}
-		if value[1] != requestLineHeaderMultipleValuesAssertValues[4] {
+		if value[1] != assertValues[4] {
 			t.Errorf("Expected requestLineHeaderMultipleValues' second header value to be %s but got %s!",
-				requestLineHeaderAssertValues[4], value[1])
+				assertValues[4], value[1])
 		}
 	}
 
+	// Request line with multiple headers with one value each
 	requestLineMultipleHeadersParsed := parser.Parse(requestLineMultipleHeaders)
-	requestLineMultipleHeadersAssertValues := []string{"GET", "http://192.168.178.2/index/https", "Accept",
+	assertValues = []string{"GET", "http://192.168.178.2/index/https", "Accept",
 		"application/json", "From", "test@test.com"}
 	if len(requestLineMultipleHeadersParsed) != 1 {
 		t.Errorf("Expected requestLineMultipleHeaders to have one request but got %d!",
 			len(requestLineMultipleHeadersParsed))
 	}
-	if requestLineMultipleHeadersParsed[0].Method != requestLineMultipleHeadersAssertValues[0] {
+	if requestLineMultipleHeadersParsed[0].Method != assertValues[0] {
 		t.Errorf("Expected requestLineMultipleHeaders to use method %s but got %s!",
-			requestLineMultipleHeadersAssertValues[0], requestLineMultipleHeadersParsed[0].Method)
+			assertValues[0], requestLineMultipleHeadersParsed[0].Method)
 	}
-	if requestLineMultipleHeadersParsed[0].URL.String() != requestLineMultipleHeadersAssertValues[1] {
+	if requestLineMultipleHeadersParsed[0].URL.String() != assertValues[1] {
 		t.Errorf("Expected requestLineMultipleHeaders to use url %s but got %s!",
-			requestLineMultipleHeadersAssertValues[1], requestLineMultipleHeadersParsed[0].URL.String())
+			assertValues[1], requestLineMultipleHeadersParsed[0].URL.String())
 	}
 	if len(requestLineMultipleHeadersParsed[0].Header) != 2 {
 		t.Errorf("Expected requestLineMultipleHeaders to have two headers but got %d!",
 			len(requestLineMultipleHeadersParsed[0].Header))
 	}
 	for key, value := range requestLineMultipleHeadersParsed[0].Header {
-		if key != requestLineMultipleHeadersAssertValues[2] && key != requestLineMultipleHeadersAssertValues[4] {
+		if key != assertValues[2] && key != assertValues[4] {
 			t.Errorf("Expected requestLineMultipleHeaders to have header key %s or %s but got %s!",
-				requestLineMultipleHeadersAssertValues[2], requestLineMultipleHeadersAssertValues[4], key)
+				assertValues[2], assertValues[4], key)
 		}
 		if len(value) != 1 {
 			t.Errorf("Expected requestLineMultipleHeaders to have one header value each but got %d!", len(value))
 		}
-		if value[0] != requestLineMultipleHeadersAssertValues[3] &&
-			value[0] != requestLineMultipleHeadersAssertValues[5] {
+		if value[0] != assertValues[3] &&
+			value[0] != assertValues[5] {
 			t.Errorf("Expected requestLineMultipleHeaders' header values to be %s or %s but got %s!",
-				requestLineHeaderAssertValues[3], requestLineHeaderAssertValues[5], value[0])
+				assertValues[3], assertValues[5], value[0])
 		}
 	}
 
-	// TODO: Insert remaining test cases here
+	// Request line with one header and body
+	requestLineHeaderBodyParsed := parser.Parse(requestLineHeaderBody)
+	assertValues = []string{"POST", "http://www.example.com/test1", "Content-Type",
+		"application/json",
+		`{
+	"html": "Html message"
+}`}
+	if len(requestLineHeaderBodyParsed) != 1 {
+		t.Errorf("Expected requestLineHeaderBody to have one request but got %d!",
+			len(requestLineHeaderBodyParsed))
+	}
+	if requestLineHeaderBodyParsed[0].Method != assertValues[0] {
+		t.Errorf("Expected requestLineHeaderBody to use method %s but got %s!",
+			assertValues[0], requestLineHeaderBodyParsed[0].Method)
+	}
+	if requestLineHeaderBodyParsed[0].URL.String() != assertValues[1] {
+		t.Errorf("Expected requestLineHeaderBody to use url %s but got %s!",
+			assertValues[1], requestLineHeaderBodyParsed[0].URL.String())
+	}
+	if requestLineHeaderBodyParsed[0].Proto != "HTTP/1.1" && requestLineHeaderBodyParsed[0].Proto != "HTTP/2" {
+		t.Errorf("Expected requestLineHeaderBody to use proto HTTP/1.1 or HTTP/2 but got %s!",
+			requestLineHeaderBodyParsed[0].Proto)
+	}
+	if len(requestLineHeaderBodyParsed[0].Header) != 1 {
+		t.Errorf("Expected requestLineHeaderBody to have one header but got %d!",
+			len(requestLineHeaderBodyParsed[0].Header))
+	}
+	for key, value := range requestLineHeaderBodyParsed[0].Header {
+		if key != assertValues[2] {
+			t.Errorf("Expected requestLineHeaderBody to have header key %s or %s but got %s!",
+				assertValues[2], assertValues[4], key)
+		}
+		if len(value) != 1 {
+			t.Errorf("Expected requestLineHeaderBody to have one header value but got %d!", len(value))
+		}
+		if value[0] != assertValues[3] {
+			t.Errorf("Expected requestLineHeaderBody header value to be %s but got %s!",
+				assertValues[3], value[0])
+		}
+	}
+	requestLineHeaderBodyParsedRead, err := io.ReadAll(requestLineHeaderBodyParsed[0].Body)
+	if err != nil {
+		t.Errorf("Could not read requestLineHeaderBody's body due to \n%s", err.Error())
+	}
+	if string(requestLineHeaderBodyParsedRead) != assertValues[4] {
+		t.Errorf("Expected requestLineHeaderBody's body value to be \"%s\" but got \"%s\"!", assertValues[4],
+			string(requestLineHeaderBodyParsedRead))
+	}
 
+	// Request line with one header and body containing line break
+	requestLineHeaderBodyLineBreakParsed := parser.Parse(requestLineHeaderBodyLineBreak)
+	assertValues = []string{"POST", "http://localhost:3333/tests/pdf", "Content-Type", "1234",
+		`{
+	"html": "<h1>I'm an example heading!</h1>",
+	"test": "some text with
+	line break"
+}`}
+	if len(requestLineHeaderBodyLineBreakParsed) != 1 {
+		t.Errorf("Expected requestLineHeaderBodyLineBreak to have one request but got %d!",
+			len(requestLineHeaderBodyLineBreakParsed))
+	}
+	if requestLineHeaderBodyLineBreakParsed[0].Method != assertValues[0] {
+		t.Errorf("Expected requestLineHeaderBodyLineBreak to use method %s but got %s!",
+			assertValues[0], requestLineHeaderBodyLineBreakParsed[0].Method)
+	}
+	if requestLineHeaderBodyLineBreakParsed[0].URL.String() != assertValues[1] {
+		t.Errorf("Expected requestLineHeaderBodyLineBreak to use url %s but got %s!",
+			assertValues[1], requestLineHeaderBodyLineBreakParsed[0].URL.String())
+	}
+	if len(requestLineHeaderBodyLineBreakParsed[0].Header) != 1 {
+		t.Errorf("Expected requestLineHeaderBodyLineBreak to have one header but got %d!",
+			len(requestLineHeaderBodyLineBreakParsed[0].Header))
+	}
+	for key, value := range requestLineHeaderBodyLineBreakParsed[0].Header {
+		if key != assertValues[2] {
+			t.Errorf("Expected requestLineHeaderBodyLineBreak to have header key %s or %s but got %s!",
+				assertValues[2], assertValues[4], key)
+		}
+		if len(value) != 1 {
+			t.Errorf("Expected requestLineHeaderBodyLineBreak to have one header value but got %d!", len(value))
+		}
+		if value[0] != assertValues[3] {
+			t.Errorf("Expected requestLineHeaderBodyLineBreak header value to be %s but got %s!",
+				assertValues[3], value[0])
+		}
+	}
+	requestLineHeaderBodyLineBreakParsedRead, err := io.ReadAll(requestLineHeaderBodyLineBreakParsed[0].Body)
+	if err != nil {
+		t.Errorf("Could not read requestLineHeaderBodyLineBreak's body due to \n%s", err.Error())
+	}
+	if string(requestLineHeaderBodyLineBreakParsedRead) != assertValues[4] {
+		t.Errorf("Expected requestLineHeaderBodyLineBreak's body value to be \"%s\" but got \"%s\"!", assertValues[4],
+			string(requestLineHeaderBodyLineBreakParsedRead))
+	}
+
+	// Request line with one header and body as input file ref
+	requestLineHeaderBodyInputFileRefParsed := parser.Parse(requestLineHeaderBodyInputFileRef)
+	assertValues = []string{"POST", "http://www.example.com/test1", "Content-Type", "application/json",
+		`{
+  "html": "<h1>I'm an example heading!</h1>",
+  "testnumber": 234145
+}
+`}
+	if len(requestLineHeaderBodyInputFileRefParsed) != 1 {
+		t.Errorf("Expected requestLineHeaderBodyInputFileRef to have one request but got %d!",
+			len(requestLineHeaderBodyInputFileRefParsed))
+	}
+	if requestLineHeaderBodyInputFileRefParsed[0].Method != assertValues[0] {
+		t.Errorf("Expected requestLineHeaderBodyInputFileRef to use method %s but got %s!",
+			assertValues[0], requestLineHeaderBodyInputFileRefParsed[0].Method)
+	}
+	if requestLineHeaderBodyInputFileRefParsed[0].URL.String() != assertValues[1] {
+		t.Errorf("Expected requestLineHeaderBodyInputFileRef to use url %s but got %s!",
+			assertValues[1], requestLineHeaderBodyInputFileRefParsed[0].URL.String())
+	}
+	if len(requestLineHeaderBodyInputFileRefParsed[0].Header) != 1 {
+		t.Errorf("Expected requestLineHeaderBodyInputFileRef to have one header but got %d!",
+			len(requestLineHeaderBodyInputFileRefParsed[0].Header))
+	}
+	for key, value := range requestLineHeaderBodyInputFileRefParsed[0].Header {
+		if key != assertValues[2] {
+			t.Errorf("Expected requestLineHeaderBodyInputFileRef to have header key %s or %s but got %s!",
+				assertValues[2], assertValues[4], key)
+		}
+		if len(value) != 1 {
+			t.Errorf("Expected requestLineHeaderBodyInputFileRef to have one header value but got %d!", len(value))
+		}
+		if value[0] != assertValues[3] {
+			t.Errorf("Expected requestLineHeaderBodyInputFileRef header value to be %s but got %s!",
+				assertValues[3], value[0])
+		}
+	}
+	requestLineHeaderBodyInputFileRefParsedRead, err := io.ReadAll(requestLineHeaderBodyInputFileRefParsed[0].Body)
+	if err != nil {
+		t.Errorf("Could not read requestLineHeaderBodyInputFileRef's body due to \n%s", err.Error())
+	}
+	if string(requestLineHeaderBodyInputFileRefParsedRead) != assertValues[4] {
+		t.Errorf("Expected requestLineHeaderBodyInputFileRef's body value to be \"%s\" but got \"%s\"!",
+			assertValues[4], string(requestLineHeaderBodyInputFileRefParsedRead))
+	}
+
+	// Request line with one header and body as multipart/form-data
+	// TODO: expand test when adding multipart/form-data parsing support
 	requestLineHeaderMultipartFormDataParsed := parser.Parse(requestLineHeaderMultipartFormData)
 	if len(requestLineHeaderMultipartFormDataParsed) != 0 {
 		t.Errorf("Expected requestLineHeaderMultipartFormData to be skipped but got request!")
