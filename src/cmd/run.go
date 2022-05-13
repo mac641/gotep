@@ -26,11 +26,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
-	"reflect"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/mac641/gotep/src/lib"
 )
@@ -41,10 +40,9 @@ var (
 		Use:   "run",
 		Short: "Execute tests",
 		Long: `Execute tests based on a test file and its associated environment definitions.
-For example run: gotep run -c http-client.env.json -f tests.http`,
+For example run: gotep run -c http-client.env.json -f tests.http -e default`,
 		Run: func(cmd *cobra.Command, args []string) {
 			// fmt.Println("run called")
-			initConfig(cmd)
 			test(cmd)
 		},
 	}
@@ -62,34 +60,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-func initConfig(cmd *cobra.Command) {
-	config, err := cmd.Flags().GetString(config)
-	cobra.CheckErr(err)
-	if config != "" && err == nil {
-		viper.SetConfigFile(config)
-	} else {
-		cwd, err := os.Getwd()
-		cobra.CheckErr(err)
-
-		viper.AddConfigPath(cwd)
-		viper.SetConfigType("json")
-		viper.SetConfigName("http-client.env")
-	}
-
-	if err := viper.ReadInConfig(); err == nil {
-		lib.LogVerbose(fmt.Sprintf("Using config file: %s", viper.ConfigFileUsed()), verbose)
-	}
-
-	currentConfig := viper.GetStringMap(configEnvironment)
-	for key, val := range currentConfig {
-		typeOfVal := reflect.TypeOf(val).Kind().String()
-		if typeOfVal != "string" && typeOfVal != "bool" {
-			log.Fatalf("Your config contains key \"%s\" with value \"%s\" which is not of type string or bool!",
-				key, val)
-		}
-	}
 }
 
 func test(cmd *cobra.Command) {
@@ -113,23 +83,30 @@ func test(cmd *cobra.Command) {
 	stringContent := string(content)
 
 	// Check if environment config exists and use it, if so
+	config, err := cmd.Flags().GetString(config)
+	cobra.CheckErr(err)
+	var configPath string
+	if config != "" {
+		configPath = config
+	} else {
+		cwd, err := os.Getwd()
+		cobra.CheckErr(err)
+
+		configPath = path.Join(cwd, "http-client.env.json")
+	}
 	conEnv, err := cmd.Flags().GetString(configEnv)
 	cobra.CheckErr(err)
-	if !viper.IsSet(conEnv) {
-		log.Fatalf("%s does not exist in your config file!", conEnv)
-	}
-	lib.LogVerbose("Using config environment: "+conEnv, verbose)
-	currentConfig := viper.GetStringMapString(conEnv)
 
 	// Create parser
 	parser := lib.Parser{
-		ConEnv:     conEnv,
-		Verbose:    verbose,
+		ConfigEnv:  conEnv,
+		ConfigPath: configPath,
 		PathPrefix: pathPrefix,
-		Config:     currentConfig,
+		Verbose:    verbose,
 	}
 
 	// Parse test file
+	parser.ParseConfig()
 	preparedRequests := parser.Prepare(stringContent)
 	// fmt.Println(preparedRequests)
 	parsedHttpRequests := parser.Parse(preparedRequests)

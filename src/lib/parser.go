@@ -2,11 +2,13 @@ package lib
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -14,11 +16,14 @@ import (
 )
 
 type Parser struct {
-	ConEnv     string
-	Verbose    bool
+	ConfigEnv  string
+	ConfigPath string
 	PathPrefix string
-	Config     map[string]string
+	Verbose    bool
 }
+
+// TODO: if needed, check if possible to store bool and string in same map -> until then everything is type of string
+var config = map[string]string{}
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests.
 func (p *Parser) Parse(requests []string) []http.Request {
@@ -144,6 +149,32 @@ func (p *Parser) Parse(requests []string) []http.Request {
 	return httpRequests
 }
 
+func (p *Parser) ParseConfig() {
+	var tempConfig map[string]interface{}
+	// TODO: don't load whole files into RAM -> read by byte
+	jsonData, err := os.ReadFile(p.ConfigPath)
+	cobra.CheckErr(err)
+	err = json.Unmarshal(jsonData, &tempConfig)
+	cobra.CheckErr(err)
+
+	envMap, configKeyExists := tempConfig[p.ConfigEnv]
+	if !configKeyExists {
+		log.Fatalf("%s does not exist in your config file!", p.ConfigEnv)
+	}
+
+	for key, val := range envMap.(map[string]interface{}) {
+		typeOfVal := reflect.TypeOf(val).Kind().String()
+		if typeOfVal != "string" && typeOfVal != "bool" {
+			log.Fatalf("Your config contains key \"%s\" with value \"%s\" which is not of type string or bool!",
+				key, val)
+		}
+
+		config[key] = val.(string)
+	}
+
+	LogVerbose(fmt.Sprintf("Using config environment: %s", p.ConfigEnv), p.Verbose)
+}
+
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
 // Otherwise, exits program with exit code != 0.
@@ -176,7 +207,7 @@ func (p *Parser) Prepare(file string) []string {
 		envMatches := regEnv.FindAllString(request, -1)
 
 		if envMatches != nil {
-			matchedConfig := p.getConfig(envMatches)
+			matchedConfig := p.matchConfig(envMatches)
 
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfig) {
@@ -184,7 +215,6 @@ func (p *Parser) Prepare(file string) []string {
 					"Ensure your config variable keys use lowercase letters only.")
 			}
 
-			// TODO: check if jetbrains config allows uppercase json keys and implement it, if so
 			for configKey, configValue := range matchedConfig {
 				request = strings.ReplaceAll(request, fmt.Sprintf("{{%s}}", configKey), configValue)
 			}
@@ -234,13 +264,13 @@ func (p *Parser) Prepare(file string) []string {
 
 // Takes array of environment variable matches and compares them to keys stored in config.
 // It returns an array of all config keys that have been matched.
-func (p *Parser) getConfig(envMatches []string) map[string]string {
+func (p *Parser) matchConfig(envMatches []string) map[string]string {
 	matchedConfig := make(map[string]string)
 
 	for i := range envMatches {
 		match := strings.Trim(envMatches[i], "{}")
 
-		for configKey, configValue := range p.Config {
+		for configKey, configValue := range config {
 			if strings.Contains(configKey, match) {
 				matchedConfig[match] = configValue
 			}
