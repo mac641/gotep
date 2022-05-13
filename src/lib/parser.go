@@ -64,14 +64,14 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		if !IsUrlValid(url) {
 			log.Fatalf("%s is not a valid URL. Exiting...", url)
 		}
-		// Ensure ip addresses will be stored as hosts, otherwise creating requests fails
+		// NOTE: ensure ip addresses will be stored as hosts, otherwise creating requests fails
 		if !regUrlScheme.MatchString(url) && regIp.MatchString(url) {
 			url = "http://" + url
 		}
 
 		// Separate headers / message body and parse them afterwards
 		if regMultipartFormDataHeader.MatchString(stringHeaderMessage) {
-			// TODO: Add multipart/form-data support
+			// TODO: add multipart/form-data support
 			fmt.Println(Yellow +
 				"NOTE: Currently multipart/form-data can't be parsed. Therefore, this request will be skipped!" + Reset)
 			continue
@@ -227,9 +227,9 @@ func (p *Parser) Prepare(file string) []string {
 			Ensure there's only one handler per request.`)
 		}
 
-		// NOTE: Following TODOs are only relevant when adding response handler validation support
-		// TODO: Trim '{%%}' from response handler match
-		// TODO: Check if request separators or '%}' have been used inside the handler block
+		// NOTE: following TODOs are only relevant when adding response handler validation support
+		// TODO: trim '{%%}' from response handler match
+		// TODO: check if request separators or '%}' have been used inside the handler block
 
 		if responseHandlerMatches != nil {
 			if isFirstResponseHandlerOccurrence {
@@ -282,7 +282,7 @@ func (p *Parser) matchConfig(envMatches []string) map[string]string {
 
 // Takes string containing headers and message and separates them.
 // It returns headers as string array and message body as single string.
-// TODO: Outsource separating headers and messages from ParseHttpRequests when adding multipart/form-data support
+// TODO: outsource separating headers and messages from Parse when adding multipart/form-data support
 // func separateHeadersFromMessage(headersMessage string) ([]string, string) {
 
 // }
@@ -297,7 +297,7 @@ func (p *Parser) parseHeaders(headers []string) map[string][]string {
 		if regHeaders.MatchString(headerMatch) {
 			headerSubMatch := regHeaders.FindStringSubmatch(headerMatch)
 			for i, name := range regHeaders.SubexpNames() {
-				// NOTE: Start at index == 1 because first value of array is full match which is irrelevant
+				// NOTE: start at index == 1 because first value of array is full match which is irrelevant
 				if i >= 1 && i < len(headerSubMatch) {
 					switch name {
 					case "Fieldname":
