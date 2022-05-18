@@ -25,9 +25,11 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -63,7 +65,13 @@ func init() {
 }
 
 func test(cmd *cobra.Command) {
+	// Check if test file has been passed and uses .rest or .http extension
 	tests, err := cmd.Flags().GetString(file)
+	testFileSplit := strings.Split(tests, ".")
+	testFileFormat := strings.ToLower(testFileSplit[len(testFileSplit)-1])
+	if testFileFormat != "rest" && testFileFormat != "http" {
+		log.Fatalf(`Test file names need to have ".rest" or ".http" extensions.`)
+	}
 	pathPrefix := filepath.Dir(tests)
 	cobra.CheckErr(err)
 	if tests == "" {
@@ -73,16 +81,14 @@ func test(cmd *cobra.Command) {
 
 		tests += "default.http"
 	}
-	lib.LogVerbose("Using requests file: "+tests, verbose)
+	lib.LogVerbose(fmt.Sprintf("Using requests file: %s", tests), verbose)
 
 	// TODO: don't load whole files into RAM -> read by byte
 	content, err := os.ReadFile(tests)
-	if err != nil {
-		log.Fatal(err)
-	}
+	cobra.CheckErr(err)
 	stringContent := string(content)
 
-	// Check if environment config exists and use it, if so
+	// Check if environment config is not empty and use it, if so
 	config, err := cmd.Flags().GetString(config)
 	cobra.CheckErr(err)
 	var configPath string
@@ -110,13 +116,16 @@ func test(cmd *cobra.Command) {
 	preparedRequests := parser.Prepare(stringContent)
 	// fmt.Println(preparedRequests)
 	parsedHttpRequests := parser.Parse(preparedRequests)
-	fmt.Println(parsedHttpRequests)
+	// fmt.Println(parsedHttpRequests)
 
 	// TODO: collect requests and print ALL results on console, rather than exiting at every failed request
-	// client := &http.Client{}
-	// for i := range parsedHttpRequests {
-	// 	r, err := client.Do(&parsedHttpRequests[i])
-	// 	cobra.CheckErr(err)
-	// 	fmt.Println(r)
-	// }
+	responses := []*http.Response{}
+	client := &http.Client{}
+	for i := range parsedHttpRequests {
+		r, err := client.Do(&parsedHttpRequests[i])
+		cobra.CheckErr(err)
+		responses = append(responses, r)
+		// fmt.Println(r)
+	}
+	fmt.Println(responses)
 }

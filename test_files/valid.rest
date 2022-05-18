@@ -1,0 +1,48 @@
+### Get request
+GET http://example.com/
+
+### Get request with header
+GET /api/get
+Host: example.com
+
+### Get request with parameter
+http://example.com/api/get?id=42
+
+### Get request with query
+http://example.com/api/get#q=hello+world
+
+### Get request with query and header
+GET http://example.com/api/get?id=15
+From: user@example.com
+
+### Post request
+POST http://example.com/auth
+Content-Type: application/json
+
+< input.json
+> {% client.global.set("auth", response.body.token); %}
+<> previous-response.200.json
+
+### Post request with message
+POST http://example.com/api/add
+Content-Type: application/json
+
+{ “key”: “value” }
+
+### Post request with multipart/form-data
+POST http://example.com/api/upload
+Content-Type: multipart/form-data; boundary=abcd
+
+--abcd
+Content-Disposition: form-data; name="text"
+
+Text
+--abcd
+Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
+
+< ./input.txt
+--abcd--
+
+### Options request
+OPTIONS * HTTP/1.1
+Host: http://example.com:8080
