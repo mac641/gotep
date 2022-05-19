@@ -1,12 +1,40 @@
-package lib_test
+package lib
 
 import (
 	"path"
 	"path/filepath"
+	"reflect"
 	"testing"
-
-	"github.com/mac641/gotep/src/lib"
 )
+
+func TestConvertToAbsolutePath(t *testing.T) {
+	const (
+		prefix = "/home/testuser"
+		p      = "a/relative/path"
+	)
+
+	result := ConvertToAbsolutePath(prefix, prefix)
+	if result != prefix {
+		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s", prefix, result)
+	}
+
+	result = ConvertToAbsolutePath(p, prefix)
+	assertValueJoin := path.Join(prefix, p)
+	if result != assertValueJoin {
+		t.Errorf("Absolute paths using given prefixes have to be joined properly! Expected: %s, Got %s",
+			assertValueJoin, result)
+	}
+
+	result = ConvertToAbsolutePath(p, "")
+	assertValueAbs, err := filepath.Abs(p)
+	if err != nil {
+		t.Errorf("Error while generating absolute path. Error: %s", err.Error())
+	}
+	if result != assertValueAbs {
+		t.Errorf("Absolute paths in the same directory have to use matching path prefixes! Expected: %s, Got: %s",
+			assertValueAbs, result)
+	}
+}
 
 func TestIsUrlValid(t *testing.T) {
 	var (
@@ -30,45 +58,46 @@ func TestIsUrlValid(t *testing.T) {
 	)
 
 	for i := range validUrls {
-		valid := lib.IsUrlValid(validUrls[i])
+		valid := IsUrlValid(validUrls[i])
 		if !valid {
 			t.Errorf("Expected %s to be valid url.", validUrls[i])
 		}
 	}
 
 	for i := range invalidUrls {
-		invalid := lib.IsUrlValid(invalidUrls[i])
+		invalid := IsUrlValid(invalidUrls[i])
 		if invalid {
 			t.Errorf("Expected %s to be invalid url.", invalidUrls[i])
 		}
 	}
 }
 
-func TestConvertToAbsolutePath(t *testing.T) {
-	const (
-		prefix = "/home/testuser"
-		p      = "a/relative/path"
-	)
+func TestTrimEmptyStringsFromSlice(t *testing.T) {
+	testSlice := []string{"", "", "", "hello", "i'm in between", ""}
+	assertSlice := []string{"hello", "i'm in between"}
 
-	result := lib.ConvertToAbsolutePath(prefix, prefix)
-	if result != prefix {
-		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s", prefix, result)
+	testResult := TrimEmptyStringsFromSlice(testSlice)
+	if !reflect.DeepEqual(testResult, assertSlice) {
+		t.Errorf("Expected result to be %s but got %s", assertSlice, testResult)
 	}
+}
 
-	result = lib.ConvertToAbsolutePath(p, prefix)
-	assertValueJoin := path.Join(prefix, p)
-	if result != assertValueJoin {
-		t.Errorf("Absolute paths using given prefixes have to be joined properly! Expected: %s, Got %s",
-			assertValueJoin, result)
-	}
+func TestTrimLeftEmptyStringsFromSlice(t *testing.T) {
+	testSlice := []string{"", "", "", "hello", "i'm in between"}
+	assertSlice := []string{"hello", "i'm in between"}
 
-	result = lib.ConvertToAbsolutePath(p, "")
-	assertValueAbs, err := filepath.Abs(p)
-	if err != nil {
-		t.Errorf("Error while generating absolute path. Error: %s", err.Error())
+	testResult := TrimLeftEmptyStringsFromSlice(testSlice)
+	if !reflect.DeepEqual(testResult, assertSlice) {
+		t.Errorf("Expected result to be %s but got %s", assertSlice, testResult)
 	}
-	if result != assertValueAbs {
-		t.Errorf("Absolute paths in the same directory have to use matching path prefixes! Expected: %s, Got: %s",
-			assertValueAbs, result)
+}
+
+func TestTrimRightEmptyStringsFromSlice(t *testing.T) {
+	testSlice := []string{"hello", "i'm in between", "", "", ""}
+	assertSlice := []string{"hello", "i'm in between"}
+
+	testResult := TrimRightEmptyStringsFromSlice(testSlice)
+	if !reflect.DeepEqual(testResult, assertSlice) {
+		t.Errorf("Expected result to be %s but got %s", assertSlice, testResult)
 	}
 }

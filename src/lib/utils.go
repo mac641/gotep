@@ -12,6 +12,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func ConvertToAbsolutePath(p string, prefix string) string {
+	if filepath.IsAbs(p) {
+		return p
+	}
+
+	if !regexp.MustCompile(`^\.\/?$`).MatchString(prefix) && prefix != "" {
+		p = path.Join(prefix, p)
+	}
+	absPath, err := filepath.Abs(p)
+	cobra.CheckErr(err)
+
+	return absPath
+}
+
 func IsUrlValid(s string) bool {
 	// Return false on empty string
 	if s == "" {
@@ -59,22 +73,38 @@ func IsUrlValid(s string) bool {
 	return err == nil
 }
 
-func ConvertToAbsolutePath(p string, prefix string) string {
-	if filepath.IsAbs(p) {
-		return p
-	}
-
-	if !regexp.MustCompile(`^\.\/?$`).MatchString(prefix) && prefix != "" {
-		p = path.Join(prefix, p)
-	}
-	absPath, err := filepath.Abs(p)
-	cobra.CheckErr(err)
-
-	return absPath
-}
-
 func LogVerbose(msg string, verbose bool) {
 	if verbose {
 		fmt.Println(msg)
 	}
+}
+
+func TrimEmptyStringsFromSlice(s []string) []string {
+	s = TrimLeftEmptyStringsFromSlice(s)
+	s = TrimRightEmptyStringsFromSlice(s)
+	return s
+}
+
+func TrimLeftEmptyStringsFromSlice(s []string) []string {
+	firstNonEmptyStringIndex := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == "" {
+			firstNonEmptyStringIndex++
+		} else {
+			break
+		}
+	}
+	return s[firstNonEmptyStringIndex:]
+}
+
+func TrimRightEmptyStringsFromSlice(s []string) []string {
+	lastNonEmptyStringIndex := len(s) - 1
+	for i := lastNonEmptyStringIndex; i >= 0; i-- {
+		if s[i] == "" {
+			lastNonEmptyStringIndex--
+		} else {
+			break
+		}
+	}
+	return s[0 : lastNonEmptyStringIndex+1]
 }
