@@ -125,7 +125,7 @@ func test(cmd *cobra.Command) {
 		r, err := client.Do(&parsedHttpRequests[i])
 		cobra.CheckErr(err)
 		responses = append(responses, r)
-		// fmt.Println(r)
+		fmt.Println(r.Status)
 	}
 	fmt.Println(responses)
 }
