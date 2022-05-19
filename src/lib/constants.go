@@ -31,6 +31,7 @@ var (
 	// https://stackoverflow.com/questions/3508338/what-is-the-boundary-in-multipart-form-data
 	regMultipartFormDataHeader = regexp.
 					MustCompile(`(?m)^Content-Type: multipart\/form-data(; boundary=(?P<Boundary>[0-9a-zA-Z'()+_,\-.\/:=?]{1,70}))?$(\r?\n|\r)`)
+	// Non Ascii regex source: https://stackoverflow.com/questions/2124010/grep-regex-to-match-non-ascii-characters
 	regNonAscii    = regexp.MustCompile(`[^\x00-\x7F]`)
 	regRequestLine = regexp.
 			MustCompile(`(?m)^((GET|HEAD|POST|PUT|DELETE|CONNECT|PATCH|OPTIONS|TRACE)[ \t\f]+)?(([\d/\[*]|http|https)\S*)((\r?\n|\r)^\s+[\w\-\/?#~:.%+]+(\r?\n|\r)?)*([ \t\f]+(HTTP/\d+(\.\d+)?))?$(\r?\n|\r)`)

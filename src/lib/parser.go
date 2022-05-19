@@ -115,6 +115,25 @@ func (p *Parser) Parse(requests []string) []http.Request {
 			httpRequest.Header = parsedHeaders
 		}
 
+		// NOTE: Handle origin-form and asterisk-form of url in specific way
+		if httpRequest.URL.Host == "" && len(parsedHeaders["Host"]) > 0 {
+			// TODO: give user chance to decide which host shall be used if their are multiple
+			host := parsedHeaders["Host"][0]
+			if !regUrlScheme.MatchString(host) && httpRequest.URL.Scheme == "" {
+				httpRequest.URL.Scheme = "http"
+				httpRequest.URL.Host = host
+			} else {
+				hostSplit := strings.Split(host, "://")
+				if len(hostSplit) > 2 {
+					log.Fatalf("The \"Host\" header %s is not formatted properly!", host)
+				}
+				if httpRequest.URL.Scheme == "" {
+					httpRequest.URL.Scheme = hostSplit[0]
+				}
+				httpRequest.URL.Host = hostSplit[1]
+			}
+		}
+
 		httpRequests = append(httpRequests, *httpRequest)
 	}
 
@@ -390,8 +409,7 @@ func (p *Parser) parseRequestLine(reqLine string) (string, string, string) {
 
 	pathSegment := regRequestLinePathSegment.FindString(requestUrl)
 	if pathSegment != "" {
-		// TODO: PathEscape does not convert + to ' ' -> check if error in jetbrains specs
-		// NOTE: According to go PathUnescape does not convert + to ' ' which is correct
+		// NOTE: According to go docs, PathUnescape does not convert + to ' ' which is correct
 		if !strings.Contains(pathSegment, "%") && regNonAscii.MatchString(pathSegment) {
 			pathSegmentEncoded := url.PathEscape(pathSegment)
 			requestUrl = strings.ReplaceAll(requestUrl, pathSegment, pathSegmentEncoded)

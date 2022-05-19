@@ -27,7 +27,7 @@ Content-Type: application/json
 
 ### Test with message body and absolute path
 POST http://www.example.com/test1 HTTP/2
-Content-Type: application/json
+Content-Type: application/json # comment in line
 
 {
   "html": "Html message"

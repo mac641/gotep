@@ -1,13 +1,16 @@
-package lib
+package lib_test
 
 import (
 	"io"
+	"os"
 	"regexp"
 	"testing"
+
+	"github.com/mac641/gotep/src/lib"
 )
 
 var (
-	parser = Parser{
+	parser = lib.Parser{
 		ConfigEnv:  "default",
 		Verbose:    false,
 		PathPrefix: "../../test_files",
@@ -87,6 +90,10 @@ Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
 --abcd--
 
 `}
+		requestLineAsteriskFormHeader = []string{`OPTIONS * HTTP/1.1
+Host: http://example.com:8080`}
+		requestLineOriginFormHeader = []string{`GET /api/get
+Host: example.com`}
 		assertValues = []string{}
 	)
 
@@ -413,8 +420,8 @@ Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
 	}
 	for key, value := range requestLineHeaderBodyLineBreakParsed[0].Header {
 		if key != assertValues[2] {
-			t.Errorf("Expected requestLineHeaderBodyLineBreak to have header key %s or %s but got %s",
-				assertValues[2], assertValues[4], key)
+			t.Errorf("Expected requestLineHeaderBodyLineBreak to have header key %s but got %s",
+				assertValues[2], key)
 		}
 		if len(value) != 1 {
 			t.Errorf("Expected requestLineHeaderBodyLineBreak to have one header value but got %d", len(value))
@@ -459,8 +466,8 @@ Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
 	}
 	for key, value := range requestLineHeaderBodyInputFileRefParsed[0].Header {
 		if key != assertValues[2] {
-			t.Errorf("Expected requestLineHeaderBodyInputFileRef to have header key %s or %s but got %s",
-				assertValues[2], assertValues[4], key)
+			t.Errorf("Expected requestLineHeaderBodyInputFileRef to have header key %s but got %s",
+				assertValues[2], key)
 		}
 		if len(value) != 1 {
 			t.Errorf("Expected requestLineHeaderBodyInputFileRef to have one header value but got %d", len(value))
@@ -485,100 +492,94 @@ Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
 	if len(requestLineHeaderMultipartFormDataParsed) != 0 {
 		t.Errorf("Expected requestLineHeaderMultipartFormData to be skipped but got request")
 	}
+
+	// Request line in asterisk-form with one mandatory header
+	requestLineAsteriskFormHeaderParsed := parser.Parse(requestLineAsteriskFormHeader)
+	assertValues = []string{"OPTIONS", "http://example.com:8080/*", "HTTP/1.1", "Host", "http://example.com:8080"}
+	if len(requestLineAsteriskFormHeaderParsed) != 1 {
+		t.Errorf("Expected requestLineAsteriskFormHeader to have one request but got %d",
+			len(requestLineAsteriskFormHeaderParsed))
+	}
+	if requestLineAsteriskFormHeaderParsed[0].Method != assertValues[0] {
+		t.Errorf("Expected requestLineAsteriskFormHeader to use method %s but got %s",
+			assertValues[0], requestLineAsteriskFormHeaderParsed[0].Method)
+	}
+	if requestLineAsteriskFormHeaderParsed[0].URL.String() != assertValues[1] {
+		t.Errorf("Expected requestLineAsteriskFormHeader to use url %s but got %s",
+			assertValues[1], requestLineAsteriskFormHeaderParsed[0].URL.String())
+	}
+	if requestLineAsteriskFormHeaderParsed[0].Proto != "HTTP/1.1" &&
+		requestLineAsteriskFormHeaderParsed[0].Proto != "HTTP/2" {
+		t.Errorf("Expected requestLineAsteriskFormHeader to use proto HTTP/1.1 or HTTP/2 but got %s",
+			requestLineAsteriskFormHeaderParsed[0].Proto)
+	}
+	if len(requestLineAsteriskFormHeaderParsed[0].Header) != 1 {
+		t.Errorf("Expected requestLineAsteriskFormHeader to have one header but got %d",
+			len(requestLineAsteriskFormHeaderParsed[0].Header))
+	}
+	for key, value := range requestLineAsteriskFormHeaderParsed[0].Header {
+		if key != assertValues[3] {
+			t.Errorf("Expected requestLineAsteriskFormHeader to have header key %s but got %s",
+				assertValues[3], key)
+		}
+		if len(value) != 1 {
+			t.Errorf("Expected requestLineAsteriskFormHeader to have one header value but got %d", len(value))
+		}
+		if value[0] != assertValues[4] {
+			t.Errorf("Expected requestLineAsteriskFormHeader header value to be %s but got %s",
+				assertValues[4], value[0])
+		}
+	}
+
+	// Request line in origin-form (contains only path segment of url) with one mandatory header
+	requestLineOriginFormHeaderParsed := parser.Parse(requestLineOriginFormHeader)
+	assertValues = []string{"GET", "http://example.com/api/get", "/api/get", "Host", "example.com"}
+	if len(requestLineOriginFormHeaderParsed) != 1 {
+		t.Errorf("Expected requestLineOriginFormHeader to have one request but got %d",
+			len(requestLineOriginFormHeaderParsed))
+	}
+	if requestLineOriginFormHeaderParsed[0].Method != assertValues[0] {
+		t.Errorf("Expected requestLineOriginFormHeader to use method %s but got %s",
+			assertValues[0], requestLineOriginFormHeaderParsed[0].Method)
+	}
+	if requestLineOriginFormHeaderParsed[0].URL.String() != assertValues[1] {
+		t.Errorf("Expected requestLineOriginFormHeader to use url %s but got %s",
+			assertValues[1], requestLineOriginFormHeaderParsed[0].URL.String())
+	}
+	if requestLineOriginFormHeaderParsed[0].URL.Path != assertValues[2] {
+		t.Errorf("Expected requestLineOriginFormHeader to use url path %s but got %s",
+			assertValues[1], requestLineOriginFormHeaderParsed[0].URL.String())
+	}
+	if requestLineOriginFormHeaderParsed[0].Proto != "HTTP/1.1" &&
+		requestLineOriginFormHeaderParsed[0].Proto != "HTTP/2" {
+		t.Errorf("Expected requestLineOriginFormHeader to use proto HTTP/1.1 or HTTP/2 but got %s",
+			requestLineOriginFormHeaderParsed[0].Proto)
+	}
+	if len(requestLineOriginFormHeaderParsed[0].Header) != 1 {
+		t.Errorf("Expected requestLineOriginFormHeader to have one header but got %d",
+			len(requestLineOriginFormHeaderParsed[0].Header))
+	}
+	for key, value := range requestLineOriginFormHeaderParsed[0].Header {
+		if key != assertValues[3] {
+			t.Errorf("Expected requestLineOriginFormHeader to have header key %s but got %s",
+				assertValues[3], key)
+		}
+		if len(value) != 1 {
+			t.Errorf("Expected requestLineOriginFormHeader to have one header value but got %d", len(value))
+		}
+		if value[0] != assertValues[4] {
+			t.Errorf("Expected requestLineOriginFormHeader header value to be %s but got %s",
+				assertValues[4], value[0])
+		}
+	}
 }
 
 func TestPrepare(t *testing.T) {
-	const testDataForPreparing = `###
-### Test ipv4
-192.168.178.2/index/https
-Accept: application/json
-
-### Test split request line
-http://example.com/
-  api
-  /get
-
-### Test split request line encoded
-GET http://example.com/
-  %20api%20
-  +/get+
-
-### Test multiple headers
-GET 192.168.178.3/index
-Accept: application/json
-  text/html
-// Comment 1
-From: test@test.com
-### Test with message body and absolute path
-POST http://www.example.com/test1
-Content-Type: application/json
-
-< ./input.json
-
-### Test with message body and absolute path
-POST http://www.example.com/test1 HTTP/2
-Content-Type: application/json
-
-{
-  "html": "Html message"
-}
-
-###
-### Test ipv6
-GET [1111:2222:abcd:4444:5a6c:7777:9c9f:6789]/index
-# Comment 924875q3948579
-Accept: application/json
-
-### Test variables in request line
-GET {{origin}}/{{location}}/available
-Accept: application/json
-
-### Test variables in header / message
-POST {{origin}}/{{location}}/pdf
-Content-Type: {{headervalue}}
-
-{
-  "html": "<h1>I'm an example heading!</h1>",
-  {{jsonvalue}}
-}
-
-### Test response handler / ref
-POST http://example.com/auth
-Content-Type: application/json
-
-< input.json
-> {% client.global.set("auth", response.body.token);
-console.log('Hello world!'); %}
-<> previous-response.200.json
-
-### Test asterisk form
-OPTIONS * HTTP/1.1
-Host: http://example.com:8080
-### Test no header and message
-OPTIONS * HTTP/1.1
-### Test message only
-OPTIONS * HTTP/1.1
-
-{
-  "html": "<h1>I'm an example heading!</h1>",
-  {{jsonvalue}}
-}
-
-### Test multipart/form-data
-POST http://example.com/api/upload
-Content-Type: multipart/form-data; boundary=abcd
-
---abcd
-Content-Disposition: form-data; name="text"
-
-Text
---abcd
-Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
-
-< ./input.txt
---abcd--
-
-`
+	file, err := os.ReadFile("../../test_files/default.http")
+	if err != nil {
+		t.Errorf("Could not open test file!\n\n%s", err.Error())
+	}
+	testDataForPreparing := string(file)
 
 	var (
 		regSeparator       = regexp.MustCompile(`(?m)^(###[^\r\n]*(\r?\n|\r))`)

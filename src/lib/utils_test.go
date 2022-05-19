@@ -1,10 +1,12 @@
-package lib
+package lib_test
 
 import (
 	"path"
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/mac641/gotep/src/lib"
 )
 
 func TestConvertToAbsolutePath(t *testing.T) {
@@ -13,19 +15,19 @@ func TestConvertToAbsolutePath(t *testing.T) {
 		p      = "a/relative/path"
 	)
 
-	result := ConvertToAbsolutePath(prefix, prefix)
+	result := lib.ConvertToAbsolutePath(prefix, prefix)
 	if result != prefix {
 		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s", prefix, result)
 	}
 
-	result = ConvertToAbsolutePath(p, prefix)
+	result = lib.ConvertToAbsolutePath(p, prefix)
 	assertValueJoin := path.Join(prefix, p)
 	if result != assertValueJoin {
 		t.Errorf("Absolute paths using given prefixes have to be joined properly! Expected: %s, Got %s",
 			assertValueJoin, result)
 	}
 
-	result = ConvertToAbsolutePath(p, "")
+	result = lib.ConvertToAbsolutePath(p, "")
 	assertValueAbs, err := filepath.Abs(p)
 	if err != nil {
 		t.Errorf("Error while generating absolute path. Error: %s", err.Error())
@@ -58,14 +60,14 @@ func TestIsUrlValid(t *testing.T) {
 	)
 
 	for i := range validUrls {
-		valid := IsUrlValid(validUrls[i])
+		valid := lib.IsUrlValid(validUrls[i])
 		if !valid {
 			t.Errorf("Expected %s to be valid url.", validUrls[i])
 		}
 	}
 
 	for i := range invalidUrls {
-		invalid := IsUrlValid(invalidUrls[i])
+		invalid := lib.IsUrlValid(invalidUrls[i])
 		if invalid {
 			t.Errorf("Expected %s to be invalid url.", invalidUrls[i])
 		}
@@ -76,7 +78,7 @@ func TestTrimEmptyStringsFromSlice(t *testing.T) {
 	testSlice := []string{"", "", "", "hello", "i'm in between", ""}
 	assertSlice := []string{"hello", "i'm in between"}
 
-	testResult := TrimEmptyStringsFromSlice(testSlice)
+	testResult := lib.TrimEmptyStringsFromSlice(testSlice)
 	if !reflect.DeepEqual(testResult, assertSlice) {
 		t.Errorf("Expected result to be %s but got %s", assertSlice, testResult)
 	}
@@ -86,7 +88,7 @@ func TestTrimLeftEmptyStringsFromSlice(t *testing.T) {
 	testSlice := []string{"", "", "", "hello", "i'm in between"}
 	assertSlice := []string{"hello", "i'm in between"}
 
-	testResult := TrimLeftEmptyStringsFromSlice(testSlice)
+	testResult := lib.TrimLeftEmptyStringsFromSlice(testSlice)
 	if !reflect.DeepEqual(testResult, assertSlice) {
 		t.Errorf("Expected result to be %s but got %s", assertSlice, testResult)
 	}
@@ -96,7 +98,7 @@ func TestTrimRightEmptyStringsFromSlice(t *testing.T) {
 	testSlice := []string{"hello", "i'm in between", "", "", ""}
 	assertSlice := []string{"hello", "i'm in between"}
 
-	testResult := TrimRightEmptyStringsFromSlice(testSlice)
+	testResult := lib.TrimRightEmptyStringsFromSlice(testSlice)
 	if !reflect.DeepEqual(testResult, assertSlice) {
 		t.Errorf("Expected result to be %s but got %s", assertSlice, testResult)
 	}
