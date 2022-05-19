@@ -25,7 +25,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -103,29 +102,18 @@ func test(cmd *cobra.Command) {
 	conEnv, err := cmd.Flags().GetString(configEnv)
 	cobra.CheckErr(err)
 
-	// Create parser
+	// Create parser and parse test file
 	parser := lib.Parser{
 		ConfigEnv:  conEnv,
 		ConfigPath: configPath,
 		PathPrefix: pathPrefix,
 		Verbose:    verbose,
 	}
-
-	// Parse test file
 	parser.ParseConfig()
 	preparedRequests := parser.Prepare(stringContent)
-	// fmt.Println(preparedRequests)
 	parsedHttpRequests := parser.Parse(preparedRequests)
-	// fmt.Println(parsedHttpRequests)
 
-	// TODO: collect requests and print ALL results on console, rather than exiting at every failed request
-	responses := []*http.Response{}
-	client := &http.Client{}
-	for i := range parsedHttpRequests {
-		r, err := client.Do(&parsedHttpRequests[i])
-		cobra.CheckErr(err)
-		responses = append(responses, r)
-		fmt.Println(r.Status)
-	}
-	fmt.Println(responses)
+	// Create validator and send requests
+	validator := lib.Validator{}
+	validator.Send(parsedHttpRequests)
 }
