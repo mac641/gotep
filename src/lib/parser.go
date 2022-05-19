@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"regexp"
@@ -33,67 +34,38 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		stringRequest := requests[i]
 
 		// Parse request line
-		requestLine := strings.TrimRight(regRequestline.FindString(stringRequest), "\r\n")
-		requestLineMatches := regexp.MustCompile("[ \t\f]").Split(requestLine, -1)
-		method := ""
-		url := ""
-		httpVersion := ""
-		switch len(requestLineMatches) {
-		case 1:
-			url = requestLineMatches[0]
-		case 2:
-			if strings.Contains(requestLineMatches[1], "HTTP/") {
-				url = requestLineMatches[0]
-				httpVersion = requestLineMatches[1]
-			} else {
-				method = requestLineMatches[0]
-				url = requestLineMatches[1]
-			}
-		case 3:
-			method = requestLineMatches[0]
-			url = requestLineMatches[1]
-			httpVersion = requestLineMatches[2]
-		default:
-			fmt.Println(Red + "One of your request lines could not be parsed!" + Reset)
-			fmt.Println(Yellow + "Check request below for errors:" + Reset)
-			fmt.Println(stringRequest)
-			os.Exit(1)
-		}
-		stringHeaderMessage := strings.Trim(strings.ReplaceAll(stringRequest, requestLine, ""), "\r\n")
+		requestLine := regRequestLine.FindString(stringRequest)
+		method, requestUrl, httpVersion := p.parseRequestLine(requestLine)
 
-		if !IsUrlValid(url) {
-			log.Fatalf("%s is not a valid URL. Exiting...", url)
-		}
-		// NOTE: ensure ip addresses will be stored as hosts, otherwise creating requests fails
-		if !regUrlScheme.MatchString(url) && regIp.MatchString(url) {
-			url = "http://" + url
-		}
+		stringHeaderMessage := strings.Trim(strings.ReplaceAll(stringRequest, requestLine, ""), "\r\n")
 
 		// Separate headers / message body and parse them afterwards
 		if regMultipartFormDataHeader.MatchString(stringHeaderMessage) {
 			// TODO: add multipart/form-data support
 			fmt.Println(Yellow +
 				"NOTE: Currently multipart/form-data can't be parsed. Therefore, this request will be skipped!" + Reset)
-			continue
+			continue // Skip this loop cycle
 		}
-		splitEmptyNewline := regEmptyNewline.Split(stringHeaderMessage, -1)
+		splitEmptyNewline := regEmptyNewLine.Split(stringHeaderMessage, -1)
 		parsedHeaders := make(map[string][]string)
 		var message io.Reader
 		switch len(splitEmptyNewline) {
 		case 0:
-			LogVerbose("Neither headers, nor a message body have/has been provided for\\n"+stringRequest, p.Verbose)
+			LogVerbose(
+				fmt.Sprintf("Neither headers, nor a message body have/has been provided for\n%s", stringRequest),
+				p.Verbose)
 		case 1:
 			match := splitEmptyNewline[0]
 			if regHeaders.MatchString(match) {
-				LogVerbose("No message body has been provided for\n"+stringRequest, p.Verbose)
+				LogVerbose(fmt.Sprintf("No message body has been provided for\n%s", stringRequest), p.Verbose)
 				parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 
 			} else {
-				LogVerbose("No headers have been provided for\n"+stringRequest, p.Verbose)
+				LogVerbose(fmt.Sprintf("No headers have been provided for\n%s", stringRequest), p.Verbose)
 				message = p.parseMessage(match)
 			}
 		case 2:
-			LogVerbose("Headers and message body detected in\n"+stringRequest, p.Verbose)
+			LogVerbose(fmt.Sprintf("Headers and message body detected in\n%s", stringRequest), p.Verbose)
 			parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 			message = p.parseMessage(splitEmptyNewline[1])
 		default:
@@ -108,23 +80,23 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		var err error
 		switch method {
 		case "", "GET":
-			httpRequest, err = http.NewRequest(http.MethodGet, url, message)
+			httpRequest, err = http.NewRequest(http.MethodGet, requestUrl, message)
 		case "HEAD":
-			httpRequest, err = http.NewRequest(http.MethodHead, url, message)
+			httpRequest, err = http.NewRequest(http.MethodHead, requestUrl, message)
 		case "POST":
-			httpRequest, err = http.NewRequest(http.MethodPost, url, message)
+			httpRequest, err = http.NewRequest(http.MethodPost, requestUrl, message)
 		case "PUT":
-			httpRequest, err = http.NewRequest(http.MethodPut, url, message)
+			httpRequest, err = http.NewRequest(http.MethodPut, requestUrl, message)
 		case "DELETE":
-			httpRequest, err = http.NewRequest(http.MethodDelete, url, message)
+			httpRequest, err = http.NewRequest(http.MethodDelete, requestUrl, message)
 		case "CONNECT":
-			httpRequest, err = http.NewRequest(http.MethodConnect, url, message)
+			httpRequest, err = http.NewRequest(http.MethodConnect, requestUrl, message)
 		case "PATCH":
-			httpRequest, err = http.NewRequest(http.MethodPatch, url, message)
+			httpRequest, err = http.NewRequest(http.MethodPatch, requestUrl, message)
 		case "OPTIONS":
-			httpRequest, err = http.NewRequest(http.MethodOptions, url, message)
+			httpRequest, err = http.NewRequest(http.MethodOptions, requestUrl, message)
 		case "TRACE":
-			httpRequest, err = http.NewRequest(http.MethodTrace, url, message)
+			httpRequest, err = http.NewRequest(http.MethodTrace, requestUrl, message)
 		default:
 			log.Fatal("Undefined http method value found in\n" + stringRequest)
 		}
@@ -345,4 +317,102 @@ func (p *Parser) parseMessage(message string) io.Reader {
 	cobra.CheckErr(err)
 
 	return bufio.NewReader(file)
+}
+
+// Takes string representing a request line and parses it.
+// Three strings in (sorted like method, requestUrl, httpVersion) will be returned.
+func (p *Parser) parseRequestLine(reqLine string) (string, string, string) {
+	requestLine := reqLine
+	// Check if request line has been split
+	requestLineSplit := TrimRightEmptyStringsFromSlice(regexp.MustCompile("\r?\n|\r").Split(requestLine, -1))
+	if len(requestLineSplit) > 1 {
+		requestLine = ""
+		for j := range requestLineSplit {
+			line := requestLineSplit[j]
+
+			line = strings.Trim(line, " \t\f")
+			line = strings.TrimRight(line, "\r\n")
+			requestLine += line
+		}
+	} else {
+		requestLine = strings.TrimRight(requestLine, "\r\n")
+	}
+
+	// Assign method, requestUrl and httpVersion
+	requestLineMatches := regexp.MustCompile("[ \t\f]").Split(requestLine, -1)
+	method := ""
+	requestUrl := ""
+	httpVersion := ""
+	switch len(requestLineMatches) {
+	case 1:
+		requestUrl = requestLineMatches[0]
+	case 2:
+		if strings.Contains(requestLineMatches[1], "HTTP/") {
+			requestUrl = requestLineMatches[0]
+			httpVersion = requestLineMatches[1]
+		} else {
+			method = requestLineMatches[0]
+			requestUrl = requestLineMatches[1]
+		}
+	case 3:
+		method = requestLineMatches[0]
+		requestUrl = requestLineMatches[1]
+		httpVersion = requestLineMatches[2]
+	default:
+		fmt.Println(Red + "One of your request lines could not be parsed!" + Reset)
+		fmt.Println(Yellow + "Check request line below for errors:" + Reset)
+		fmt.Println(reqLine)
+		os.Exit(1)
+	}
+
+	// Check if requestUrl contains fragment and remove it, because browsers do not send fragments
+	fragment := regRequestLineFragment.FindString(requestUrl)
+	if fragment != "" {
+		requestUrl = strings.ReplaceAll(requestUrl, fragment, "")
+	}
+
+	// Check if requestUrl contains path or query elements and needs to be encoded
+	// or requestUrl is already encoded because of whitespace and needs to be decoded
+	query := regRequestLineQuery.FindString(requestUrl)
+	if query != "" {
+		if !strings.Contains(query, "%") && regNonAscii.MatchString(query) {
+			queryEncoded := url.QueryEscape(query)
+			requestUrl = strings.ReplaceAll(requestUrl, query, queryEncoded)
+		}
+		if strings.Contains(query, "%") {
+			queryDecoded, err := url.QueryUnescape(query)
+			cobra.CheckErr(err)
+			if !regNonAscii.MatchString(queryDecoded) {
+				requestUrl = strings.ReplaceAll(requestUrl, query, queryDecoded)
+			}
+		}
+	}
+
+	pathSegment := regRequestLinePathSegment.FindString(requestUrl)
+	if pathSegment != "" {
+		// TODO: PathEscape does not convert + to ' ' -> check if error in jetbrains specs
+		// NOTE: According to go PathUnescape does not convert + to ' ' which is correct
+		if !strings.Contains(pathSegment, "%") && regNonAscii.MatchString(pathSegment) {
+			pathSegmentEncoded := url.PathEscape(pathSegment)
+			requestUrl = strings.ReplaceAll(requestUrl, pathSegment, pathSegmentEncoded)
+		}
+		if strings.Contains(pathSegment, "%") {
+			pathSegmentDecoded, err := url.PathUnescape(pathSegment)
+			cobra.CheckErr(err)
+			if !regNonAscii.MatchString(pathSegmentDecoded) {
+				requestUrl = strings.ReplaceAll(requestUrl, pathSegment, pathSegmentDecoded)
+			}
+		}
+	}
+
+	// Validate url and add scheme, if missing
+	if !IsUrlValid(requestUrl) {
+		log.Fatalf("%s is not a valid URL. Exiting...", requestUrl)
+	}
+	// NOTE: ensure ip addresses will be stored as hosts, otherwise creating requests fails
+	if !regUrlScheme.MatchString(requestUrl) && regIp.MatchString(requestUrl) {
+		requestUrl = "http://" + requestUrl
+	}
+
+	return method, requestUrl, httpVersion
 }
