@@ -33,9 +33,12 @@ var (
 	checkCmd = &cobra.Command{
 		Use:   "check",
 		Short: "Check syntax of tests files",
-		Long: `Validate the syntax of test files, as well as associated environment definitions, 
-within gotep. For example run: gotep check -c http-client.env.json -f tests.http`,
+		Long: `Validate the syntax of test files, as well as associated environment definitions,
+within gotep. For example run: gotep check -c http-client.env.json -e default tests.http`,
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			// TODO: add parseFlags similar to runCmd
+			// TODO: call parser to determine errors similar to runCmd
 			fmt.Println("check called")
 		},
 	}

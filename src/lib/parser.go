@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -16,15 +17,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type Parser struct {
-	ConfigEnv  string
-	ConfigPath string
-	PathPrefix string
-	Verbose    bool
-}
+type Parser struct{}
 
 // TODO: if needed, check if possible to store bool and string in same map -> until then everything is type of string
-var config = map[string]string{}
+var (
+	config = map[string]string{}
+)
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests.
 func (p *Parser) Parse(requests []string) []http.Request {
@@ -53,19 +51,20 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		case 0:
 			LogVerbose(
 				fmt.Sprintf("Neither headers, nor a message body have/has been provided for\n%s", stringRequest),
-				p.Verbose)
+				ctx.GetVerbose())
 		case 1:
 			match := splitEmptyNewline[0]
 			if regHeaders.MatchString(match) {
-				LogVerbose(fmt.Sprintf("No message body has been provided for\n%s", stringRequest), p.Verbose)
+				LogVerbose(fmt.Sprintf("No message body has been provided for\n%s", stringRequest),
+					ctx.GetVerbose())
 				parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 
 			} else {
-				LogVerbose(fmt.Sprintf("No headers have been provided for\n%s", stringRequest), p.Verbose)
+				LogVerbose(fmt.Sprintf("No headers have been provided for\n%s", stringRequest), ctx.GetVerbose())
 				message = p.parseMessage(match)
 			}
 		case 2:
-			LogVerbose(fmt.Sprintf("Headers and message body detected in\n%s", stringRequest), p.Verbose)
+			LogVerbose(fmt.Sprintf("Headers and message body detected in\n%s", stringRequest), ctx.GetVerbose())
 			parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
 			message = p.parseMessage(splitEmptyNewline[1])
 		default:
@@ -142,15 +141,20 @@ func (p *Parser) Parse(requests []string) []http.Request {
 
 func (p *Parser) ParseConfig() {
 	var tempConfig map[string]interface{}
+	configPath := ctx.GetConfigFilePath()
+	pathPrefix := ctx.GetPathPrefix()
+	if !filepath.IsAbs(configPath) {
+		configPath = ConvertToAbsolutePath(configPath, pathPrefix)
+	}
 	// TODO: don't load whole files into RAM -> read by byte
-	jsonData, err := os.ReadFile(p.ConfigPath)
+	jsonData, err := os.ReadFile(configPath)
 	cobra.CheckErr(err)
 	err = json.Unmarshal(jsonData, &tempConfig)
 	cobra.CheckErr(err)
 
-	envMap, configKeyExists := tempConfig[p.ConfigEnv]
+	envMap, configKeyExists := tempConfig[ctx.GetConfigEnvironment()]
 	if !configKeyExists {
-		log.Fatalf("%s does not exist in your config file!", p.ConfigEnv)
+		log.Fatalf("%s does not exist in your config file!", ctx.GetConfigEnvironment())
 	}
 
 	for key, val := range envMap.(map[string]interface{}) {
@@ -163,7 +167,7 @@ func (p *Parser) ParseConfig() {
 		config[key] = val.(string)
 	}
 
-	LogVerbose(fmt.Sprintf("Using config environment: %s", p.ConfigEnv), p.Verbose)
+	LogVerbose(fmt.Sprintf("Using config environment: %s", ctx.GetConfigEnvironment()), ctx.GetVerbose())
 }
 
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
@@ -327,7 +331,7 @@ func (p *Parser) parseMessage(message string) io.Reader {
 	var err error
 	if regInputFileRef.MatchString(message) {
 		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
-		absMessagePath := ConvertToAbsolutePath(message, p.PathPrefix)
+		absMessagePath := ConvertToAbsolutePath(message, ctx.GetPathPrefix())
 		file, err = os.Open(absMessagePath)
 	} else {
 		file, err = strings.NewReader(message), nil

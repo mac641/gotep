@@ -12,10 +12,9 @@
 				"run",
 				"-c",
 				"${workspaceFolder}/test_files/http-client.env.json",
-				"-f",
-				"${workspaceFolder}/test_files/default.http",
         "-e",
-        "default"
+        "default",
+				"${workspaceFolder}/test_files/default.http",
         // "-v"
 			]
 		},
@@ -30,11 +29,10 @@
 				"run",
 				"-c",
 				"${workspaceFolder}/test_files/http-client.env.json",
-				"-f",
-				"${workspaceFolder}/test_files/valid.rest",
         "-e",
-        "default"
-        // "-v"
+        "default",
+				"${workspaceFolder}/test_files/valid.rest",
+        "-v"
 			]
 		}
 	]
