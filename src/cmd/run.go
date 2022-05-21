@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -37,14 +36,20 @@ import (
 
 // runCmd represents the run command
 var (
+	ctx    = lib.GetContext()
 	runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Execute tests",
 		Long: `Execute tests based on a test file and its associated environment definitions.
-For example run: gotep run -c http-client.env.json -f tests.http -e default`,
+For example run: gotep run -c http-client.env.json -e default tests.http`,
+		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			// fmt.Println("run called")
-			test(cmd)
+			// err := cmd.ParseFlags(args)
+			// if err != nil {
+			// 	log.Fatalf(err.Error())
+			// }
+			assignContext(cmd, args)
+			test()
 		},
 	}
 )
@@ -63,52 +68,37 @@ func init() {
 	// runCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func test(cmd *cobra.Command) {
-	// Check if test file has been passed and uses .rest or .http extension
-	tests, err := cmd.Flags().GetString(file)
-	testFileSplit := strings.Split(tests, ".")
+func assignContext(cmd *cobra.Command, args []string) {
+	// Check if test file uses .rest or .http extension
+	fileName := args[0]
+	testFileSplit := strings.Split(fileName, ".")
 	testFileFormat := strings.ToLower(testFileSplit[len(testFileSplit)-1])
 	if testFileFormat != "rest" && testFileFormat != "http" {
 		log.Fatalf(`Test file names need to have ".rest" or ".http" extensions.`)
 	}
-	pathPrefix := filepath.Dir(tests)
-	cobra.CheckErr(err)
-	if tests == "" {
-		tests, err := os.Getwd()
-		cobra.CheckErr(err)
-		pathPrefix = tests
+	ctx.SetFilePath(fileName)
+	lib.LogVerbose(fmt.Sprintf("Using requests file: %s", fileName), verbose)
 
-		tests += "default.http"
-	}
-	lib.LogVerbose(fmt.Sprintf("Using requests file: %s", tests), verbose)
+	pathPrefix := filepath.Dir(fileName) // Determine path prefix
+	ctx.SetPathPrefix(pathPrefix)
 
+	// Check if environment config is not empty and use it, if so
+	ctx.SetConfigFilePath(configFilePath)
+	lib.LogVerbose(fmt.Sprintf("Using config file: %s", configFilePath), verbose)
+
+	ctx.SetConfigEnvironment(configEnvironment)
+
+	ctx.SetVerbose(verbose)
+}
+
+func test() {
 	// TODO: don't load whole files into RAM -> read by byte
-	content, err := os.ReadFile(tests)
+	content, err := os.ReadFile(ctx.GetFilePath())
 	cobra.CheckErr(err)
 	stringContent := string(content)
 
-	// Check if environment config is not empty and use it, if so
-	config, err := cmd.Flags().GetString(config)
-	cobra.CheckErr(err)
-	var configPath string
-	if config != "" {
-		configPath = config
-	} else {
-		cwd, err := os.Getwd()
-		cobra.CheckErr(err)
-
-		configPath = path.Join(cwd, "http-client.env.json")
-	}
-	conEnv, err := cmd.Flags().GetString(configEnv)
-	cobra.CheckErr(err)
-
 	// Create parser and parse test file
-	parser := lib.Parser{
-		ConfigEnv:  conEnv,
-		ConfigPath: configPath,
-		PathPrefix: pathPrefix,
-		Verbose:    verbose,
-	}
+	parser := lib.Parser{}
 	parser.ParseConfig()
 	preparedRequests := parser.Prepare(stringContent)
 	parsedHttpRequests := parser.Parse(preparedRequests)

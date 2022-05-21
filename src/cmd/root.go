@@ -30,8 +30,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	testFile          string
-	configFile        string
+	configFilePath    string
 	configEnvironment string
 	verbose           bool
 
@@ -47,9 +46,9 @@ var (
 )
 
 const (
-	config    = "config"
-	configEnv = "configEnv"
-	file      = "file"
+	configFilePathFlag    = "configFile"
+	configEnvironmentFlag = "configEnvironment"
+	verboseFlag           = "verbose"
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -66,22 +65,18 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	// cobra.OnInitialize(initConfig, initTests)
-
 	// TODO: implement custom print queue for better formatted output
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false,
-		"print log messages (default is false)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, verboseFlag, "v", false, "print log messages (default is false)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	checkCmd.Flags().StringVarP(&configFile, config, "c", "",
-		"config file path (default is current working directory + \"http-client.env.json\")")
-	checkCmd.Flags().StringVarP(&testFile, file, "f", "",
-		"test file path (default is current working directory + \"default.http\")")
-	runCmd.Flags().StringVarP(&configFile, config, "c", "",
-		"config file path (default is current working directory + \"http-client.env.json\")")
-	runCmd.Flags().StringVarP(&configEnvironment, configEnv, "e", "default",
-		"environment name specified in config file (default is 'default')")
-	runCmd.Flags().StringVarP(&testFile, file, "f", "",
-		"test file path (default is current working directory + \"default.http\")")
+	checkCmd.Flags().StringVarP(&configFilePath, configFilePathFlag, "c", "./http-client.env.json", "config file path")
+	checkCmd.Flags().StringVarP(&configEnvironment, configEnvironmentFlag, "e", "default",
+		"environment name specified in config file")
+	checkCmd.MarkFlagRequired(configEnvironmentFlag)
+
+	runCmd.Flags().StringVarP(&configFilePath, configFilePathFlag, "c", "./http-client.env.json", "config file path")
+	runCmd.Flags().StringVarP(&configEnvironment, configEnvironmentFlag, "e", "default",
+		"environment name specified in config file")
+	runCmd.MarkFlagRequired(configEnvironmentFlag)
 }

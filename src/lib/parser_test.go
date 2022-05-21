@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	parser = lib.Parser{
-		ConfigEnv:  "default",
-		Verbose:    false,
-		PathPrefix: "../../test_files",
-		ConfigPath: "../../test_files/http-client.env.json",
-	}
+	ctx    = lib.GetContext()
+	parser = lib.Parser{}
 )
+
+func init() {
+	ctx.SetPathPrefix("../../test_files")
+}
 
 func TestParse(t *testing.T) {
 	var (
