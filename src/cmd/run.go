@@ -29,7 +29,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/mac641/gotep/src/lib"
 	"github.com/mac641/gotep/src/lib/context"
 	"github.com/mac641/gotep/src/lib/logger"
 	"github.com/mac641/gotep/src/lib/parser"
@@ -96,20 +95,24 @@ func assignContext(cmd *cobra.Command, args []string) {
 func test() {
 	// TODO: don't load whole files into RAM -> read by byte
 	content, err := os.ReadFile(ctx.GetFilePath())
-	lib.CheckErr(err)
+	CheckErr(err)
 	stringContent := string(content)
 
 	// Create parser and parse test file
 	parser := parser.Parser{}
 	err = parser.ParseConfig()
-	lib.CheckErr(err)
+	CheckErr(err)
 	preparedRequests, err := parser.Prepare(stringContent)
-	lib.CheckErr(err)
+	CheckErr(err)
 	parsedHttpRequests, err := parser.Parse(preparedRequests)
-	lib.CheckErr(err)
+	CheckErr(err)
 
 	// Create validator and send requests
 	validator := validator.Validator{}
-	_, err = validator.Send(parsedHttpRequests)
-	lib.CheckErr(err)
+	responses, err := validator.Send(parsedHttpRequests)
+	CheckErr(err)
+	succeeded := validator.Analyze(responses)
+
+	// Print result to console
+	os.Exit(log.Report(succeeded, len(responses)))
 }

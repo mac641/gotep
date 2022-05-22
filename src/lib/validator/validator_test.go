@@ -16,6 +16,21 @@ var (
 	validator_test = validator.Validator{}
 )
 
+func TestAnalyze(t *testing.T) {
+	resSuccessful := http.Response{
+		StatusCode: 200,
+	}
+	resFailed := http.Response{
+		StatusCode: 400,
+	}
+
+	succeeded := validator_test.Analyze([]*http.Response{&resSuccessful, &resFailed})
+	if succeeded != 1 {
+		t.Errorf("Expected analyzing to result in %d item but got %d", 1, succeeded)
+	}
+
+}
+
 func TestSend(t *testing.T) {
 	cwd, err := os.Getwd()
 	if err != nil {

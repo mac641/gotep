@@ -335,7 +335,10 @@ func (p *Parser) parseMessage(message string) (io.Reader, error) {
 	var err error
 	if lib.RegInputFileRef.MatchString(message) {
 		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
-		absMessagePath := lib.ConvertToAbsolutePath(message)
+		absMessagePath, err := lib.ConvertToAbsolutePath(message)
+		if err != nil {
+			return file, err
+		}
 		file, err = os.Open(absMessagePath)
 	} else {
 		file, err = strings.NewReader(message), nil
@@ -345,8 +348,7 @@ func (p *Parser) parseMessage(message string) (io.Reader, error) {
 }
 
 // Takes string representing a request line and parses it.
-// Three strings in (sorted like method, requestUrl, httpVersion) will be returned.
-func (p *Parser) parseRequestLine(reqLine string) (string, string, string, error) {
+func (p *Parser) parseRequestLine(reqLine string) (method string, requestUrl string, httpVersion string, err error) {
 	requestLine := reqLine
 	// Check if request line has been split
 	requestLineSplit := lib.TrimRightEmptyStringsFromSlice(regexp.MustCompile("\r?\n|\r").Split(requestLine, -1))
@@ -365,9 +367,9 @@ func (p *Parser) parseRequestLine(reqLine string) (string, string, string, error
 
 	// Assign method, requestUrl and httpVersion
 	requestLineMatches := regexp.MustCompile("[ \t\f]").Split(requestLine, -1)
-	method := ""
-	requestUrl := ""
-	httpVersion := ""
+	method = ""
+	requestUrl = ""
+	httpVersion = ""
 	switch len(requestLineMatches) {
 	case 1:
 		requestUrl = requestLineMatches[0]

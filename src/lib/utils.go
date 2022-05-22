@@ -3,31 +3,24 @@ package lib
 import (
 	"net"
 	"net/url"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/mac641/gotep/src/lib/context"
-	"github.com/mac641/gotep/src/lib/logger"
+	"golang.org/x/term"
 )
 
 var (
 	ctx = context.GetContext()
-	log = logger.GetLogger()
 )
 
-// Checks if err not nil, prints it using l.Fatalf, if so and prepends "error:"
-func CheckErr(err error) {
-	if err != nil {
-		log.Fatalf("error: %s", err.Error())
-	}
-}
-
 // Converts any file name or relative path to absolute path using context' pathPrefix
-func ConvertToAbsolutePath(p string) string {
+func ConvertToAbsolutePath(p string) (string, error) {
 	if filepath.IsAbs(p) {
-		return p
+		return p, nil
 	}
 
 	prefix := ctx.GetPathPrefix()
@@ -35,9 +28,14 @@ func ConvertToAbsolutePath(p string) string {
 		p = path.Join(prefix, p)
 	}
 	absPath, err := filepath.Abs(p)
-	CheckErr(err)
 
-	return absPath
+	return absPath, err
+}
+
+// Returns the current dimensions of file descriptor (os.Stdout.Fd()) (no scrollback buffer)
+func GetTerminalSize() (width int, height int, err error) {
+	width, height, err = term.GetSize(int(os.Stdout.Fd()))
+	return width, height, err
 }
 
 func IsUrlValid(s string) bool {

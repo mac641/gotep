@@ -23,13 +23,19 @@ func TestConvertToAbsolutePath(t *testing.T) {
 		p = "a/relative/path"
 	)
 
-	result := lib.ConvertToAbsolutePath(ctx.GetPathPrefix())
+	result, err := lib.ConvertToAbsolutePath(ctx.GetPathPrefix())
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 	if result != ctx.GetPathPrefix() {
 		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s",
 			ctx.GetPathPrefix(), result)
 	}
 
-	result = lib.ConvertToAbsolutePath(p)
+	result, err = lib.ConvertToAbsolutePath(p)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 	assertValueJoin := path.Join(ctx.GetPathPrefix(), p)
 	if result != assertValueJoin {
 		t.Errorf("Absolute paths using given prefixes have to be joined properly! Expected: %s, Got %s",
@@ -37,7 +43,10 @@ func TestConvertToAbsolutePath(t *testing.T) {
 	}
 
 	ctx.SetPathPrefix("")
-	result = lib.ConvertToAbsolutePath(p)
+	result, err = lib.ConvertToAbsolutePath(p)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 	assertValueAbs, err := filepath.Abs(p)
 	if err != nil {
 		t.Errorf("Error while generating absolute path. Error: %s", err.Error())
