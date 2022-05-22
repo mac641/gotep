@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"net"
 	"net/url"
 	"path"
@@ -9,19 +8,34 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/mac641/gotep/src/lib/context"
+	"github.com/mac641/gotep/src/lib/logger"
 )
 
-func ConvertToAbsolutePath(p string, prefix string) string {
+var (
+	ctx = context.GetContext()
+	log = logger.GetLogger()
+)
+
+// Checks if err not nil, prints it using l.Fatalf, if so and prepends "error:"
+func CheckErr(err error) {
+	if err != nil {
+		log.Fatalf("error: %s", err.Error())
+	}
+}
+
+// Converts any file name or relative path to absolute path using context' pathPrefix
+func ConvertToAbsolutePath(p string) string {
 	if filepath.IsAbs(p) {
 		return p
 	}
 
+	prefix := ctx.GetPathPrefix()
 	if !regexp.MustCompile(`^\.\/?$`).MatchString(prefix) && prefix != "" {
 		p = path.Join(prefix, p)
 	}
 	absPath, err := filepath.Abs(p)
-	cobra.CheckErr(err)
+	CheckErr(err)
 
 	return absPath
 }
@@ -40,13 +54,13 @@ func IsUrlValid(s string) bool {
 	// Check absolute / origin form
 	_, err := url.ParseRequestURI(s) // returns true if absolute URI or absolute path
 	// Check for misspelled url schemes since ParseRequestUri does accept these
-	if err == nil && (regUrlScheme.MatchString(s) || filepath.IsAbs(s)) {
+	if err == nil && (RegUrlScheme.MatchString(s) || filepath.IsAbs(s)) {
 		return true
 	}
 
 	// Check if relative url (not relative path) by prepending "http://"
 	// Exclude misspelled urls schemes, urls containing ip addresses and relative paths
-	if !(strings.Contains(s, ":/") || strings.Contains(s, "//") || regIp.MatchString(s)) &&
+	if !(strings.Contains(s, ":/") || strings.Contains(s, "//") || RegIp.MatchString(s)) &&
 		len(strings.Split(s, ".")) > 1 {
 		absoluteUrl := "http://" + s
 		_, err = url.ParseRequestURI(absoluteUrl)
@@ -56,7 +70,7 @@ func IsUrlValid(s string) bool {
 	}
 
 	// Check if ip is valid
-	ip := regIp.FindString(s)
+	ip := RegIp.FindString(s)
 	ip = strings.Trim(ip, "[]")
 	if ip == "" {
 		return false
@@ -68,15 +82,9 @@ func IsUrlValid(s string) bool {
 	}
 
 	// Check if remaining path segment is valid
-	s = regIp.ReplaceAllLiteralString(s, "")
+	s = RegIp.ReplaceAllLiteralString(s, "")
 	_, err = url.ParseRequestURI(s)
 	return err == nil
-}
-
-func LogVerbose(msg string, verbose bool) {
-	if verbose {
-		fmt.Println(msg)
-	}
 }
 
 func TrimEmptyStringsFromSlice(s []string) []string {

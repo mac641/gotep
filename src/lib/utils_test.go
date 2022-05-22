@@ -7,27 +7,37 @@ import (
 	"testing"
 
 	"github.com/mac641/gotep/src/lib"
+	"github.com/mac641/gotep/src/lib/context"
 )
+
+var (
+	ctx = context.GetContext()
+)
+
+func init() {
+	ctx.SetPathPrefix("/home/testuser")
+}
 
 func TestConvertToAbsolutePath(t *testing.T) {
 	const (
-		prefix = "/home/testuser"
-		p      = "a/relative/path"
+		p = "a/relative/path"
 	)
 
-	result := lib.ConvertToAbsolutePath(prefix, prefix)
-	if result != prefix {
-		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s", prefix, result)
+	result := lib.ConvertToAbsolutePath(ctx.GetPathPrefix())
+	if result != ctx.GetPathPrefix() {
+		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s",
+			ctx.GetPathPrefix(), result)
 	}
 
-	result = lib.ConvertToAbsolutePath(p, prefix)
-	assertValueJoin := path.Join(prefix, p)
+	result = lib.ConvertToAbsolutePath(p)
+	assertValueJoin := path.Join(ctx.GetPathPrefix(), p)
 	if result != assertValueJoin {
 		t.Errorf("Absolute paths using given prefixes have to be joined properly! Expected: %s, Got %s",
 			assertValueJoin, result)
 	}
 
-	result = lib.ConvertToAbsolutePath(p, "")
+	ctx.SetPathPrefix("")
+	result = lib.ConvertToAbsolutePath(p)
 	assertValueAbs, err := filepath.Abs(p)
 	if err != nil {
 		t.Errorf("Error while generating absolute path. Error: %s", err.Error())

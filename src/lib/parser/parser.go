@@ -1,20 +1,21 @@
-package lib
+package parser
 
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/mac641/gotep/src/lib"
+	"github.com/mac641/gotep/src/lib/context"
+	"github.com/mac641/gotep/src/lib/logger"
 )
 
 type Parser struct{}
@@ -22,61 +23,71 @@ type Parser struct{}
 // TODO: if needed, check if possible to store bool and string in same map -> until then everything is type of string
 var (
 	config = map[string]string{}
+	ctx    = context.GetContext()
+	log    = logger.GetLogger()
 )
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests.
-func (p *Parser) Parse(requests []string) []http.Request {
+func (p *Parser) Parse(requests []string) ([]http.Request, error) {
 	httpRequests := []http.Request{}
 	isFirstHttpVersionOccurrence := true
 	for i := range requests {
 		stringRequest := requests[i]
 
 		// Parse request line
-		requestLine := regRequestLine.FindString(stringRequest)
-		method, requestUrl, httpVersion := p.parseRequestLine(requestLine)
+		requestLine := lib.RegRequestLine.FindString(stringRequest)
+		method, requestUrl, httpVersion, err := p.parseRequestLine(requestLine)
+		if err != nil {
+			return httpRequests, err
+		}
 
 		stringHeaderMessage := strings.Trim(strings.ReplaceAll(stringRequest, requestLine, ""), "\r\n")
 
 		// Separate headers / message body and parse them afterwards
-		if regMultipartFormDataHeader.MatchString(stringHeaderMessage) {
+		if lib.RegMultipartFormDataHeader.MatchString(stringHeaderMessage) {
 			// TODO: add multipart/form-data support
-			fmt.Println(Yellow +
-				"NOTE: Currently multipart/form-data can't be parsed. Therefore, this request will be skipped!" + Reset)
+			log.Warnln("NOTE: currently multipart/form-data can't be parsed and, therefore, this request will be skipped")
 			continue // Skip this loop cycle
 		}
-		splitEmptyNewline := regEmptyNewLine.Split(stringHeaderMessage, -1)
+		splitEmptyNewline := lib.RegEmptyNewLine.Split(stringHeaderMessage, -1)
 		parsedHeaders := make(map[string][]string)
 		var message io.Reader
 		switch len(splitEmptyNewline) {
 		case 0:
-			LogVerbose(
-				fmt.Sprintf("Neither headers, nor a message body have/has been provided for\n%s", stringRequest),
-				ctx.GetVerbose())
+			log.Infof("neither headers, nor a message body have/has been provided for\n%s\n", stringRequest)
 		case 1:
 			match := splitEmptyNewline[0]
-			if regHeaders.MatchString(match) {
-				LogVerbose(fmt.Sprintf("No message body has been provided for\n%s", stringRequest),
-					ctx.GetVerbose())
-				parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
-
+			if lib.RegHeaders.MatchString(match) {
+				log.Infof("no message body has been provided for\n%s\n", stringRequest)
+				parsedHeaders, err = p.parseHeaders(lib.RegLineEnding.Split(splitEmptyNewline[0], -1))
+				if err != nil {
+					return httpRequests, err
+				}
 			} else {
-				LogVerbose(fmt.Sprintf("No headers have been provided for\n%s", stringRequest), ctx.GetVerbose())
-				message = p.parseMessage(match)
+				log.Infof("no headers have been provided for\n%s\n", stringRequest)
+				message, err = p.parseMessage(match)
+				if err != nil {
+					return httpRequests, err
+				}
 			}
 		case 2:
-			LogVerbose(fmt.Sprintf("Headers and message body detected in\n%s", stringRequest), ctx.GetVerbose())
-			parsedHeaders = p.parseHeaders(regLineEnding.Split(splitEmptyNewline[0], -1))
-			message = p.parseMessage(splitEmptyNewline[1])
+			log.Infof("headers and message body detected in\n%s\n", stringRequest)
+			parsedHeaders, err = p.parseHeaders(lib.RegLineEnding.Split(splitEmptyNewline[0], -1))
+			if err != nil {
+				return httpRequests, err
+			}
+			message, err = p.parseMessage(splitEmptyNewline[1])
+			if err != nil {
+				return httpRequests, err
+			}
 		default:
-			fmt.Println(Red + "Too many in-between line breaks detected!" + Reset)
-			fmt.Println(Yellow + "Check request below for errors:" + Reset)
-			fmt.Println(stringRequest)
-			os.Exit(1)
+			return httpRequests,
+				fmt.Errorf("too many in-between line breaks detected!\nCheck request below for errors:\n%s",
+					stringRequest)
 		}
 
 		// Assemble request
 		var httpRequest *http.Request
-		var err error
 		switch method {
 		case "", "GET":
 			httpRequest, err = http.NewRequest(http.MethodGet, requestUrl, message)
@@ -97,14 +108,16 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		case "TRACE":
 			httpRequest, err = http.NewRequest(http.MethodTrace, requestUrl, message)
 		default:
-			log.Fatal("Undefined http method value found in\n" + stringRequest)
+			return httpRequests, fmt.Errorf("undefined http method value found in\n%s", stringRequest)
 		}
-		cobra.CheckErr(err)
+		if err != nil {
+			return httpRequests, err
+		}
 
 		// NOTE: http version can only be set when acting as server
 		if httpVersion != "" {
 			if isFirstHttpVersionOccurrence {
-				fmt.Println(Yellow + "NOTE: Http versions can't be set and, therefore, will be ignored!" + Reset)
+				log.Warnln("NOTE: http versions can't be set and, therefore, will be ignored")
 				isFirstHttpVersionOccurrence = false
 			}
 			// httpRequest.Proto = httpVersion
@@ -118,13 +131,13 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		if httpRequest.URL.Host == "" && len(parsedHeaders["Host"]) > 0 {
 			// TODO: give user chance to decide which host shall be used if their are multiple
 			host := parsedHeaders["Host"][0]
-			if !regUrlScheme.MatchString(host) && httpRequest.URL.Scheme == "" {
+			if !lib.RegUrlScheme.MatchString(host) && httpRequest.URL.Scheme == "" {
 				httpRequest.URL.Scheme = "http"
 				httpRequest.URL.Host = host
 			} else {
 				hostSplit := strings.Split(host, "://")
 				if len(hostSplit) > 2 {
-					log.Fatalf("The \"Host\" header %s is not formatted properly!", host)
+					return httpRequests, fmt.Errorf("the \"Host\" header %s is not formatted properly", host)
 				}
 				if httpRequest.URL.Scheme == "" {
 					httpRequest.URL.Scheme = hostSplit[0]
@@ -136,49 +149,50 @@ func (p *Parser) Parse(requests []string) []http.Request {
 		httpRequests = append(httpRequests, *httpRequest)
 	}
 
-	return httpRequests
+	return httpRequests, nil
 }
 
-func (p *Parser) ParseConfig() {
+func (p *Parser) ParseConfig() error {
 	var tempConfig map[string]interface{}
-	configPath := ctx.GetConfigFilePath()
-	pathPrefix := ctx.GetPathPrefix()
-	if !filepath.IsAbs(configPath) {
-		configPath = ConvertToAbsolutePath(configPath, pathPrefix)
-	}
 	// TODO: don't load whole files into RAM -> read by byte
-	jsonData, err := os.ReadFile(configPath)
-	cobra.CheckErr(err)
+	jsonData, err := os.ReadFile(ctx.GetConfigFilePath())
+	if err != nil {
+		return err
+	}
 	err = json.Unmarshal(jsonData, &tempConfig)
-	cobra.CheckErr(err)
+	if err != nil {
+		return err
+	}
 
 	envMap, configKeyExists := tempConfig[ctx.GetConfigEnvironment()]
 	if !configKeyExists {
-		log.Fatalf("%s does not exist in your config file!", ctx.GetConfigEnvironment())
+		return fmt.Errorf("%s does not exist in your config file", ctx.GetConfigEnvironment())
 	}
 
 	for key, val := range envMap.(map[string]interface{}) {
 		typeOfVal := reflect.TypeOf(val).Kind().String()
 		if typeOfVal != "string" && typeOfVal != "bool" {
-			log.Fatalf("Your config contains key \"%s\" with value \"%s\" which is not of type string or bool!",
+			return fmt.Errorf("your config contains key %s with value %s which is not of type string or bool",
 				key, val)
 		}
 
 		config[key] = val.(string)
 	}
 
-	LogVerbose(fmt.Sprintf("Using config environment: %s", ctx.GetConfigEnvironment()), ctx.GetVerbose())
+	log.Infof("using config environment: %s\n", ctx.GetConfigEnvironment())
+	return nil
 }
 
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
 // Otherwise, exits program with exit code != 0.
-func (p *Parser) Prepare(file string) []string {
+func (p *Parser) Prepare(file string) ([]string, error) {
+	var err error
 	// Split file by request separators.
 	// Exit, if no requests can be found after splitting.
-	requests := regSeparator.Split(file, -1)
+	requests := lib.RegSeparator.Split(file, -1)
 	if len(requests) == 0 {
-		log.Fatal("No requests could be parsed!")
+		return nil, errors.New("no requests could be parsed")
 	}
 
 	// Remove empty requests and comments
@@ -188,7 +202,7 @@ func (p *Parser) Prepare(file string) []string {
 			continue
 		}
 
-		noEmptyRequests = append(noEmptyRequests, regComments.ReplaceAllLiteralString(requests[i], ""))
+		noEmptyRequests = append(noEmptyRequests, lib.RegComments.ReplaceAllLiteralString(requests[i], ""))
 	}
 	requests = noEmptyRequests
 
@@ -199,15 +213,14 @@ func (p *Parser) Prepare(file string) []string {
 
 		// Insert env variable values from json config.
 		// Exit, if one variable does not exist in json config.
-		envMatches := regEnv.FindAllString(request, -1)
+		envMatches := lib.RegEnv.FindAllString(request, -1)
 
 		if envMatches != nil {
 			matchedConfig := p.matchConfig(envMatches)
 
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfig) {
-				log.Fatal("There are undefined env variables present in your requests file!\n",
-					"Ensure your config variable keys use lowercase letters only.")
+				return requests, errors.New("there are undefined env variables present in your requests file")
 			}
 
 			for configKey, configValue := range matchedConfig {
@@ -216,10 +229,9 @@ func (p *Parser) Prepare(file string) []string {
 		}
 
 		// Remove response handler from request and prompt user that they are not going to be used
-		responseHandlerMatches := regResponseHandler.FindAllString(request, -1)
+		responseHandlerMatches := lib.RegResponseHandler.FindAllString(request, -1)
 		if len(responseHandlerMatches) > 1 {
-			log.Fatal(`Some of your requests contain too many response handlers!\n
-			Ensure there's only one handler per request.`)
+			return requests, errors.New("some of your requests contain too many response handlers")
 		}
 
 		// NOTE: following TODOs are only relevant when adding response handler validation support
@@ -228,33 +240,30 @@ func (p *Parser) Prepare(file string) []string {
 
 		if responseHandlerMatches != nil {
 			if isFirstResponseHandlerOccurrence {
-				fmt.Println(Yellow +
-					"NOTE: Currently response handlers can't be validated and, therefore, will be ignored!" + Reset)
+				log.Warnln("NOTE: currently response handlers can't be validated and, therefore, will be ignored")
 				isFirstResponseHandlerOccurrence = false
 			}
-			request = regResponseHandler.ReplaceAllLiteralString(request, "")
+			request = lib.RegResponseHandler.ReplaceAllLiteralString(request, "")
 		}
 
 		// Remove response ref from request and prompt user that they are not going to be used
-		responseRefMatches := regResponseRef.FindAllString(request, -1)
+		responseRefMatches := lib.RegResponseRef.FindAllString(request, -1)
 		if len(responseRefMatches) > 1 {
-			log.Fatal(`Some of your requests contain too many response refs!\n
-			Ensure there is only one reference per request.`)
+			return requests, errors.New("some of your requests contain too many response refs")
 		}
 
 		if responseRefMatches != nil {
 			if isFirstResponseRefOccurrence {
-				fmt.Println(Yellow +
-					"NOTE: Currently response references can't be validated and, therefore, will be ignored!" + Reset)
+				log.Warnln("NOTE: currently response references can't be validated and, therefore, will be ignored")
 				isFirstResponseRefOccurrence = false
 			}
-			request = regResponseRef.ReplaceAllLiteralString(request, "")
+			request = lib.RegResponseRef.ReplaceAllLiteralString(request, "")
 		}
 
 		requests[i] = request
 	}
 
-	return requests
+	return requests, err
 }
 
 // Takes array of environment variable matches and compares them to keys stored in config.
@@ -283,15 +292,16 @@ func (p *Parser) matchConfig(envMatches []string) map[string]string {
 // }
 
 // Takes array of header strings splitted by new line, detects related header values and adds them to map
-func (p *Parser) parseHeaders(headers []string) map[string][]string {
+func (p *Parser) parseHeaders(headers []string) (map[string][]string, error) {
 	parsedHeaders := make(map[string][]string)
 
 	var fieldName string
+	var err error
 	for i := range headers {
 		headerMatch := strings.Trim(headers[i], "\r\n \t\f")
-		if regHeaders.MatchString(headerMatch) {
-			headerSubMatch := regHeaders.FindStringSubmatch(headerMatch)
-			for i, name := range regHeaders.SubexpNames() {
+		if lib.RegHeaders.MatchString(headerMatch) {
+			headerSubMatch := lib.RegHeaders.FindStringSubmatch(headerMatch)
+			for i, name := range lib.RegHeaders.SubexpNames() {
 				// NOTE: start at index == 1 because first value of array is full match which is irrelevant
 				if i >= 1 && i < len(headerSubMatch) {
 					switch name {
@@ -301,10 +311,7 @@ func (p *Parser) parseHeaders(headers []string) map[string][]string {
 					case "Fieldvalue":
 						parsedHeaders[fieldName] = append(parsedHeaders[fieldName], headerSubMatch[i])
 					default:
-						fmt.Println(Red + "Misconfigured header found!" + Reset)
-						fmt.Println(Yellow + "Check header below for errors:" + Reset)
-						fmt.Println(headerMatch)
-						os.Exit(1)
+						err = errors.New("misconfigured header found")
 					}
 				}
 			}
@@ -314,40 +321,35 @@ func (p *Parser) parseHeaders(headers []string) map[string][]string {
 			} else if headerMatch == "" {
 				continue
 			} else {
-				fmt.Println(Red + "Misconfigured header found!" + Reset)
-				fmt.Println(Yellow + "Check header below for errors:" + Reset)
-				fmt.Println(headerMatch)
-				os.Exit(1)
+				err = errors.New("misconfigured header found")
 			}
 		}
 	}
 
-	return parsedHeaders
+	return parsedHeaders, err
 }
 
 // Takes message string, detects whether it is a filepath or direct message strings and returns them as io.Reader
-func (p *Parser) parseMessage(message string) io.Reader {
+func (p *Parser) parseMessage(message string) (io.Reader, error) {
 	var file io.Reader
 	var err error
-	if regInputFileRef.MatchString(message) {
+	if lib.RegInputFileRef.MatchString(message) {
 		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
-		absMessagePath := ConvertToAbsolutePath(message, ctx.GetPathPrefix())
+		absMessagePath := lib.ConvertToAbsolutePath(message)
 		file, err = os.Open(absMessagePath)
 	} else {
 		file, err = strings.NewReader(message), nil
 	}
 
-	cobra.CheckErr(err)
-
-	return bufio.NewReader(file)
+	return bufio.NewReader(file), err
 }
 
 // Takes string representing a request line and parses it.
 // Three strings in (sorted like method, requestUrl, httpVersion) will be returned.
-func (p *Parser) parseRequestLine(reqLine string) (string, string, string) {
+func (p *Parser) parseRequestLine(reqLine string) (string, string, string, error) {
 	requestLine := reqLine
 	// Check if request line has been split
-	requestLineSplit := TrimRightEmptyStringsFromSlice(regexp.MustCompile("\r?\n|\r").Split(requestLine, -1))
+	requestLineSplit := lib.TrimRightEmptyStringsFromSlice(regexp.MustCompile("\r?\n|\r").Split(requestLine, -1))
 	if len(requestLineSplit) > 1 {
 		requestLine = ""
 		for j := range requestLineSplit {
@@ -382,59 +384,60 @@ func (p *Parser) parseRequestLine(reqLine string) (string, string, string) {
 		requestUrl = requestLineMatches[1]
 		httpVersion = requestLineMatches[2]
 	default:
-		fmt.Println(Red + "One of your request lines could not be parsed!" + Reset)
-		fmt.Println(Yellow + "Check request line below for errors:" + Reset)
-		fmt.Println(reqLine)
-		os.Exit(1)
+		return method, requestUrl, httpVersion, errors.New("one of your request lines could not be parsed")
 	}
 
 	// Check if requestUrl contains fragment and remove it, because browsers do not send fragments
-	fragment := regRequestLineFragment.FindString(requestUrl)
+	fragment := lib.RegRequestLineFragment.FindString(requestUrl)
 	if fragment != "" {
 		requestUrl = strings.ReplaceAll(requestUrl, fragment, "")
 	}
 
 	// Check if requestUrl contains path or query elements and needs to be encoded
 	// or requestUrl is already encoded because of whitespace and needs to be decoded
-	query := regRequestLineQuery.FindString(requestUrl)
+	query := lib.RegRequestLineQuery.FindString(requestUrl)
 	if query != "" {
-		if !strings.Contains(query, "%") && regNonAscii.MatchString(query) {
+		if !strings.Contains(query, "%") && lib.RegNonAscii.MatchString(query) {
 			queryEncoded := url.QueryEscape(query)
 			requestUrl = strings.ReplaceAll(requestUrl, query, queryEncoded)
 		}
 		if strings.Contains(query, "%") {
 			queryDecoded, err := url.QueryUnescape(query)
-			cobra.CheckErr(err)
-			if !regNonAscii.MatchString(queryDecoded) {
+			if err != nil {
+				return method, requestUrl, httpVersion, err
+			}
+			if !lib.RegNonAscii.MatchString(queryDecoded) {
 				requestUrl = strings.ReplaceAll(requestUrl, query, queryDecoded)
 			}
 		}
 	}
 
-	pathSegment := regRequestLinePathSegment.FindString(requestUrl)
+	pathSegment := lib.RegRequestLinePathSegment.FindString(requestUrl)
 	if pathSegment != "" {
 		// NOTE: According to go docs, PathUnescape does not convert + to ' ' which is correct
-		if !strings.Contains(pathSegment, "%") && regNonAscii.MatchString(pathSegment) {
+		if !strings.Contains(pathSegment, "%") && lib.RegNonAscii.MatchString(pathSegment) {
 			pathSegmentEncoded := url.PathEscape(pathSegment)
 			requestUrl = strings.ReplaceAll(requestUrl, pathSegment, pathSegmentEncoded)
 		}
 		if strings.Contains(pathSegment, "%") {
 			pathSegmentDecoded, err := url.PathUnescape(pathSegment)
-			cobra.CheckErr(err)
-			if !regNonAscii.MatchString(pathSegmentDecoded) {
+			if err != nil {
+				return method, requestUrl, httpVersion, err
+			}
+			if !lib.RegNonAscii.MatchString(pathSegmentDecoded) {
 				requestUrl = strings.ReplaceAll(requestUrl, pathSegment, pathSegmentDecoded)
 			}
 		}
 	}
 
 	// Validate url and add scheme, if missing
-	if !IsUrlValid(requestUrl) {
-		log.Fatalf("%s is not a valid URL. Exiting...", requestUrl)
+	if !lib.IsUrlValid(requestUrl) {
+		return method, requestUrl, httpVersion, fmt.Errorf("%s is not a valid URL", requestUrl)
 	}
 	// NOTE: ensure ip addresses will be stored as hosts, otherwise creating requests fails
-	if !regUrlScheme.MatchString(requestUrl) && regIp.MatchString(requestUrl) {
+	if !lib.RegUrlScheme.MatchString(requestUrl) && lib.RegIp.MatchString(requestUrl) {
 		requestUrl = "http://" + requestUrl
 	}
 
-	return method, requestUrl, httpVersion
+	return method, requestUrl, httpVersion, nil
 }

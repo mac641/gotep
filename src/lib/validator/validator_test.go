@@ -1,4 +1,4 @@
-package lib_test
+package validator_test
 
 import (
 	"bufio"
@@ -9,11 +9,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mac641/gotep/src/lib"
+	"github.com/mac641/gotep/src/lib/validator"
 )
 
 var (
-	validator = lib.Validator{}
+	validator_test = validator.Validator{}
 )
 
 func TestSend(t *testing.T) {
@@ -21,7 +21,7 @@ func TestSend(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	absPathToBody, err := filepath.Abs(path.Join(cwd, "../../test_files/input.json"))
+	absPathToBody, err := filepath.Abs(path.Join(cwd, "../../../test_files/input.json"))
 	if err != nil {
 		t.Errorf(err.Error())
 	}
@@ -35,7 +35,10 @@ func TestSend(t *testing.T) {
 	}
 	requests := []http.Request{}
 	requests = append(requests, *request)
-	responses := validator.Send(requests)
+	responses, err := validator_test.Send(requests)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 
 	if len(responses) > 1 {
 		t.Errorf("Expected responses to contain 1 response but got %d", len(responses))

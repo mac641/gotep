@@ -1,6 +1,8 @@
-package lib
+package context
 
-import "sync"
+import (
+	"sync"
+)
 
 type context struct {
 	configEnvironment string
@@ -11,8 +13,9 @@ type context struct {
 }
 
 var (
+	ctx *context
+
 	once = sync.Once{}
-	ctx  *context
 )
 
 // Creates one thread-safe instance of context using default values
