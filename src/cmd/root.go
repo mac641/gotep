@@ -80,3 +80,10 @@ func init() {
 		"environment name specified in config file")
 	runCmd.MarkFlagRequired(configEnvironmentFlag)
 }
+
+// Checks if err not nil, prints it using l.Fatalf, if so and prepends "error:"
+func CheckErr(err error) {
+	if err != nil {
+		log.Fatalf("error: %s", err.Error())
+	}
+}

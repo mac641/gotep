@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"os"
 	"sync"
 
@@ -62,12 +63,6 @@ func (l *logger) Fatalf(format string, a ...any) {
 	os.Exit(1) // TODO: consider setting exit code via parameter
 }
 
-// Uses Errorln to log message and exits the app with exit code 1
-func (l *logger) Fatalln(msg string) {
-	l.Errorln(msg)
-	os.Exit(1) // TODO: consider setting exit code via parameter
-}
-
 // Logs message colored blue, if verbose flag has been set
 func (l *logger) Info(msg string) {
 	if ctx.GetVerbose() {
@@ -87,6 +82,27 @@ func (l *logger) Infoln(msg string) {
 	if ctx.GetVerbose() {
 		blueln(msg)
 	}
+}
+
+// Generates report based on analyzed http responses, prints it to console and returns app exit code
+func (l *logger) Report(succeeded int, total int) (exitCode int) {
+	fmt.Println()
+	fmt.Println("All tests have been run.")
+	fmt.Println("----------------------------------------")
+	fmt.Println()
+	fmt.Println("Results:")
+	if succeeded < total {
+		color.Set(color.FgRed, color.Bold)
+		exitCode = 1
+	} else {
+		color.Set(color.FgGreen, color.Bold)
+		exitCode = 0
+	}
+	fmt.Printf("Successful %d/%d\n", succeeded, total)
+	color.Unset()
+	fmt.Println()
+
+	return exitCode
 }
 
 // Logs message colored yellow to console
