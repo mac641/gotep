@@ -23,8 +23,6 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,11 +30,16 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/mac641/gotep/src/lib"
+	"github.com/mac641/gotep/src/lib/context"
+	"github.com/mac641/gotep/src/lib/logger"
+	"github.com/mac641/gotep/src/lib/parser"
+	"github.com/mac641/gotep/src/lib/validator"
 )
 
 // runCmd represents the run command
 var (
-	ctx    = lib.GetContext()
+	ctx    = context.GetContext()
+	log    = logger.GetLogger()
 	runCmd = &cobra.Command{
 		Use:   "run",
 		Short: "Execute tests",
@@ -69,41 +72,44 @@ func init() {
 }
 
 func assignContext(cmd *cobra.Command, args []string) {
+	ctx.SetVerbose(verbose)
+
 	// Check if test file uses .rest or .http extension
 	fileName := args[0]
 	testFileSplit := strings.Split(fileName, ".")
 	testFileFormat := strings.ToLower(testFileSplit[len(testFileSplit)-1])
 	if testFileFormat != "rest" && testFileFormat != "http" {
-		log.Fatalf(`Test file names need to have ".rest" or ".http" extensions.`)
+		log.Fatal(`Test file names need to have ".rest" or ".http" extensions.`)
 	}
 	ctx.SetFilePath(fileName)
-	lib.LogVerbose(fmt.Sprintf("Using requests file: %s", fileName), verbose)
+	log.Infof("Using requests file: %s\n", fileName)
 
 	pathPrefix := filepath.Dir(fileName) // Determine path prefix
 	ctx.SetPathPrefix(pathPrefix)
 
-	// Check if environment config is not empty and use it, if so
 	ctx.SetConfigFilePath(configFilePath)
-	lib.LogVerbose(fmt.Sprintf("Using config file: %s", configFilePath), verbose)
+	log.Infof("Using config file: %s\n", configFilePath)
 
 	ctx.SetConfigEnvironment(configEnvironment)
-
-	ctx.SetVerbose(verbose)
 }
 
 func test() {
 	// TODO: don't load whole files into RAM -> read by byte
 	content, err := os.ReadFile(ctx.GetFilePath())
-	cobra.CheckErr(err)
+	lib.CheckErr(err)
 	stringContent := string(content)
 
 	// Create parser and parse test file
-	parser := lib.Parser{}
-	parser.ParseConfig()
-	preparedRequests := parser.Prepare(stringContent)
-	parsedHttpRequests := parser.Parse(preparedRequests)
+	parser := parser.Parser{}
+	err = parser.ParseConfig()
+	lib.CheckErr(err)
+	preparedRequests, err := parser.Prepare(stringContent)
+	lib.CheckErr(err)
+	parsedHttpRequests, err := parser.Parse(preparedRequests)
+	lib.CheckErr(err)
 
 	// Create validator and send requests
-	validator := lib.Validator{}
-	validator.Send(parsedHttpRequests)
+	validator := validator.Validator{}
+	_, err = validator.Send(parsedHttpRequests)
+	lib.CheckErr(err)
 }

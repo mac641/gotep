@@ -1,22 +1,22 @@
-package lib
+package validator
 
 import (
 	"net/http"
-
-	"github.com/spf13/cobra"
 )
 
 type Validator struct{}
 
-func (v *Validator) Send(requests []http.Request) []*http.Response {
+func (v *Validator) Send(requests []http.Request) ([]*http.Response, error) {
 	// TODO: collect requests and print ALL results on console, rather than exiting at every failed request
 	responses := []*http.Response{}
 	client := &http.Client{}
 	for i := range requests {
 		r, err := client.Do(&requests[i])
-		cobra.CheckErr(err)
+		if err != nil {
+			return responses, err
+		}
 		responses = append(responses, r)
 	}
 
-	return responses
+	return responses, nil
 }

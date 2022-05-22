@@ -1,4 +1,4 @@
-package lib_test
+package parser_test
 
 import (
 	"io"
@@ -6,16 +6,18 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/mac641/gotep/src/lib"
+	"github.com/mac641/gotep/src/lib/context"
+	"github.com/mac641/gotep/src/lib/parser"
 )
 
 var (
-	ctx    = lib.GetContext()
-	parser = lib.Parser{}
+	ctx        = context.GetContext()
+	parserTest = parser.Parser{}
 )
 
 func init() {
-	ctx.SetPathPrefix("../../test_files")
+	ctx.SetConfigFilePath("../../../test_files/http-client.env.json")
+	ctx.SetPathPrefix("../../../test_files")
 }
 
 func TestParse(t *testing.T) {
@@ -98,7 +100,10 @@ Host: example.com`}
 	)
 
 	// Request line only
-	requestLineOnlyParsed := parser.Parse(requestLineOnly)
+	requestLineOnlyParsed, err := parserTest.Parse(requestLineOnly)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"http://192.168.178.2/index/https"}
 	if len(requestLineOnlyParsed) != 1 {
 		t.Errorf("Expected requestLineOnly to have one request but got %d", len(requestLineOnlyParsed))
@@ -109,7 +114,10 @@ Host: example.com`}
 	}
 
 	// Request line with method prepended
-	requestLineOnlyMethodParsed := parser.Parse(requestLineOnlyMethod)
+	requestLineOnlyMethodParsed, err := parserTest.Parse(requestLineOnlyMethod)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"PUT", "http://192.168.178.2/index/https"}
 	if len(requestLineOnlyMethodParsed) != 1 {
 		t.Errorf("Expected requestLineOnlyMethod to have one request but got %d", len(requestLineOnlyMethodParsed))
@@ -124,7 +132,10 @@ Host: example.com`}
 	}
 
 	// Request line with method and HTTP version
-	requestLineOnlyMethodHttpParsed := parser.Parse(requestLineOnlyMethodHttp)
+	requestLineOnlyMethodHttpParsed, err := parserTest.Parse(requestLineOnlyMethodHttp)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"GET", "http://192.168.178.2/index/https"}
 	if len(requestLineOnlyMethodHttpParsed) != 1 {
 		t.Errorf("Expected requestLineOnlyMethodHttp to have one request but got %d", len(requestLineOnlyMethodHttpParsed))
@@ -143,7 +154,10 @@ Host: example.com`}
 	}
 
 	// Request line only in split form
-	requestLineOnlySplitParsed := parser.Parse(requestLineOnlySplit)
+	requestLineOnlySplitParsed, err := parserTest.Parse(requestLineOnlySplit)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"http://example.com/api/get"}
 	if len(requestLineOnlySplitParsed) != 1 {
 		t.Errorf("Expected requestLineOnlySplit to have one request but got %d", len(requestLineOnlySplitParsed))
@@ -154,7 +168,10 @@ Host: example.com`}
 	}
 
 	// Request line only in split form with encoded url
-	requestLineOnlySplitEncodedParsed := parser.Parse(requestLineOnlySplitEncoded)
+	requestLineOnlySplitEncodedParsed, err := parserTest.Parse(requestLineOnlySplitEncoded)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"GET", "/ api +/get+"}
 	if len(requestLineOnlySplitEncodedParsed) != 1 {
 		t.Errorf("Expected requestLineOnlySplitEncoded to have one request but got %d",
@@ -170,7 +187,10 @@ Host: example.com`}
 	}
 
 	// Request line and one header
-	requestLineHeaderParsed := parser.Parse(requestLineHeader)
+	requestLineHeaderParsed, err := parserTest.Parse(requestLineHeader)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"GET", "http://192.168.178.2/index/https", "Accept", "application/json"}
 	if len(requestLineHeaderParsed) != 1 {
 		t.Errorf("Expected requestLineHeader to have one request but got %d", len(requestLineHeaderParsed))
@@ -202,7 +222,10 @@ Host: example.com`}
 	}
 
 	// Split request line with one header
-	requestLineSplitHeaderParsed := parser.Parse(requestLineSplitHeader)
+	requestLineSplitHeaderParsed, err := parserTest.Parse(requestLineSplitHeader)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"http://example.com/api/get", "From", "eugen@blabla.com"}
 	if len(requestLineSplitHeaderParsed) != 1 {
 		t.Errorf("Expected requestLineSplitHeader to have one request but got %d", len(requestLineSplitHeaderParsed))
@@ -229,7 +252,10 @@ Host: example.com`}
 	}
 
 	// Request line with one header and multiple header values
-	requestLineHeaderMultipleValuesParsed := parser.Parse(requestLineHeaderMultipleValues)
+	requestLineHeaderMultipleValuesParsed, err := parserTest.Parse(requestLineHeaderMultipleValues)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"GET", "http://192.168.178.2/index/https", "Accept", "application/json", "text/html"}
 	if len(requestLineHeaderMultipleValuesParsed) != 1 {
 		t.Errorf("Expected requestLineHeaderMultipleValues to have one request but got %d",
@@ -266,7 +292,10 @@ Host: example.com`}
 	}
 
 	// Request line with multiple headers with one value each
-	requestLineMultipleHeadersParsed := parser.Parse(requestLineMultipleHeaders)
+	requestLineMultipleHeadersParsed, err := parserTest.Parse(requestLineMultipleHeaders)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"GET", "http://192.168.178.2/index/https", "Accept",
 		"application/json", "From", "test@test.com"}
 	if len(requestLineMultipleHeadersParsed) != 1 {
@@ -301,7 +330,10 @@ Host: example.com`}
 	}
 
 	// Request line with one header and body
-	requestLineHeaderBodyParsed := parser.Parse(requestLineHeaderBody)
+	requestLineHeaderBodyParsed, err := parserTest.Parse(requestLineHeaderBody)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"POST", "http://www.example.com/test1", "Content-Type",
 		"application/json",
 		`{
@@ -349,7 +381,10 @@ Host: example.com`}
 	}
 
 	// Split request line with one header and message body
-	requestLineSplitHeaderBodyParsed := parser.Parse(requestLineSplitHeaderBody)
+	requestLineSplitHeaderBodyParsed, err := parserTest.Parse(requestLineSplitHeaderBody)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"POST",
 		"http://example.com/api/get",
 		"From",
@@ -395,7 +430,10 @@ Host: example.com`}
 	}
 
 	// Request line with one header and body containing line break
-	requestLineHeaderBodyLineBreakParsed := parser.Parse(requestLineHeaderBodyLineBreak)
+	requestLineHeaderBodyLineBreakParsed, err := parserTest.Parse(requestLineHeaderBodyLineBreak)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"POST", "http://localhost:3333/tests/pdf", "Content-Type", "1234",
 		`{
 	"html": "<h1>I'm an example heading!</h1>",
@@ -441,7 +479,10 @@ Host: example.com`}
 	}
 
 	// Request line with one header and body as input file ref
-	requestLineHeaderBodyInputFileRefParsed := parser.Parse(requestLineHeaderBodyInputFileRef)
+	requestLineHeaderBodyInputFileRefParsed, err := parserTest.Parse(requestLineHeaderBodyInputFileRef)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"POST", "http://www.example.com/test1", "Content-Type", "application/json",
 		`{
   "html": "<h1>I'm an example heading!</h1>",
@@ -488,13 +529,19 @@ Host: example.com`}
 
 	// Request line with one header and body as multipart/form-data
 	// TODO: expand test when adding multipart/form-data parsing support
-	requestLineHeaderMultipartFormDataParsed := parser.Parse(requestLineHeaderMultipartFormData)
+	requestLineHeaderMultipartFormDataParsed, err := parserTest.Parse(requestLineHeaderMultipartFormData)
+	if err != nil {
+		t.Error(err)
+	}
 	if len(requestLineHeaderMultipartFormDataParsed) != 0 {
 		t.Errorf("Expected requestLineHeaderMultipartFormData to be skipped but got request")
 	}
 
 	// Request line in asterisk-form with one mandatory header
-	requestLineAsteriskFormHeaderParsed := parser.Parse(requestLineAsteriskFormHeader)
+	requestLineAsteriskFormHeaderParsed, err := parserTest.Parse(requestLineAsteriskFormHeader)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"OPTIONS", "http://example.com:8080/*", "HTTP/1.1", "Host", "http://example.com:8080"}
 	if len(requestLineAsteriskFormHeaderParsed) != 1 {
 		t.Errorf("Expected requestLineAsteriskFormHeader to have one request but got %d",
@@ -532,7 +579,10 @@ Host: example.com`}
 	}
 
 	// Request line in origin-form (contains only path segment of url) with one mandatory header
-	requestLineOriginFormHeaderParsed := parser.Parse(requestLineOriginFormHeader)
+	requestLineOriginFormHeaderParsed, err := parserTest.Parse(requestLineOriginFormHeader)
+	if err != nil {
+		t.Error(err)
+	}
 	assertValues = []string{"GET", "http://example.com/api/get", "/api/get", "Host", "example.com"}
 	if len(requestLineOriginFormHeaderParsed) != 1 {
 		t.Errorf("Expected requestLineOriginFormHeader to have one request but got %d",
@@ -575,7 +625,7 @@ Host: example.com`}
 }
 
 func TestPrepare(t *testing.T) {
-	file, err := os.ReadFile("../../test_files/default.http")
+	file, err := os.ReadFile("../../../test_files/default.http")
 	if err != nil {
 		t.Errorf("Could not open test file!\n\n%s", err.Error())
 	}
@@ -589,8 +639,14 @@ func TestPrepare(t *testing.T) {
 		regResponseRef     = regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
 	)
 
-	parser.ParseConfig()
-	requests := parser.Prepare(testDataForPreparing)
+	err = parserTest.ParseConfig()
+	if err != nil {
+		t.Error(err)
+	}
+	requests, err := parserTest.Prepare(testDataForPreparing)
+	if err != nil {
+		t.Error(err)
+	}
 
 	for i := range requests {
 		result := requests[i]
