@@ -25,7 +25,6 @@ package cmd
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -74,20 +73,23 @@ func assignContext(cmd *cobra.Command, args []string) {
 	ctx.SetVerbose(verbose)
 
 	// Check if test file uses .rest or .http extension
-	fileName := args[0]
-	testFileSplit := strings.Split(fileName, ".")
-	testFileFormat := strings.ToLower(testFileSplit[len(testFileSplit)-1])
-	if testFileFormat != "rest" && testFileFormat != "http" {
-		log.Fatal(`Test file names need to have ".rest" or ".http" extensions.`)
+	filePath := args[0]
+	filePathExt := filepath.Ext(filePath)
+	if filePathExt != ".rest" && filePathExt != ".http" {
+		log.Fatal(`error: test file names need to have ".rest" or ".http" extensions`)
 	}
-	ctx.SetFilePath(fileName)
-	log.Infof("Using requests file: %s\n", fileName)
+	ctx.SetFilePath(filePath)
+	log.Infof("using requests file: %s\n", filePath)
 
-	pathPrefix := filepath.Dir(fileName) // Determine path prefix
+	pathPrefix := filepath.Dir(filePath) // Determine path prefix
 	ctx.SetPathPrefix(pathPrefix)
 
+	configFilePathBase := filepath.Base(configFilePath)
+	if configFilePathBase != "http-client.env.json" && configFilePathBase != "http-client.private.env.json" {
+		log.Fatal(`error: config files need to be named "http-client.env.json" or "http-client.private.env.json"`)
+	}
 	ctx.SetConfigFilePath(configFilePath)
-	log.Infof("Using config file: %s\n", configFilePath)
+	log.Infof("using config file: %s\n", configFilePath)
 
 	ctx.SetConfigEnvironment(configEnvironment)
 }
