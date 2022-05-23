@@ -65,8 +65,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	// TODO: implement custom print queue for better formatted output
-	rootCmd.PersistentFlags().BoolVarP(&verbose, verboseFlag, "v", false, "print log messages (default is false)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, verboseFlag, "v", false, "print log messages")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
