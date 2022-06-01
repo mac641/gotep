@@ -14,12 +14,8 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Go workspace files
-*.work
-
 # compiled binaries
 bin/
-*.java
 
 # include launch.json
 !.vscode/

@@ -18,10 +18,10 @@ var (
 
 func TestAnalyze(t *testing.T) {
 	resSuccessful := http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusIMUsed,
 	}
 	resFailed := http.Response{
-		StatusCode: 400,
+		StatusCode: http.StatusBadRequest,
 	}
 
 	succeeded := validator_test.Analyze([]*http.Response{&resSuccessful, &resFailed})
@@ -59,6 +59,6 @@ func TestSend(t *testing.T) {
 		t.Errorf("Expected responses to contain 1 response but got %d", len(responses))
 	}
 	if reflect.TypeOf(responses[0]).String() != "*http.Response" {
-		t.Errorf("Expected response to be of type http.Response but got %s", reflect.TypeOf(responses[0]).String())
+		t.Errorf("Expected response to be of type *http.Response but got %s", reflect.TypeOf(responses[0]).String())
 	}
 }

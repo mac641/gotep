@@ -27,8 +27,7 @@ var (
 )
 
 // Takes array of strings representing prepared http requests and parses them into array of http.Requests.
-func (p *Parser) Parse(requests []string) ([]http.Request, error) {
-	httpRequests := []http.Request{}
+func (p *Parser) Parse(requests []string) (httpRequests []http.Request, err error) {
 	isFirstHttpVersionOccurrence := true
 	for _, request := range requests {
 		// Parse request line
@@ -149,7 +148,7 @@ func (p *Parser) Parse(requests []string) ([]http.Request, error) {
 	return httpRequests, nil
 }
 
-func (p *Parser) ParseConfig() error {
+func (p *Parser) ParseConfig() (err error) {
 	var tempConfig map[string]interface{}
 	// TODO: don't load whole files into RAM -> read by byte
 	jsonData, err := os.ReadFile(ctx.GetConfigFilePath())
@@ -183,11 +182,10 @@ func (p *Parser) ParseConfig() error {
 // Takes string containing http requests and splits them by separators, removes comments and empty requests
 // and inserts env variable values, if possible.
 // Otherwise, exits program with exit code != 0.
-func (p *Parser) Prepare(file string) ([]string, error) {
-	var err error
+func (p *Parser) Prepare(file string) (requests []string, err error) {
 	// Split file by request separators.
 	// Exit, if no requests can be found after splitting.
-	requests := lib.RegSeparator.Split(file, -1)
+	requests = lib.RegSeparator.Split(file, -1)
 	if len(requests) == 0 {
 		return nil, errors.New("no requests could be parsed")
 	}
@@ -263,8 +261,8 @@ func (p *Parser) Prepare(file string) ([]string, error) {
 
 // Takes array of environment variable matches and compares them to keys stored in config.
 // It returns an array of all config keys that have been matched.
-func (p *Parser) matchConfig(envMatches []string) map[string]string {
-	matchedConfig := make(map[string]string)
+func (p *Parser) matchConfig(envMatches []string) (matchedConfig map[string]string) {
+	matchedConfig = make(map[string]string)
 
 	for _, match := range envMatches {
 		match = strings.Trim(match, "{}")
@@ -286,12 +284,11 @@ func (p *Parser) matchConfig(envMatches []string) map[string]string {
 
 // }
 
-// Takes array of header strings splitted by new line, detects related header values and adds them to map
-func (p *Parser) parseHeaders(headers []string) (map[string][]string, error) {
-	parsedHeaders := make(map[string][]string)
+// Takes array of header strings split by new line, detects related header values and adds them to map
+func (p *Parser) parseHeaders(headers []string) (parsedHeaders map[string][]string, err error) {
+	parsedHeaders = make(map[string][]string)
 
 	var fieldName string
-	var err error
 	for _, header := range headers {
 		header = strings.Trim(header, "\r\n \t\f")
 		if lib.RegHeaders.MatchString(header) {
@@ -325,8 +322,7 @@ func (p *Parser) parseHeaders(headers []string) (map[string][]string, error) {
 }
 
 // Takes message string, detects whether it is a filepath or direct message strings and returns them as io.Reader
-func (p *Parser) parseMessage(message string) (io.Reader, error) {
-	var file io.Reader
+func (p *Parser) parseMessage(message string) (file io.Reader, err error) {
 	if lib.RegInputFileRef.MatchString(message) {
 		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
 		absMessagePath, err := lib.ConvertToAbsolutePath(message)

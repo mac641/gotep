@@ -7,13 +7,10 @@ import (
 type Validator struct{}
 
 // Checks if request was successful, if so, increments the success count which will be returned
-func (v *Validator) Analyze(responses []*http.Response) int {
-	successful := 0
-
+func (v *Validator) Analyze(responses []*http.Response) (successful int) {
 	for _, response := range responses {
 		if v.isStatusSuccessful(response.StatusCode) {
 			successful++
-			continue
 		}
 	}
 
@@ -22,8 +19,7 @@ func (v *Validator) Analyze(responses []*http.Response) int {
 
 // Sends given requests, collects responses and returns them
 // If an error occurs, the function will return the error immediately without continuing
-func (v *Validator) Send(requests []http.Request) ([]*http.Response, error) {
-	responses := []*http.Response{}
+func (v *Validator) Send(requests []http.Request) (responses []*http.Response, err error) {
 	client := &http.Client{}
 	for _, request := range requests {
 		r, err := client.Do(&request)
