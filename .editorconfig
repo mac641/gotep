@@ -1,5 +1,4 @@
 # Editor configuration, see https://editorconfig.org
-# !! Place inside project root!!
 root = true
 
 [*]
