@@ -10,8 +10,8 @@ type Validator struct{}
 func (v *Validator) Analyze(responses []*http.Response) int {
 	successful := 0
 
-	for i := range responses {
-		if v.isStatusSuccessful(responses[i].StatusCode) {
+	for _, response := range responses {
+		if v.isStatusSuccessful(response.StatusCode) {
 			successful++
 			continue
 		}
@@ -25,8 +25,8 @@ func (v *Validator) Analyze(responses []*http.Response) int {
 func (v *Validator) Send(requests []http.Request) ([]*http.Response, error) {
 	responses := []*http.Response{}
 	client := &http.Client{}
-	for i := range requests {
-		r, err := client.Do(&requests[i])
+	for _, request := range requests {
+		r, err := client.Do(&request)
 		if err != nil {
 			return responses, err
 		}

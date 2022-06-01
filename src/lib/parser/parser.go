@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,17 +30,15 @@ var (
 func (p *Parser) Parse(requests []string) ([]http.Request, error) {
 	httpRequests := []http.Request{}
 	isFirstHttpVersionOccurrence := true
-	for i := range requests {
-		stringRequest := requests[i]
-
+	for _, request := range requests {
 		// Parse request line
-		requestLine := lib.RegRequestLine.FindString(stringRequest)
+		requestLine := lib.RegRequestLine.FindString(request)
 		method, requestUrl, httpVersion, err := p.parseRequestLine(requestLine)
 		if err != nil {
 			return httpRequests, err
 		}
 
-		stringHeaderMessage := strings.Trim(strings.ReplaceAll(stringRequest, requestLine, ""), "\r\n")
+		stringHeaderMessage := strings.Trim(strings.ReplaceAll(request, requestLine, ""), "\r\n")
 
 		// Separate headers / message body and parse them afterwards
 		if lib.RegMultipartFormDataHeader.MatchString(stringHeaderMessage) {
@@ -54,24 +51,24 @@ func (p *Parser) Parse(requests []string) ([]http.Request, error) {
 		var message io.Reader
 		switch len(splitEmptyNewline) {
 		case 0:
-			log.Infof("neither headers, nor a message body have/has been provided for\n%s\n", stringRequest)
+			log.Infof("neither headers, nor a message body have/has been provided for\n%s\n", request)
 		case 1:
 			match := splitEmptyNewline[0]
 			if lib.RegHeaders.MatchString(match) {
-				log.Infof("no message body has been provided for\n%s\n", stringRequest)
+				log.Infof("no message body has been provided for\n%s\n", request)
 				parsedHeaders, err = p.parseHeaders(lib.RegLineEnding.Split(splitEmptyNewline[0], -1))
 				if err != nil {
 					return httpRequests, err
 				}
 			} else {
-				log.Infof("no headers have been provided for\n%s\n", stringRequest)
+				log.Infof("no headers have been provided for\n%s\n", request)
 				message, err = p.parseMessage(match)
 				if err != nil {
 					return httpRequests, err
 				}
 			}
 		case 2:
-			log.Infof("headers and message body detected in\n%s\n", stringRequest)
+			log.Infof("headers and message body detected in\n%s\n", request)
 			parsedHeaders, err = p.parseHeaders(lib.RegLineEnding.Split(splitEmptyNewline[0], -1))
 			if err != nil {
 				return httpRequests, err
@@ -83,7 +80,7 @@ func (p *Parser) Parse(requests []string) ([]http.Request, error) {
 		default:
 			return httpRequests,
 				fmt.Errorf("too many in-between line breaks detected!\nCheck request below for errors:\n%s",
-					stringRequest)
+					request)
 		}
 
 		// Assemble request
@@ -108,7 +105,7 @@ func (p *Parser) Parse(requests []string) ([]http.Request, error) {
 		case "TRACE":
 			httpRequest, err = http.NewRequest(http.MethodTrace, requestUrl, message)
 		default:
-			return httpRequests, fmt.Errorf("undefined http method value found in\n%s", stringRequest)
+			return httpRequests, fmt.Errorf("undefined http method value found in\n%s", request)
 		}
 		if err != nil {
 			return httpRequests, err
@@ -197,20 +194,18 @@ func (p *Parser) Prepare(file string) ([]string, error) {
 
 	// Remove empty requests and comments
 	noEmptyRequests := []string{}
-	for i := range requests {
-		if len(requests[i]) == 0 {
+	for _, request := range requests {
+		if len(request) == 0 {
 			continue
 		}
 
-		noEmptyRequests = append(noEmptyRequests, lib.RegComments.ReplaceAllLiteralString(requests[i], ""))
+		noEmptyRequests = append(noEmptyRequests, lib.RegComments.ReplaceAllLiteralString(request, ""))
 	}
 	requests = noEmptyRequests
 
 	isFirstResponseHandlerOccurrence := true
 	isFirstResponseRefOccurrence := true
-	for i := range requests {
-		request := requests[i]
-
+	for i, request := range requests {
 		// Insert env variable values from json config.
 		// Exit, if one variable does not exist in json config.
 		envMatches := lib.RegEnv.FindAllString(request, -1)
@@ -271,8 +266,8 @@ func (p *Parser) Prepare(file string) ([]string, error) {
 func (p *Parser) matchConfig(envMatches []string) map[string]string {
 	matchedConfig := make(map[string]string)
 
-	for i := range envMatches {
-		match := strings.Trim(envMatches[i], "{}")
+	for _, match := range envMatches {
+		match = strings.Trim(match, "{}")
 
 		for configKey, configValue := range config {
 			if strings.Contains(configKey, match) {
@@ -297,10 +292,10 @@ func (p *Parser) parseHeaders(headers []string) (map[string][]string, error) {
 
 	var fieldName string
 	var err error
-	for i := range headers {
-		headerMatch := strings.Trim(headers[i], "\r\n \t\f")
-		if lib.RegHeaders.MatchString(headerMatch) {
-			headerSubMatch := lib.RegHeaders.FindStringSubmatch(headerMatch)
+	for _, header := range headers {
+		header = strings.Trim(header, "\r\n \t\f")
+		if lib.RegHeaders.MatchString(header) {
+			headerSubMatch := lib.RegHeaders.FindStringSubmatch(header)
 			for i, name := range lib.RegHeaders.SubexpNames() {
 				// NOTE: start at index == 1 because first value of array is full match which is irrelevant
 				if i >= 1 && i < len(headerSubMatch) {
@@ -316,9 +311,9 @@ func (p *Parser) parseHeaders(headers []string) (map[string][]string, error) {
 				}
 			}
 		} else {
-			if len(parsedHeaders) > 0 && headerMatch != "" && fieldName != "" {
-				parsedHeaders[fieldName] = append(parsedHeaders[fieldName], headerMatch)
-			} else if headerMatch == "" {
+			if len(parsedHeaders) > 0 && header != "" && fieldName != "" {
+				parsedHeaders[fieldName] = append(parsedHeaders[fieldName], header)
+			} else if header == "" {
 				continue
 			} else {
 				err = errors.New("misconfigured header found")
@@ -332,19 +327,16 @@ func (p *Parser) parseHeaders(headers []string) (map[string][]string, error) {
 // Takes message string, detects whether it is a filepath or direct message strings and returns them as io.Reader
 func (p *Parser) parseMessage(message string) (io.Reader, error) {
 	var file io.Reader
-	var err error
 	if lib.RegInputFileRef.MatchString(message) {
 		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
 		absMessagePath, err := lib.ConvertToAbsolutePath(message)
 		if err != nil {
 			return file, err
 		}
-		file, err = os.Open(absMessagePath)
+		return os.Open(absMessagePath)
 	} else {
-		file, err = strings.NewReader(message), nil
+		return strings.NewReader(message), nil
 	}
-
-	return bufio.NewReader(file), err
 }
 
 // Takes string representing a request line and parses it.
@@ -354,9 +346,7 @@ func (p *Parser) parseRequestLine(reqLine string) (method string, requestUrl str
 	requestLineSplit := lib.TrimRightEmptyStringsFromSlice(regexp.MustCompile("\r?\n|\r").Split(requestLine, -1))
 	if len(requestLineSplit) > 1 {
 		requestLine = ""
-		for j := range requestLineSplit {
-			line := requestLineSplit[j]
-
+		for _, line := range requestLineSplit {
 			line = strings.Trim(line, " \t\f")
 			line = strings.TrimRight(line, "\r\n")
 			requestLine += line
@@ -416,7 +406,8 @@ func (p *Parser) parseRequestLine(reqLine string) (method string, requestUrl str
 
 	pathSegment := lib.RegRequestLinePathSegment.FindString(requestUrl)
 	if pathSegment != "" {
-		// NOTE: According to go docs, PathUnescape does not convert + to ' ' which is correct
+		// NOTE: According to go docs, PathUnescape does not convert + to ' ', which is correct, unlike stated by
+		// JetBrains grammar
 		if !strings.Contains(pathSegment, "%") && lib.RegNonAscii.MatchString(pathSegment) {
 			pathSegmentEncoded := url.PathEscape(pathSegment)
 			requestUrl = strings.ReplaceAll(requestUrl, pathSegment, pathSegmentEncoded)
