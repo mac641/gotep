@@ -78,17 +78,17 @@ func TestIsUrlValid(t *testing.T) {
 		}
 	)
 
-	for i := range validUrls {
-		valid := lib.IsUrlValid(validUrls[i])
+	for _, url := range validUrls {
+		valid := lib.IsUrlValid(url)
 		if !valid {
-			t.Errorf("Expected %s to be valid url.", validUrls[i])
+			t.Errorf("Expected %s to be valid url.", url)
 		}
 	}
 
-	for i := range invalidUrls {
-		invalid := lib.IsUrlValid(invalidUrls[i])
+	for _, url := range invalidUrls {
+		invalid := lib.IsUrlValid(url)
 		if invalid {
-			t.Errorf("Expected %s to be invalid url.", invalidUrls[i])
+			t.Errorf("Expected %s to be invalid url.", url)
 		}
 	}
 }

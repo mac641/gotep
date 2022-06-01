@@ -648,31 +648,30 @@ func TestPrepare(t *testing.T) {
 		t.Error(err)
 	}
 
-	for i := range requests {
-		result := requests[i]
-		if regSeparator.MatchString(result) {
-			t.Errorf("Expected %s not to contain request separators!", result)
+	for _, request := range requests {
+		if regSeparator.MatchString(request) {
+			t.Errorf("Expected %s not to contain request separators!", request)
 		}
 
-		if result == "" {
-			t.Errorf("Expected %s not to be empty!", result)
+		if request == "" {
+			t.Errorf("Expected %s not to be empty!", request)
 		}
 
-		if regComments.MatchString(result) {
-			t.Errorf("Expected %s not to contain comments!", result)
+		if regComments.MatchString(request) {
+			t.Errorf("Expected %s not to contain comments!", request)
 		}
 
 		// TODO: test if correct env var value has been inserted
-		if regEnv.MatchString(result) {
-			t.Errorf("Expected %s not to contain env variables!", result)
+		if regEnv.MatchString(request) {
+			t.Errorf("Expected %s not to contain env variables!", request)
 		}
 
-		if regResponseHandler.MatchString(result) {
-			t.Errorf("Expected %s not to contain response handlers!", result)
+		if regResponseHandler.MatchString(request) {
+			t.Errorf("Expected %s not to contain response handlers!", request)
 		}
 
-		if regResponseRef.MatchString(result) {
-			t.Errorf("Expected %s not to contain response refs!", result)
+		if regResponseRef.MatchString(request) {
+			t.Errorf("Expected %s not to contain response refs!", request)
 		}
 	}
 }
