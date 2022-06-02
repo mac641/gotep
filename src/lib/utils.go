@@ -34,8 +34,7 @@ func ConvertToAbsolutePath(p string) (string, error) {
 
 // Returns the current dimensions of file descriptor (os.Stdout.Fd()) (no scrollback buffer)
 func GetTerminalSize() (width int, height int, err error) {
-	width, height, err = term.GetSize(int(os.Stdout.Fd()))
-	return width, height, err
+	return term.GetSize(int(os.Stdout.Fd()))
 }
 
 func IsUrlValid(s string) bool {

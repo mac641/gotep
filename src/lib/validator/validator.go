@@ -24,7 +24,7 @@ func (v *Validator) Send(requests []http.Request) (responses []*http.Response, e
 	for _, request := range requests {
 		r, err := client.Do(&request)
 		if err != nil {
-			return responses, err
+			return nil, err
 		}
 		responses = append(responses, r)
 	}

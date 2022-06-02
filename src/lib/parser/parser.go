@@ -34,7 +34,7 @@ func (p *Parser) Parse(requests []string) (httpRequests []http.Request, err erro
 		requestLine := lib.RegRequestLine.FindString(request)
 		method, requestUrl, httpVersion, err := p.parseRequestLine(requestLine)
 		if err != nil {
-			return httpRequests, err
+			return nil, err
 		}
 
 		stringHeaderMessage := strings.Trim(strings.ReplaceAll(request, requestLine, ""), "\r\n")
@@ -57,27 +57,27 @@ func (p *Parser) Parse(requests []string) (httpRequests []http.Request, err erro
 				log.Infof("no message body has been provided for\n%s\n", request)
 				parsedHeaders, err = p.parseHeaders(lib.RegLineEnding.Split(splitEmptyNewline[0], -1))
 				if err != nil {
-					return httpRequests, err
+					return nil, err
 				}
 			} else {
 				log.Infof("no headers have been provided for\n%s\n", request)
 				message, err = p.parseMessage(match)
 				if err != nil {
-					return httpRequests, err
+					return nil, err
 				}
 			}
 		case 2:
 			log.Infof("headers and message body detected in\n%s\n", request)
 			parsedHeaders, err = p.parseHeaders(lib.RegLineEnding.Split(splitEmptyNewline[0], -1))
 			if err != nil {
-				return httpRequests, err
+				return nil, err
 			}
 			message, err = p.parseMessage(splitEmptyNewline[1])
 			if err != nil {
-				return httpRequests, err
+				return nil, err
 			}
 		default:
-			return httpRequests,
+			return nil,
 				fmt.Errorf("too many in-between line breaks detected!\nCheck request below for errors:\n%s",
 					request)
 		}
@@ -104,10 +104,10 @@ func (p *Parser) Parse(requests []string) (httpRequests []http.Request, err erro
 		case "TRACE":
 			httpRequest, err = http.NewRequest(http.MethodTrace, requestUrl, message)
 		default:
-			return httpRequests, fmt.Errorf("undefined http method value found in\n%s", request)
+			return nil, fmt.Errorf("undefined http method value found in\n%s", request)
 		}
 		if err != nil {
-			return httpRequests, err
+			return nil, err
 		}
 
 		// NOTE: http version can only be set when acting as server
@@ -133,7 +133,7 @@ func (p *Parser) Parse(requests []string) (httpRequests []http.Request, err erro
 			} else {
 				hostSplit := strings.Split(host, "://")
 				if len(hostSplit) > 2 {
-					return httpRequests, fmt.Errorf("the \"Host\" header %s is not formatted properly", host)
+					return nil, fmt.Errorf("the \"Host\" header %s is not formatted properly", host)
 				}
 				if httpRequest.URL.Scheme == "" {
 					httpRequest.URL.Scheme = hostSplit[0]
@@ -213,7 +213,7 @@ func (p *Parser) Prepare(file string) (requests []string, err error) {
 
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfig) {
-				return requests, errors.New("there are undefined env variables present in your requests file")
+				return nil, errors.New("there are undefined env variables present in your requests file")
 			}
 
 			for configKey, configValue := range matchedConfig {
@@ -224,7 +224,7 @@ func (p *Parser) Prepare(file string) (requests []string, err error) {
 		// Remove response handler from request and prompt user that they are not going to be used
 		responseHandlerMatches := lib.RegResponseHandler.FindAllString(request, -1)
 		if len(responseHandlerMatches) > 1 {
-			return requests, errors.New("some of your requests contain too many response handlers")
+			return nil, errors.New("some of your requests contain too many response handlers")
 		}
 
 		// NOTE: following TODOs are only relevant when adding response handler validation support
@@ -242,7 +242,7 @@ func (p *Parser) Prepare(file string) (requests []string, err error) {
 		// Remove response ref from request and prompt user that they are not going to be used
 		responseRefMatches := lib.RegResponseRef.FindAllString(request, -1)
 		if len(responseRefMatches) > 1 {
-			return requests, errors.New("some of your requests contain too many response refs")
+			return nil, errors.New("some of your requests contain too many response refs")
 		}
 
 		if responseRefMatches != nil {
@@ -256,7 +256,7 @@ func (p *Parser) Prepare(file string) (requests []string, err error) {
 		requests[i] = request
 	}
 
-	return requests, err
+	return requests, nil
 }
 
 // Takes array of environment variable matches and compares them to keys stored in config.
@@ -303,7 +303,7 @@ func (p *Parser) parseHeaders(headers []string) (parsedHeaders map[string][]stri
 					case "Fieldvalue":
 						parsedHeaders[fieldName] = append(parsedHeaders[fieldName], headerSubMatch[i])
 					default:
-						err = errors.New("misconfigured header found")
+						return nil, errors.New("misconfigured header found")
 					}
 				}
 			}
@@ -313,12 +313,12 @@ func (p *Parser) parseHeaders(headers []string) (parsedHeaders map[string][]stri
 			} else if header == "" {
 				continue
 			} else {
-				err = errors.New("misconfigured header found")
+				return nil, errors.New("misconfigured header found")
 			}
 		}
 	}
 
-	return parsedHeaders, err
+	return parsedHeaders, nil
 }
 
 // Takes message string, detects whether it is a filepath or direct message strings and returns them as io.Reader
@@ -327,7 +327,7 @@ func (p *Parser) parseMessage(message string) (file io.Reader, err error) {
 		message = strings.TrimSpace(strings.TrimPrefix(message, "<"))
 		absMessagePath, err := lib.ConvertToAbsolutePath(message)
 		if err != nil {
-			return file, err
+			return nil, err
 		}
 		return os.Open(absMessagePath)
 	} else {
