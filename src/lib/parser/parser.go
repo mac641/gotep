@@ -149,6 +149,7 @@ func (p *Parser) Parse(requests []string) (httpRequests []http.Request, err erro
 }
 
 func (p *Parser) ParseConfig() (err error) {
+  // TODO: allow emtpy config, if no variables have been used in the test file
 	var tempConfig map[string]interface{}
 	// TODO: don't load whole files into RAM -> read by byte
 	jsonData, err := os.ReadFile(ctx.GetConfigFilePath())
@@ -213,6 +214,8 @@ func (p *Parser) Prepare(file string) (requests []string, err error) {
 
 			// TODO: use one by one comparison to ensure every match is represented in env variable config
 			if len(envMatches) != len(matchedConfig) {
+        // TODO: add support for dynamic variables
+        // https://www.jetbrains.com/help/idea/exploring-http-syntax.html#dynamic-variables
 				return nil, errors.New("there are undefined env variables present in your requests file")
 			}
 
