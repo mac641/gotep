@@ -8,8 +8,8 @@ on:
     branches:
       - main
 jobs:
-  lint-test-and-build:
-    name: Lint, test and build gotep
+  lint-test-and-build-linux:
+    name: Lint, test and build gotep on Linux
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -17,7 +17,7 @@ jobs:
       - name: Set up golang
         uses: actions/setup-go@v2
         with:
-          go-version: '1.18'
+          go-version: "1.18"
       - name: Install dependencies
         run: cd src; go install
       - name: Lint
@@ -29,5 +29,53 @@ jobs:
       - name: Archive gotep release
         uses: actions/upload-artifact@v2
         with:
-          name: gotep
+          name: gotep-linux
+          path: bin/gotep
+
+  lint-test-and-build-windows:
+    name: Lint, test and build gotep on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.18"
+      - name: Install dependencies
+        run: cd src; go install
+      - name: Lint
+        run: make check-linting
+      - name: Test
+        run: make test
+      - name: Build
+        run: make
+      - name: Archive gotep release
+        uses: actions/upload-artifact@v2
+        with:
+          name: gotep-windows
+          path: bin/gotep
+
+  lint-test-and-build-macos:
+    name: Lint, test and build gotep on macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.18"
+      - name: Install dependencies
+        run: cd src; go install
+      - name: Lint
+        run: make check-linting
+      - name: Test
+        run: make test
+      - name: Build
+        run: make
+      - name: Archive gotep release
+        uses: actions/upload-artifact@v2
+        with:
+          name: gotep-macos
           path: bin/gotep
