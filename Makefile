@@ -17,7 +17,7 @@ check-linting:
 	gofmt -l .
 
 clean: bin/gotep
-	trash-put bin/gotep
+	rm -f bin/gotep
 
 fmt: check-linting
 	gofmt -w -s .
