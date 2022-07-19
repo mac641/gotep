@@ -37,7 +37,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "gotep",
 		Short: "gotep is a terminal-based REST client.",
-		Long: `gotep is a terminal-based REST client designed to execute HTTP tests based on the JetBrains HTTP-Client.`,
+		Long:  `gotep is a terminal-based REST client designed to execute HTTP tests based on the JetBrains HTTP-Client.`,
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
 		// Run: func(cmd *cobra.Command, args []string) { },
@@ -68,7 +68,7 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-  // TODO: give possibility to provide both http-client.env.json and http-client.env.json
+	// TODO: give possibility to provide both http-client.env.json and http-client.env.json
 	checkCmd.Flags().StringVarP(&configFilePath, configFilePathFlag, "c", "./http-client.env.json", "config file path")
 	checkCmd.Flags().StringVarP(&configEnvironment, configEnvironmentFlag, "e", "default",
 		"environment name specified in config file")
@@ -77,7 +77,7 @@ func init() {
 	runCmd.Flags().StringVarP(&configFilePath, configFilePathFlag, "c", "./http-client.env.json", "config file path")
 	runCmd.Flags().StringVarP(&configEnvironment, configEnvironmentFlag, "e", "default",
 		"environment name specified in config file")
-    runCmd.MarkFlagRequired(configEnvironmentFlag) // TODO: remove this line and only require this only, if env variables have been used
+	runCmd.MarkFlagRequired(configEnvironmentFlag) // TODO: remove this line and only require this only, if env variables have been used
 }
 
 // Checks if err not nil. If so, prints it using l.Fatalf and prepends "error:"
