@@ -7,7 +7,7 @@ import (
 var (
 	// Lib regex
 	// NOTE: multi-line mode flag (?m) enables ^ and $ to match line beginnings and endings
-	RegComments     = regexp.MustCompile(`(?m)^(//|#)([^\r\n]*$(\r?\n|\r))`)
+	RegComments     = regexp.MustCompile(`(?m)^(//|#)([^\r\n]*(\r?\n|\r))`)
 	RegEmptyNewLine = regexp.MustCompile(`(?m)^\r?\n|\r$`)
 	RegEnv          = regexp.MustCompile(`{{[ \t\f]*[\w\-]+[ \t\f]*}}`)
 	RegHeaders      = regexp.MustCompile(`(?m)^(?P<Fieldname>[\w\-]+):[ \t\f]*(?P<Fieldvalue>[^\r\n]+[ \t\f]*)$`)
@@ -30,6 +30,6 @@ var (
 	RegResponseHandler        = regexp.
 					MustCompile(`(?m)^>[ \t\f]+([^\r\n]*(\r?\n|\r)$|{%(.|(\r?\n|\r))+%})$(\r?\n|\r)`)
 	RegResponseRef = regexp.MustCompile(`(?m)^<>[ \t\f]+[^\r\n]*$(\r?\n|\r)`)
-	RegSeparator   = regexp.MustCompile(`(?m)^###[^\r\n]*$(\r?\n|\r)`)
+	RegSeparator   = regexp.MustCompile(`(?m)^###[^\r\n]*(\r?\n|\r)`)
 	RegUrlScheme   = regexp.MustCompile(`(?m)^(http|https)://`)
 )

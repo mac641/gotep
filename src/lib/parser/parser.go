@@ -212,12 +212,21 @@ func (p *Parser) Prepare(file string) (requests []string, err error) {
 		if envMatches != nil {
 			matchedConfig := p.matchConfig(envMatches)
 
-			// TODO: use one by one comparison to ensure every match is represented in env variable config
-			if len(envMatches) != len(matchedConfig) {
-				// TODO: add support for dynamic variables
-				// https://www.jetbrains.com/help/idea/exploring-http-syntax.html#dynamic-variables
-				return nil, errors.New("there are undefined env variables present in your requests file")
+			for key, _ := range matchedConfig {
+				isMatch := false
+				for _, envMatch := range envMatches {
+					if strings.Contains(envMatch, key) {
+						isMatch = true
+						continue
+					}
+				}
+				if !isMatch {
+					return nil, errors.New("there are undefined env variables present in your requests file")
+				}
 			}
+
+			// TODO: add support for dynamic variables
+			// https://www.jetbrains.com/help/idea/exploring-http-syntax.html#dynamic-variables
 
 			for configKey, configValue := range matchedConfig {
 				request = strings.ReplaceAll(request, fmt.Sprintf("{{%s}}", configKey), configValue)
@@ -272,7 +281,7 @@ func (p *Parser) matchConfig(envMatches []string) (matchedConfig map[string]stri
 
 		for configKey, configValue := range config {
 			if strings.Contains(configKey, match) {
-				matchedConfig[match] = configValue
+				matchedConfig[configKey] = configValue
 			}
 		}
 	}
@@ -377,6 +386,11 @@ func (p *Parser) parseRequestLine(reqLine string) (method string, requestUrl str
 	default:
 		return method, requestUrl, httpVersion, errors.New("one of your request lines could not be parsed")
 	}
+
+	// Trim unnecessary line breaks
+	method = strings.TrimRight(method, "\r\n")
+	requestUrl = strings.TrimRight(requestUrl, "\r\n")
+	httpVersion = strings.TrimRight(httpVersion, "\r\n")
 
 	// Check if requestUrl contains fragment and remove it, because browsers do not send fragments
 	fragment := lib.RegRequestLineFragment.FindString(requestUrl)

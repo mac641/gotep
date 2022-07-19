@@ -1,9 +1,11 @@
 package lib_test
 
 import (
-	"path"
+	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"testing"
 
 	"github.com/mac641/gotep/src/lib"
@@ -15,12 +17,17 @@ var (
 )
 
 func init() {
-	ctx.SetPathPrefix("/home/testuser")
+	if runtime.GOOS == "windows" {
+		// NOTE: use D disk for compatibility with GitHub pipeline
+		ctx.SetPathPrefix("D:\\home\\testuser")
+	} else {
+		ctx.SetPathPrefix("/home/testuser")
+	}
 }
 
 func TestConvertToAbsolutePath(t *testing.T) {
-	const (
-		p = "a/relative/path"
+	var (
+		p = fmt.Sprintf("a%crelative%cpath", os.PathSeparator, os.PathSeparator)
 	)
 
 	result, err := lib.ConvertToAbsolutePath(ctx.GetPathPrefix())
@@ -28,7 +35,7 @@ func TestConvertToAbsolutePath(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 	if result != ctx.GetPathPrefix() {
-		t.Errorf("Expect absolute path to be returned without editing! Expected: %s, Got: %s",
+		t.Errorf("Expected absolute path to be %s without editing but got %s",
 			ctx.GetPathPrefix(), result)
 	}
 
@@ -36,9 +43,9 @@ func TestConvertToAbsolutePath(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	assertValueJoin := path.Join(ctx.GetPathPrefix(), p)
+	assertValueJoin := filepath.Join(ctx.GetPathPrefix(), p)
 	if result != assertValueJoin {
-		t.Errorf("Absolute paths using given prefixes have to be joined properly! Expected: %s, Got %s",
+		t.Errorf("Expected absolute paths to be joined properly like %s but got %s",
 			assertValueJoin, result)
 	}
 

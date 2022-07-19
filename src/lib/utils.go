@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -24,8 +23,8 @@ func ConvertToAbsolutePath(p string) (string, error) {
 	}
 
 	prefix := ctx.GetPathPrefix()
-	if !regexp.MustCompile(`^\.\/?$`).MatchString(prefix) && prefix != "" {
-		p = path.Join(prefix, p)
+	if !regexp.MustCompile(`^\.(\/|\\)?$`).MatchString(prefix) && prefix != "" {
+		p = filepath.Join(prefix, p)
 	}
 	absPath, err := filepath.Abs(p)
 
@@ -51,7 +50,7 @@ func IsUrlValid(s string) bool {
 	// Check absolute / origin form
 	_, err := url.ParseRequestURI(s) // returns true if absolute URI or absolute path
 	// Check for misspelled url schemes since ParseRequestUri does accept these
-	if err == nil && (RegUrlScheme.MatchString(s) || filepath.IsAbs(s)) {
+	if err == nil && (RegUrlScheme.MatchString(s) || strings.HasPrefix(s, "/")) {
 		return true
 	}
 

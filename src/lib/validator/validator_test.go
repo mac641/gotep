@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -36,7 +35,7 @@ func TestSend(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	absPathToBody, err := filepath.Abs(path.Join(cwd, "../../../test_files/input.json"))
+	absPathToBody, err := filepath.Abs(filepath.Join(cwd, "../../../test_files/input.json"))
 	if err != nil {
 		t.Errorf(err.Error())
 	}

@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/mac641/gotep/src/lib/context"
@@ -22,81 +24,36 @@ func init() {
 
 func TestParse(t *testing.T) {
 	var (
-		requestLineOnly           = []string{"192.168.178.2/index/https\n"}
-		requestLineOnlyMethod     = []string{"PUT 192.168.178.2/index/https\n"}
-		requestLineOnlyMethodHttp = []string{"GET 192.168.178.2/index/https HTTP/1\n"}
-		requestLineOnlySplit      = []string{`http://example.com/
-  api
-  /get
-`}
-		requestLineOnlySplitEncoded = []string{`GET http://example.com/
-  %20api%20
-  +/get+
-`}
+		requestLineOnly             = []string{"192.168.178.2/index/https\n"}
+		requestLineOnlyMethod       = []string{"PUT 192.168.178.2/index/https\n"}
+		requestLineOnlyMethodHttp   = []string{"GET 192.168.178.2/index/https HTTP/1\n"}
+		requestLineOnlySplit        = []string{"http://example.com/\n  api\n  /get\n"}
+		requestLineOnlySplitEncoded = []string{"GET http://example.com/\n  %20api%20\n  +/get+\n"}
 
-		requestLineHeader      = []string{"GET 192.168.178.2/index/https\nAccept: application/json"}
-		requestLineSplitHeader = []string{`http://example.com/
-  api
-  /get
-From: eugen@blabla.com`}
+		requestLineHeader               = []string{"GET 192.168.178.2/index/https\nAccept: application/json"}
+		requestLineSplitHeader          = []string{"http://example.com/\n  api\n  /get\nFrom: eugen@blabla.com"}
 		requestLineHeaderMultipleValues = []string{
 			"GET 192.168.178.2/index/https\nAccept: application/json\n  text/html"}
 		requestLineMultipleHeaders = []string{
 			"GET 192.168.178.2/index/https\nAccept: application/json\nFrom: test@test.com"}
 
-		requestLineHeaderBody = []string{`POST http://www.example.com/test1 HTTP/2
-Content-Type: application/json
-
-{
-	"html": "Html message"
-}
-
-`}
-		requestLineSplitHeaderBody = []string{`POST http://example.com/
-  api
-  /get
-From: eugen@blabla.com
-
-{
-	"html": "Html message"
-}
-
-`}
-		requestLineHeaderBodyLineBreak = []string{`POST http://localhost:3333/tests/pdf
-Content-Type: 1234
-
-{
-	"html": "<h1>I'm an example heading!</h1>",
-	"test": "some text with
-	line break"
-}
-
-`}
-		requestLineHeaderBodyInputFileRef = []string{`POST http://www.example.com/test1
-Content-Type: application/json
-
-< ../test_files/input.json
-
-`}
-		requestLineHeaderMultipartFormData = []string{`POST http://example.com/api/upload
-Content-Type: multipart/form-data; boundary=abcd
-
---abcd
-Content-Disposition: form-data; name="text"
-
-Text
---abcd
-Content-Disposition: form-data; name="file_to_send"; filename="input.txt"
-
-< ./input.txt
---abcd--
-
-`}
-		requestLineAsteriskFormHeader = []string{`OPTIONS * HTTP/1.1
-Host: http://example.com:8080`}
-		requestLineOriginFormHeader = []string{`GET /api/get
-Host: example.com`}
-		assertValues = []string{}
+		requestLineHeaderBody = []string{
+			"POST http://www.example.com/test1 HTTP/2\nContent-Type: application/json\n\n{\n	\"html\": \"Html message\"\n}" +
+				"\n\n"}
+		requestLineSplitHeaderBody = []string{
+			"POST http://example.com/\n  api\n  /get\nFrom: eugen@blabla.com\n\n{\n	\"html\": \"Html message\"\n}\n\n"}
+		requestLineHeaderBodyLineBreak = []string{
+			"POST http://localhost:3333/tests/pdf\nContent-Type: 1234\n\n{\n	\"html\": \"<h1>I'm an example heading!</h1>" +
+				"\",\n	\"test\": \"some text with\n	line break\"\n}\n\n"}
+		requestLineHeaderBodyInputFileRef = []string{
+			"POST http://www.example.com/test1\nContent-Type: application/json\n\n< ../test_files/input.json\n\n"}
+		requestLineHeaderMultipartFormData = []string{
+			"POST http://example.com/api/upload\nContent-Type: multipart/form-data; boundary=abcd\n\n--abcd\nContent-" +
+				"Disposition: form-data; name=\"text\"\n\nText\n--abcd\nContent-Disposition: form-data; name=\"file_to_send\"; " +
+				"filename=\"input.txt\"\n\n< ./input.txt\n--abcd--\n\n"}
+		requestLineAsteriskFormHeader = []string{"OPTIONS * HTTP/1.1\nHost: http://example.com:8080"}
+		requestLineOriginFormHeader   = []string{"GET /api/get\nHost: example.com"}
+		assertValues                  = []string{}
 	)
 
 	// Request line only
@@ -484,11 +441,7 @@ Host: example.com`}
 		t.Error(err)
 	}
 	assertValues = []string{"POST", "http://www.example.com/test1", "Content-Type", "application/json",
-		`{
-  "html": "<h1>I'm an example heading!</h1>",
-  "testnumber": 234145
-}
-`}
+		"{\n  \"html\": \"<h1>I'm an example heading!</h1>\",\n  \"testnumber\": 234145\n}\n"}
 	if len(requestLineHeaderBodyInputFileRefParsed) != 1 {
 		t.Errorf("Expected requestLineHeaderBodyInputFileRef to have one request but got %d",
 			len(requestLineHeaderBodyInputFileRefParsed))
@@ -519,11 +472,16 @@ Host: example.com`}
 		}
 	}
 	requestLineHeaderBodyInputFileRefParsedRead, err := io.ReadAll(requestLineHeaderBodyInputFileRefParsed[0].Body)
+	requestLineHeaderBodyInputFileRefParsedReadString := string(requestLineHeaderBodyInputFileRefParsedRead)
 	if err != nil {
 		t.Errorf("Could not read requestLineHeaderBodyInputFileRef's body due to \n%s", err.Error())
 	}
-	if string(requestLineHeaderBodyInputFileRefParsedRead) != assertValues[4] {
-		t.Errorf("Expected requestLineHeaderBodyInputFileRef's body value to be \n%s\n but got \n%s",
+	if runtime.GOOS == "windows" {
+		requestLineHeaderBodyInputFileRefParsedReadString =
+			strings.ReplaceAll(requestLineHeaderBodyInputFileRefParsedReadString, "\r", "")
+	}
+	if requestLineHeaderBodyInputFileRefParsedReadString != assertValues[4] {
+		t.Errorf("Expected requestLineHeaderBodyInputFileRef's body value to be\n'%s'\nbut got\n'%s'",
 			assertValues[4], string(requestLineHeaderBodyInputFileRefParsedRead))
 	}
 
