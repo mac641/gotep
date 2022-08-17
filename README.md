@@ -17,9 +17,10 @@ If you encounter bugs during use, feel free to open a PR containing a fix. 😉
 Please read and follow the guidelines, if you wish to contribute.
 
 ### Dev environment setup
-1. Clone the repository.
-2. Enable git hooks by executing `git config core.hooksPath .hooks; chmod +x .hooks/*`.
-3. Run `go install` inside the `src` directory to install all necessary go dependencies. You can either spin up a
+1. Ensure you have [go-task](https://taskfile.dev/installation/) installed.
+2. Clone the repository.
+3. Enable git hooks by executing `git config core.hooksPath .hooks; chmod +x .hooks/*`.
+4. Run `go install` inside the `src` directory to install all necessary go dependencies. You can either spin up a
 docker dev container using the command below or develop on your local machine.
 
 ```bash
@@ -30,11 +31,10 @@ docker dev container using the command below or develop on your local machine.
 * This repo follows the **rebase-merge** git strategy.
 * Commit messages have to follow an extended version of
 [Angular commit message guidelines](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#-commit-message-format).
-* All go files need to be properly formatted before they can be committed. Use `make fmt`.
+* All go files need to be properly formatted before they can be committed. Use `task fmt`.
 * Comments should begin with the following annotations:
   * ```golang
     // FIXME - for a bug that has to be approached later on
     // TODO - for a feature / architecture / design change which depends on something else and needs to be implemented on a future point in time
     // NOTE - for an important info
     ```
-

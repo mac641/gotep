@@ -1,0 +1,42 @@
+version: "3"
+
+env:
+  MODULE: src/
+
+tasks:
+  build:
+    dir: "{{.MODULE}}"
+    cmds:
+      - go build -o ../bin/gotep
+
+  check-updates:
+    dir: "{{.MODULE}}"
+    cmds:
+      - go list -u -m all
+
+  clean:
+    cmds:
+      - rm -f bin/gotep
+
+  fmt:
+    cmds:
+      - gofmt -w -s .
+
+  mod-tidy:
+    dir: "{{.MODULE}}"
+    cmds:
+      - go mod tidy -e
+
+  test:
+    dir: "{{.MODULE}}"
+    cmds:
+      - go clean -testcache
+      - go test ./... -cover
+
+  update:
+    dir: "{{.MODULE}}"
+    deps: [check-updates, mod-tidy]
+    cmds:
+      - go get -u ./...
+    preconditions:
+      - test -f go.mod
