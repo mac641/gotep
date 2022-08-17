@@ -212,7 +212,7 @@ func (p *Parser) Prepare(file string) (requests []string, err error) {
 		if envMatches != nil {
 			matchedConfig := p.matchConfig(envMatches)
 
-			for key, _ := range matchedConfig {
+			for key := range matchedConfig {
 				isMatch := false
 				for _, envMatch := range envMatches {
 					if strings.Contains(envMatch, key) {
