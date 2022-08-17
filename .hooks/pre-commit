@@ -12,11 +12,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # TODO: only check files staged for commit
 # Check if all go files have been formatted
 cd "${SCRIPT_DIR}"/../ || exit 1
-PRE_COMMIT_RESULT="$(make check-linting)"
+PRE_COMMIT_RESULT="$(task check-linting)"
 if [ $? != 0 ]; then
   tput setaf 1
   echo "Your go files have not been formatted properly!"
-  echo "Run 'make fmt' in project root directory to do so."
+  echo "Run 'task fmt' in project root directory to do so."
   tput setaf 7
   echo ""
   echo "Linter output:"
