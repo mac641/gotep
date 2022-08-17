@@ -4,6 +4,10 @@ env:
   MODULE: src/
 
 tasks:
+  default:
+    cmds:
+      - task: build
+
   build:
     dir: "{{.MODULE}}"
     cmds:
