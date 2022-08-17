@@ -9,6 +9,10 @@ tasks:
     cmds:
       - go build -o ../bin/gotep
 
+  check-linting:
+    cmds:
+      - gofmt -l .
+
   check-updates:
     dir: "{{.MODULE}}"
     cmds:
