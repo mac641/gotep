@@ -19,14 +19,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: "1.18"
+      - name: Install Task
+        uses: arduino/setup-task@v1
       - name: Install dependencies
         run: cd src; go install
       - name: Lint
-        run: make check-linting
+        run: task check-linting
       - name: Test
-        run: make test
+        run: task test
       - name: Build
-        run: make
+        run: task
       - name: Archive gotep release
         uses: actions/upload-artifact@v2
         with:
@@ -43,14 +45,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: "1.18"
+      - name: Install Task
+        uses: arduino/setup-task@v1
       - name: Install dependencies
         run: cd src; go install
       - name: Lint
-        run: make check-linting
+        run: task check-linting
       - name: Test
-        run: make test
+        run: task test
       - name: Build
-        run: make
+        run: task
       - name: Archive gotep release
         uses: actions/upload-artifact@v2
         with:
@@ -67,14 +71,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: "1.18"
+      - name: Install Task
+        uses: arduino/setup-task@v1
       - name: Install dependencies
         run: cd src; go install
       - name: Lint
-        run: make check-linting
+        run: task check-linting
       - name: Test
-        run: make test
+        run: task test
       - name: Build
-        run: make
+        run: task
       - name: Archive gotep release
         uses: actions/upload-artifact@v2
         with:
