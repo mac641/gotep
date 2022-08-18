@@ -68,7 +68,7 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	// TODO: give possibility to provide both http-client.env.json and http-client.env.json
+	// TODO: give possibility to provide both http-client.env.json and http-client-private.env.json
 	checkCmd.Flags().StringVarP(&configFilePath, configFilePathFlag, "c", "./http-client.env.json", "config file path")
 	checkCmd.Flags().StringVarP(&configEnvironment, configEnvironmentFlag, "e", "default",
 		"environment name specified in config file")
@@ -77,7 +77,7 @@ func init() {
 	runCmd.Flags().StringVarP(&configFilePath, configFilePathFlag, "c", "./http-client.env.json", "config file path")
 	runCmd.Flags().StringVarP(&configEnvironment, configEnvironmentFlag, "e", "default",
 		"environment name specified in config file")
-	runCmd.MarkFlagRequired(configEnvironmentFlag) // TODO: remove this line and only require this only, if env variables have been used
+	runCmd.MarkFlagRequired(configEnvironmentFlag) // TODO: remove this line and only require this, if env variables have been used
 }
 
 // Checks if err not nil. If so, prints it using l.Fatalf and prepends "error:"
