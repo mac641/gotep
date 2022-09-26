@@ -23,8 +23,6 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +37,7 @@ within gotep. For example run: gotep check -c http-client.env.json -e default te
 		Run: func(cmd *cobra.Command, args []string) {
 			// TODO: add parseFlags similar to runCmd
 			// TODO: call parser to determine errors similar to runCmd
-			fmt.Println("check called")
+			log.Infoln("check called")
 		},
 	}
 )
