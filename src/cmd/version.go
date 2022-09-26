@@ -22,8 +22,6 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +30,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Displays current version of the app",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("v0.0.1")
+		log.Infoln("v0.0.1")
 	},
 }
 
