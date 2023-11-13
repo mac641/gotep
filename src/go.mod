@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/fatih/color v1.16.0
 	github.com/spf13/cobra v1.8.0
-	golang.org/x/term v0.13.0
+	golang.org/x/term v0.14.0
 )
 
 require (
